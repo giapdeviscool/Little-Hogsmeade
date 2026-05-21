@@ -1,0 +1,55 @@
+{
+  "brand": {
+    "name": "Little Hogsmeade",
+    "tagline": "BISTRO · CAFÉ · CHAIN"
+  },
+  "common": {
+    "searchPlaceholder": "Search orders, items, employees...",
+    "branch": "District 1 Branch",
+    "settings": "System Settings",
+    "logout": "Log out"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Register",
+    "forgotPassword": "Forgot password",
+    "welcomeBack": "Welcome back",
+    "createAccount": "Create internal account",
+    "recoverAccess": "Recover access",
+    "loginTitle": "Log in to the system",
+    "registerTitle": "Register an account",
+    "forgotTitle": "Forgot password",
+    "heroTitle": "A clean, warm command center for your Bistro Cafe chain.",
+    "heroSubtitle": "Operations, POS, inventory, and CMS landing management in one unified system.",
+    "emailOrPhone": "Email or phone number",
+    "recoveryEmail": "Email for reset link",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "fullName": "Full name",
+    "role": "Role",
+    "rememberMe": "Remember me",
+    "submitRecovery": "Send recovery link",
+    "submitRegister": "Create account",
+    "noAccount": "No account yet?",
+    "hasAccount": "Already have an account?",
+    "rememberedPassword": "Remembered your password?",
+    "recoverySent": "Password recovery instructions have been sent to your email."
+  },
+  "navigation": {
+    "dashboard": "Overview (Dashboard)",
+    "pos": "Sales & Cashier (POS)",
+    "operations": "Operations & Service",
+    "internal": "Internal Management",
+    "owner": "Chain Management (Owner)",
+    "cms": "CMS (Landing Page)"
+  },
+  "pages": {
+    "dashboardTitle": "Little Hogsmeade Chain Overview",
+    "posTitle": "Sales & Cashier",
+    "operationsTableMap": "Floor/Table Map",
+    "menuManagement": "Menu Management",
+    "inventoryTitle": "Inventory Management",
+    "ownerTitle": "Chain Management",
+    "settingsTitle": "System Settings"
+  }
+}
