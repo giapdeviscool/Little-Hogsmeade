@@ -1,9 +1,37 @@
 export type AuthMode = 'login' | 'register' | 'forgot'
 
-export type AuthRole = 'Chain Owner' | 'Branch Manager' | 'Cashier'
+export type AuthRole = 'Chain Owner' | 'Branch Manager' | 'Cashier' | 'Customer'
+
+export type AccountType = 'customer' | 'employee'
 
 export type AuthUser = {
   id: string
-  name: string
-  role: AuthRole
+  fullName?: string
+  name?: string
+  phone?: string
+  email?: string | null
+  role?: AuthRole
+}
+
+export type AuthResponse = {
+  accountType: AccountType
+  user: AuthUser
+  token: string
+}
+
+export type ApiResponse<T> = {
+  data: T
+}
+
+export type LoginPayload = {
+  identifier: string
+  password: string
+}
+
+export type RegisterPayload = {
+  accountType: 'customer'
+  fullName: string
+  phone: string
+  email?: string
+  password: string
 }

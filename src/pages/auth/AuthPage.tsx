@@ -5,22 +5,60 @@ import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
 import { useLocale } from '../../hooks/useLocale'
 import { cn } from '../../utils/cn'
 import type { AuthMode } from '../../types'
+import { login, register } from '../../api/auth.api'
+import { saveAuthSession } from '../../store/auth.store'
 
 export function AuthPage({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate()
   const { t } = useLocale()
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const isLogin = mode === 'login'
   const isRegister = mode === 'register'
   const isForgot = mode === 'forgot'
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setMessage('')
+    setError('')
+
     if (isForgot) {
       setMessage(t.auth.recoverySent)
       return
     }
-    navigate('/home')
+
+    const form = new FormData(event.currentTarget)
+    const password = String(form.get('password') || '')
+
+    if (isRegister && password !== String(form.get('confirmPassword') || '')) {
+      setError(t.auth.passwordMismatch)
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = isRegister
+        ? await register({
+            accountType: 'customer',
+            fullName: String(form.get('fullName') || '').trim(),
+            phone: String(form.get('phone') || '').trim(),
+            email: String(form.get('email') || '').trim() || undefined,
+            password,
+          })
+        : await login({
+            identifier: String(form.get('identifier') || '').trim(),
+            password,
+          })
+
+      saveAuthSession(response.data)
+      navigate('/home')
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Unable to connect to server')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -65,21 +103,23 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         <form onSubmit={submit} className="flex flex-col gap-4">
           {isRegister && (
             <>
-              <AuthInput label={t.auth.fullName} placeholder="Anna Nguyễn" />
-              <AuthInput label={t.auth.role} placeholder="Chain Owner / Branch Manager" />
+              <AuthInput name="fullName" label={t.auth.fullName} placeholder="Anna Nguyễn" required />
+              <AuthInput name="phone" label={t.auth.phone} placeholder="0901 234 567" required />
+              <AuthInput name="email" label={t.auth.email} placeholder="anna@littlehogsmeade.vn" type="email" />
             </>
           )}
-          <AuthInput label={isForgot ? t.auth.recoveryEmail : t.auth.emailOrPhone} placeholder="admin@littlehogsmeade.vn" type={isForgot ? 'email' : 'text'} />
-          {!isForgot && <AuthInput label={t.auth.password} placeholder="••••••••" type="password" />}
-          {isRegister && <AuthInput label={t.auth.confirmPassword} placeholder="••••••••" type="password" />}
+          {!isRegister && <AuthInput name="identifier" label={isForgot ? t.auth.recoveryEmail : t.auth.emailOrPhone} placeholder="admin@littlehogsmeade.vn" type={isForgot ? 'email' : 'text'} required />}
+          {!isForgot && <AuthInput name="password" label={t.auth.password} placeholder="••••••••" type="password" required />}
+          {isRegister && <AuthInput name="confirmPassword" label={t.auth.confirmPassword} placeholder="••••••••" type="password" required />}
           {isLogin && (
             <div className="flex items-center justify-between pt-1 text-sm">
               <label className="flex items-center gap-2 font-semibold text-muted"><input type="checkbox" defaultChecked className="h-4 w-4 accent-coffee" />{t.auth.rememberMe}</label>
               <button type="button" onClick={() => navigate('/forgot-password')} className="font-bold text-coffee hover:underline">{t.auth.forgotPassword}?</button>
             </div>
           )}
-          <button type="submit" className="mt-2 h-12 rounded-[14px] bg-coffee px-5 text-[15px] font-bold text-white shadow-[0_16px_32px_rgba(74,53,37,0.18)] hover:bg-[#3f2d20]">{isForgot ? t.auth.submitRecovery : isRegister ? t.auth.submitRegister : t.auth.login}</button>
+          <button type="submit" disabled={isSubmitting} className="mt-2 h-12 rounded-[14px] bg-coffee px-5 text-[15px] font-bold text-white shadow-[0_16px_32px_rgba(74,53,37,0.18)] hover:bg-[#3f2d20] disabled:cursor-wait disabled:opacity-65">{isSubmitting ? t.auth.processing : isForgot ? t.auth.submitRecovery : isRegister ? t.auth.submitRegister : t.auth.login}</button>
           {message && <p className="rounded-[12px] bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</p>}
+          {error && <p className="rounded-[12px] bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
         </form>
 
         <p className="mt-7 flex justify-center gap-2 text-sm font-medium text-muted">
