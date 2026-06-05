@@ -1,6 +1,8 @@
 export type { AccountType, ApiResponse, AuthMode, AuthResponse, AuthRole, AuthUser, LoginPayload, RegisterPayload } from './auth.types'
+export type { Branch, BranchListResponse, BranchPayload, BranchStatus, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from './chain.types'
 export type { BranchPerformanceMock, KpiMock } from './dashboard.types'
 export type { Locale } from './locale.types'
 export type { NavIconKey, NavItem, SidebarNavKey, TabKey } from './navigation.types'
+export type { OwnerActiveTab } from './owner.types'
 export type { ProductMock, ProductStatus } from './product.types'
 export type { TableMapMock, TableShape, TableStatus } from './table.types'

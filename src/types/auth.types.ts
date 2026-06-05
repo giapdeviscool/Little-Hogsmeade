@@ -11,6 +11,9 @@ export type AuthUser = {
   phone?: string
   email?: string | null
   role?: AuthRole
+  roleId?: string
+  roleName?: string | null
+  branchId?: string
 }
 
 export type AuthResponse = {

@@ -20,3 +20,7 @@ export function getAuthSession() {
 export function clearAuthSession() {
   localStorage.removeItem(AUTH_STORAGE_KEY)
 }
+
+export function getAuthToken() {
+  return getAuthSession()?.token ?? null
+}
