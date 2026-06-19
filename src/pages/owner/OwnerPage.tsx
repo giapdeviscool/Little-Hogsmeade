@@ -33,8 +33,8 @@ const emptyBranchForm: BranchPayload = {
   address: "",
   phone: "",
   email: "",
-  lat: 10.7769,
-  lng: 106.7009,
+  lat: 21.0278,
+  lng: 105.8536,
   openTime: timeToIso("07:00"),
   closeTime: timeToIso("22:00"),
   status: "active",
@@ -69,6 +69,7 @@ export function OwnerPage() {
   const [endDate, setEndDate] = useState(dateToInput(new Date()));
   const [branchForm, setBranchForm] = useState<BranchPayload>(emptyBranchForm);
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [promotionForm, setPromotionForm] =
     useState<PromotionPayload>(emptyPromotionForm);
   const [pricingItemId, setPricingItemId] = useState("");
@@ -144,6 +145,7 @@ export function OwnerPage() {
       }
       setBranchForm(emptyBranchForm);
       setEditingBranchId(null);
+      setIsBranchModalOpen(false);
       await loadModule();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -152,12 +154,12 @@ export function OwnerPage() {
     }
   }
 
-  async function deactivateBranch(id: string) {
+  async function toggleBranchStatus(id: string) {
     try {
       setSaving(true);
       setError("");
-      await chainApi.deactivateBranch(id);
-      setNotice("Đã vô hiệu hóa chi nhánh.");
+      await chainApi.toggleBranchStatus(id);
+      setNotice("Đã cập nhật trạng thái chi nhánh.");
       await loadModule();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -259,9 +261,17 @@ export function OwnerPage() {
       status: branch.status,
       allowLocalPricingOverride: branch.allowLocalPricingOverride,
     });
+    setIsBranchModalOpen(true);
   }
 
-  function cancelBranchEdit() {
+  function openCreateBranchModal() {
+    setEditingBranchId(null);
+    setBranchForm(emptyBranchForm);
+    setIsBranchModalOpen(true);
+  }
+
+  function closeBranchModal() {
+    setIsBranchModalOpen(false);
     setEditingBranchId(null);
     setBranchForm(emptyBranchForm);
   }
@@ -269,7 +279,14 @@ export function OwnerPage() {
   return (
     <div className="space-y-6">
       <OwnerHeader onRefresh={() => void loadModule()} />
-      <OwnerAlert error={error} notice={notice} />
+      <OwnerAlert
+        error={error}
+        notice={notice}
+        onClose={() => {
+          setError("");
+          setNotice("");
+        }}
+      />
       <OwnerTabs activeTab={activeTab} onChange={setActiveTab} />
 
       {loading ? <OwnerLoading /> : null}
@@ -291,11 +308,13 @@ export function OwnerPage() {
           form={branchForm}
           editingBranchId={editingBranchId}
           saving={saving}
+          isModalOpen={isBranchModalOpen}
+          onOpenModal={openCreateBranchModal}
+          onCloseModal={closeBranchModal}
           onFormChange={setBranchForm}
           onSave={() => void saveBranch()}
           onEdit={editBranch}
-          onCancel={cancelBranchEdit}
-          onDeactivate={(id) => void deactivateBranch(id)}
+          onToggleStatus={(id) => void toggleBranchStatus(id)}
         />
       ) : null}
       {!loading && activeTab === "sync" ? (

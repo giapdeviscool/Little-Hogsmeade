@@ -1,7 +1,8 @@
-import { Card } from '../../ui/Card'
 import type { Branch, Promotion, PromotionPayload } from '../../../types'
 import { dateToInput, formatCurrency } from '../../../utils/owner.utils'
 import { DateField, Field, NumberField, StatusBadge, TextField } from './OwnerFields'
+import { DataTable } from './DataTable'
+import { Card } from '../../ui/Card'
 
 export function PromotionsPanel({ branches, promotions, form, saving, onFormChange, onSave }: {
   branches: Branch[]
@@ -48,31 +49,30 @@ export function PromotionsPanel({ branches, promotions, form, saving, onFormChan
           <button className="h-9 w-full rounded-lg bg-coffee px-4 text-sm font-semibold text-white disabled:opacity-50" disabled={saving} onClick={onSave}>Tạo khuyến mãi</button>
         </div>
       </Card>
-      <Card className="overflow-hidden">
-        <table className="w-full border-collapse text-sm">
-          <thead className="bg-beige text-left text-xs font-semibold text-muted">
-            <tr>
-              <th className="px-4 py-3">Tên</th>
-              <th className="px-4 py-3">Thời gian</th>
-              <th className="px-4 py-3">Giảm</th>
-              <th className="px-4 py-3">Phạm vi</th>
-              <th className="px-4 py-3">Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {promotions.map((promotion) => (
-              <tr key={promotion.id} className="border-t border-line bg-white">
-                <td className="px-4 py-3 font-semibold">{promotion.name}</td>
-                <td className="px-4 py-3 text-muted">{dateToInput(new Date(promotion.startDate))} → {dateToInput(new Date(promotion.endDate))}</td>
-                <td className="px-4 py-3">{promotion.discountType === 'percent' ? `${promotion.discountValue}%` : formatCurrency(promotion.discountValue)}</td>
-                <td className="px-4 py-3">{promotion.scope === 'global' ? 'Toàn chuỗi' : `${promotion.appliedBranches.length} chi nhánh`}</td>
-                <td className="px-4 py-3"><StatusBadge status={promotion.isActive ? 'active' : 'inactive'} /></td>
-              </tr>
-            ))}
-            {promotions.length === 0 ? <tr><td className="px-4 py-10 text-center text-muted" colSpan={5}>Chưa có khuyến mãi.</td></tr> : null}
-          </tbody>
-        </table>
-      </Card>
+
+      <DataTable
+        data={promotions}
+        colSpan={5}
+        emptyMessage="Chưa có khuyến mãi."
+        renderHeader={() => (
+          <tr>
+            <th className="px-4 py-3">Tên</th>
+            <th className="px-4 py-3">Thời gian</th>
+            <th className="px-4 py-3">Giảm</th>
+            <th className="px-4 py-3">Phạm vi</th>
+            <th className="px-4 py-3">Trạng thái</th>
+          </tr>
+        )}
+        renderRow={(promotion) => (
+          <tr key={promotion.id} className="border-t border-line bg-white">
+            <td className="px-4 py-3 font-semibold">{promotion.name}</td>
+            <td className="px-4 py-3 text-muted">{dateToInput(new Date(promotion.startDate))} → {dateToInput(new Date(promotion.endDate))}</td>
+            <td className="px-4 py-3">{promotion.discountType === 'percent' ? `${promotion.discountValue}%` : formatCurrency(promotion.discountValue)}</td>
+            <td className="px-4 py-3">{promotion.scope === 'global' ? 'Toàn chuỗi' : `${promotion.appliedBranches.length} chi nhánh`}</td>
+            <td className="px-4 py-3"><StatusBadge status={promotion.isActive ? 'active' : 'inactive'} /></td>
+          </tr>
+        )}
+      />
     </section>
   )
 }

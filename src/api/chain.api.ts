@@ -42,8 +42,8 @@ export function updateBranch(id: string, payload: BranchPayload) {
   })
 }
 
-export function deactivateBranch(id: string) {
-  return httpClient<ApiResponse<Branch>>(`/branches/${id}/deactivate`, {
+export function toggleBranchStatus(id: string) {
+  return httpClient<ApiResponse<Branch>>(`/branches/${id}/toggle-status`, {
     method: 'PATCH',
     headers: authHeaders(),
   })
