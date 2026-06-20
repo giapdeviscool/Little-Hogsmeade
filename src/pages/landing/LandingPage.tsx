@@ -1,143 +1,662 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { ArrowRight, Clock3, MapPin, Search, Star, X } from 'lucide-react'
 import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
+import { Card } from '../../components/ui/Card'
+import defaultHeroImage from '../../assets/image/default.jpg'
 import { cn } from '../../utils/cn'
+import { formatVND } from '../../utils/formatCurrency'
+import { formatVnDate, formatVnTime } from '../../utils/date'
+import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
+import type { Banner, CmsPage, Event, Post } from '../../types'
+import { getBranches } from '../../api/chain.api'
+import type { Branch } from '../../types'
 
-const signatureItems = [
-  {
-    category: 'Cà phê đặc sản',
-    name: 'Cappuccino Đặc Biệt',
-    description: 'Espresso đậm đà phủ lớp foam sữa nguyên kem mịn như nhung.',
-    price: '₫65.000',
-    image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    category: 'Món chính Bistro',
-    name: 'Mì Ý Sốt Truffle',
-    description: 'Mì sợi tươi áo sốt nấm truffle đen, parmesan bào tay.',
-    price: '₫185.000',
-    image: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    category: 'Món chính Bistro',
-    name: 'Steak Bò Úc',
-    description: 'Thăn ngoại bò Úc áp chảo, sốt vang đỏ và khoai nướng thảo mộc.',
-    price: '₫320.000',
-    image: 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    category: 'Rượu & Cocktail',
-    name: 'Vang Đỏ Old Vine',
-    description: 'Hương trái cây chín, tannin mượt — lý tưởng cho bữa tối ấm cúng.',
-    price: '₫220.000',
-    image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=700&q=85',
-  },
-]
-
-const menuFilters = ['Tất cả', 'Cà phê đặc sản', 'Món chính Bistro', 'Rượu & Cocktail']
-
-function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+export type ContactBlock = {
+  phone: string
+  email: string
+  address: string
+  mapLink: string
+  socials: string[]
 }
 
-export function LandingPage({ onClose }: { onClose: () => void }) {
-  const [activeFilter, setActiveFilter] = useState('Tất cả')
-  const menuItems = activeFilter === 'Tất cả' ? signatureItems : signatureItems.filter((item) => item.category === activeFilter)
+export type OpeningHoursBlock = {
+  title: string
+  description: string
+  hours: Array<{
+    day: string
+    hours: string
+    isClosed: boolean
+  }>
+}
+
+export type FeaturedMenuBlock = {
+  title: string
+  description: string
+  items: Array<{
+    name: string
+    description: string
+    price: number
+    imageUrl: string
+    badge?: string
+  }>
+}
+
+export type BookingDraft = {
+  name: string
+  phone: string
+  guests: string
+  datetime: string
+  note: string
+}
+
+export const defaultHero = {
+  title: 'Little Hogsmeade',
+  subtitle: 'Nơi cà phê, ẩm thực và quầy bar hòa thành một trải nghiệm ấm cúng.',
+  image: `${defaultHeroImage}?auto=format&fit=crop&w=1800&q=90`,
+}
+
+const fallbackContact: ContactBlock = {
+  phone: '1900 6868',
+  email: 'hello@littlehogsmeade.vn',
+  address: '12 Đồng Khởi, Quận 1, TP.HCM',
+  mapLink: 'https://maps.google.com',
+  socials: ['Instagram', 'Facebook', 'TikTok'],
+}
+
+const fallbackHours: OpeningHoursBlock = {
+  title: 'Giờ mở cửa',
+  description: 'Áp dụng cho toàn hệ thống',
+  hours: [
+    { day: 'Thứ 2 - Thứ 6', hours: '07:00 - 23:00', isClosed: false },
+    { day: 'Thứ 7', hours: '08:00 - 23:30', isClosed: false },
+    { day: 'Chủ nhật', hours: '08:00 - 22:00', isClosed: false },
+  ],
+}
+
+const fallbackMenu: FeaturedMenuBlock = {
+  title: 'Menu nổi bật',
+  description: 'Món chủ lực xuất hiện ở Landing Page',
+  items: [
+    {
+      name: 'Cappuccino Đặc Biệt',
+      description: 'Espresso đậm đà, foam sữa mịn.',
+      price: 65000,
+      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=85',
+      badge: 'Best seller',
+    },
+    {
+      name: 'Mì Ý Sốt Truffle',
+      description: 'Mì sợi tươi áo sốt nấm truffle đen.',
+      price: 185000,
+      imageUrl: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1000&q=85',
+      badge: 'Featured',
+    },
+    {
+      name: 'Vang Đỏ Old Vine',
+      description: 'Hương trái cây chín, hợp bữa tối ấm cúng.',
+      price: 220000,
+      imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1000&q=85',
+      badge: 'Wine',
+    },
+  ],
+}
+
+const fallbackBooking: BookingDraft = {
+  name: '',
+  phone: '',
+  guests: '4',
+  datetime: '',
+  note: '',
+}
+
+function safeParse<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
+export function normalizeList<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[]
+  if (value && typeof value === 'object') {
+    const items = (value as { items?: unknown }).items
+    if (Array.isArray(items)) return items as T[]
+  }
+  return []
+}
+
+export function normalizeBranches(value: unknown): Branch[] {
+  return normalizeList<Branch>(value)
+}
+
+function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180
+  const earthRadiusKm = 6371
+  const deltaLat = toRadians(lat2 - lat1)
+  const deltaLng = toRadians(lng2 - lng1)
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function getPageBySlug(pages: CmsPage[], slug: string) {
+  return pages.find((page) => page.slug === slug) ?? null
+}
+
+export function LandingPage({
+  onClose,
+  embedded = false,
+  hideBrowserChrome = false,
+  initialSection,
+}: {
+  onClose?: () => void
+  embedded?: boolean
+  hideBrowserChrome?: boolean
+  initialSection?: string
+}) {
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [pages, setPages] = useState<CmsPage[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [bookingDraft, setBookingDraft] = useState<BookingDraft>(fallbackBooking)
+  const [bookingNotice, setBookingNotice] = useState<string | null>(null)
+  const [activeMenuQuery, setActiveMenuQuery] = useState('')
+  const [storeQuery, setStoreQuery] = useState('')
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationNotice, setLocationNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const [bannerResponse, pageResponse, postResponse, eventResponse] = await Promise.all([
+          listBanners(),
+          listPages(),
+          listPosts(),
+          listEvents(),
+        ])
+        const branchResponse = await getBranches()
+        if (!alive) return
+        const normalizedBanners = normalizeList<Banner>(bannerResponse.data)
+        const normalizedPages = normalizeList<CmsPage>(pageResponse.data)
+        const normalizedPosts = normalizeList<Post>(postResponse.data)
+        const normalizedEvents = normalizeList<Event>(eventResponse.data)
+        const normalizedBranches = normalizeBranches(branchResponse.data)
+        setBanners(normalizedBanners)
+        setPages(normalizedPages)
+        setPosts(normalizedPosts)
+        setEvents(normalizedEvents)
+        setBranches(normalizedBranches)
+        hydrateBookingDraft(normalizedPages, setBookingDraft)
+      } catch (loadError) {
+        if (!alive) return
+        setError(loadError instanceof Error ? loadError.message : 'Không tải được Landing Page.')
+      } finally {
+        if (alive) setLoading(false)
+      }
+    }
+
+    void load()
+
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!initialSection) return
+    requestAnimationFrame(() => {
+      document.getElementById(initialSection)?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    })
+  }, [initialSection])
+
+  const branchCards = useMemo(() => {
+    const query = storeQuery.trim().toLowerCase()
+    return [...branches]
+      .filter((branch) => !query || [branch.name, branch.address, branch.phone, branch.email ?? ''].some((value) => value.toLowerCase().includes(query)))
+      .map((branch) => ({
+        ...branch,
+        distanceKm: userLocation ? calculateDistanceKm(userLocation.lat, userLocation.lng, branch.lat, branch.lng) : null,
+      }))
+      .sort((a, b) => {
+        if (a.distanceKm == null && b.distanceKm == null) return a.name.localeCompare(b.name)
+        if (a.distanceKm == null) return 1
+        if (b.distanceKm == null) return -1
+        return a.distanceKm - b.distanceKm
+      })
+  }, [branches, storeQuery, userLocation])
+
+  const activeHero = useMemo(() => {
+    const bannerList = Array.isArray(banners) ? banners : []
+    return bannerList.find((banner) => banner.isActive) ?? bannerList[0]
+  }, [banners])
+  const contactBlock = useMemo(() => getContactBlock(pages), [pages])
+  const openingHoursBlock = useMemo(() => getOpeningHoursBlock(pages), [pages])
+  const featuredMenuBlock = useMemo(() => getFeaturedMenuBlock(pages, banners), [pages, banners])
+  const publishedPosts = useMemo(() => posts.filter((post) => post.isPublished).slice(0, 4), [posts])
+  const publishedEvents = useMemo(() => events.filter((event) => event.isPublished).slice(0, 4), [events])
+  const hero = activeHero
+    ? {
+      title: activeHero.title,
+      subtitle: activeHero.description || defaultHero.subtitle,
+      image: activeHero.imageUrl || defaultHero.image,
+      ctaLabel: activeHero.ctaLabel || 'Khám phá ngay',
+      ctaHref: activeHero.ctaHref || '#landing-menu',
+    }
+    : {
+      title: defaultHero.title,
+      subtitle: defaultHero.subtitle,
+      image: defaultHero.image,
+      ctaLabel: 'Khám phá ngay',
+      ctaHref: '#landing-menu',
+    }
+
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function handleBookingSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBookingNotice('Đã ghi nhận yêu cầu. Vui lòng kiểm tra lại trong backend booking/order khi endpoint sẵn sàng.')
+  }
+
+  const shellClassName = embedded
+    ? 'relative min-h-screen bg-white text-coffee'
+    : 'fixed inset-0 z-50 overflow-y-auto bg-white text-coffee'
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-white text-coffee">
-      <header className="sticky top-0 z-50 border-b border-line/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[80px] max-w-[1440px] items-center gap-7 px-14">
-          <button type="button" onClick={() => scrollToSection('landing-hero')} className="mr-auto text-[24px] font-bold tracking-[-0.04em]">Little Hogsmeade</button>
-          <nav className="flex items-center gap-7 text-sm font-semibold">
-            <button type="button" onClick={() => scrollToSection('landing-story')}>Giới thiệu</button>
-            <button type="button" onClick={() => scrollToSection('landing-menu')}>Thực đơn</button>
-            <button type="button" onClick={() => scrollToSection('landing-events')}>Sự kiện</button>
-            <button type="button">Tin tức</button>
-            <button type="button" onClick={() => scrollToSection('landing-stores')}>Hệ thống cửa hàng</button>
-          </nav>
-          <button type="button" aria-label="Tìm kiếm" className="text-xl">⌕</button>
-          <button type="button" aria-label="Thành viên" className="text-xl">♙</button>
-          <LanguageSwitch />
-          <button type="button" onClick={() => scrollToSection('landing-booking')} className="rounded-[12px] bg-coffee px-5 py-3 text-sm font-bold text-white shadow-soft">Đặt bàn ngay</button>
-          <button type="button" onClick={onClose} className="rounded-[12px] border border-line bg-white px-5 py-3 text-sm font-bold text-coffee shadow-soft" aria-label="Đóng preview">×&nbsp; Đóng preview</button>
-        </div>
-      </header>
-
-      <section id="landing-hero" className="relative flex min-h-[560px] items-center justify-center overflow-hidden bg-[url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1800&q=90')] bg-cover bg-center px-6 text-center">
-        <div className="absolute inset-0 bg-white/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-coffee/10" />
-        <div className="relative max-w-[1020px]">
-          <p className="mx-auto mb-5 inline-flex rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-coffee shadow-soft">●&nbsp; Mùa Xuân 2026 · Thực đơn mới ra mắt</p>
-          <h1 className="text-[68px] font-bold leading-[1.03] tracking-[-0.055em] text-coffee">Little Hogsmeade<br />Nơi phép thuật ẩm thực bắt đầu</h1>
-          <p className="mx-auto mt-6 max-w-[720px] text-[20px] font-medium leading-8 text-coffee/85">Trải nghiệm không gian ấm cúng kết hợp giữa Nhà hàng, Cà phê và Quầy Bar cổ điển.</p>
-          <div className="mt-9 flex justify-center gap-3">
-            <button type="button" onClick={() => scrollToSection('landing-menu')} className="rounded-full bg-coffee px-7 py-3.5 text-sm font-bold text-white shadow-soft transition hover:bg-[#3f2d20]">Khám phá Thực đơn&nbsp; →</button>
-            <button type="button" className="rounded-full border border-coffee bg-white/65 px-7 py-3.5 text-sm font-bold text-coffee backdrop-blur transition hover:bg-white">Xem video giới thiệu</button>
+    <div className={shellClassName}>
+      {!hideBrowserChrome && (
+        <header className="sticky top-0 z-50 border-b border-line/80 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex h-[80px] max-w-[1440px] items-center gap-4 px-4 md:px-8 lg:px-14">
+            <button type="button" onClick={() => scrollToSection('landing-hero')} className="mr-auto text-[22px] font-bold tracking-[-0.04em] md:text-[24px]">
+              Little Hogsmeade
+            </button>
+            <nav className="hidden items-center gap-5 text-sm font-semibold xl:flex">
+              <button type="button" onClick={() => scrollToSection('landing-story')}>Giới thiệu</button>
+              <button type="button" onClick={() => scrollToSection('landing-menu')}>Thực đơn</button>
+              <button type="button" onClick={() => scrollToSection('landing-events')}>Sự kiện</button>
+              <button type="button" onClick={() => scrollToSection('landing-posts')}>Tin tức</button>
+              <button type="button" onClick={() => scrollToSection('landing-stores')}>Cửa hàng</button>
+            </nav>
+            <button type="button" aria-label="Tìm kiếm" className="hidden rounded-full border border-line bg-white px-3 py-2 text-sm font-semibold text-coffee md:inline-flex">
+              <Search className="h-4 w-4" />
+            </button>
+            <LanguageSwitch />
+            <button type="button" onClick={() => scrollToSection('landing-booking')} className="rounded-full bg-coffee px-4 py-2.5 text-sm font-semibold text-white shadow-soft md:px-5">
+              Đặt bàn ngay
+            </button>
+            {onClose && (
+              <button type="button" onClick={onClose} className="rounded-full border border-line bg-white px-4 py-2.5 text-sm font-semibold text-coffee shadow-soft" aria-label="Đóng preview">
+                <span className="hidden md:inline">Đóng preview</span>
+                <X className="h-4 w-4 md:hidden" />
+              </button>
+            )}
           </div>
-        </div>
-      </section>
+        </header>
+      )}
 
-      <StorySection />
-      <EventsSection />
-      <MenuSection activeFilter={activeFilter} menuItems={menuItems} onFilterChange={setActiveFilter} />
-      <BookingSection />
-      <StoreMemberSection />
+      {loading ? (
+        <LandingLoading embedded={embedded} />
+      ) : error ? (
+        <LandingError embedded={embedded} message={error} onRetry={() => window.location.reload()} />
+      ) : (
+        <main>
+          {!hideBrowserChrome && (
+            <HeroSection
+              hero={hero}
+              onPrimaryAction={() => scrollToSection('landing-menu')}
+              onSecondaryAction={() => scrollToSection('landing-booking')}
+              embedded={embedded}
+            />
+          )}
+          {hideBrowserChrome && (
+            <div className="border-b border-line bg-cream px-6 py-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold">Preview</p>
+                  <h1 className="mt-1 text-[28px] font-bold tracking-[-0.04em]">{hero.title}</h1>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{hero.subtitle}</p>
+                </div>
+                <div className="text-right text-xs text-muted">
+                  <p>Landing Page preview</p>
+                  <p>{publishedPosts.length} posts · {publishedEvents.length} events</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-      <footer className="bg-coffee py-16 text-white">
-        <div className="mx-auto grid max-w-[1320px] grid-cols-[1.4fr_.8fr_.9fr_1fr] gap-12 px-14">
-          <div><h2 className="text-[27px] font-bold">Little Hogsmeade</h2><p className="mt-4 max-w-[320px] text-sm leading-7 text-white/65">Một góc Bistro Cafe hiện đại, nơi hương vị và những cuộc gặp gỡ đáng nhớ bắt đầu.</p><div className="mt-6 flex gap-3 text-lg"><span>◎</span><span>◉</span><span>◌</span></div></div>
-          <div><h3 className="text-sm font-bold uppercase tracking-[0.16em] text-gold">Giờ mở cửa</h3><p className="mt-4 text-sm leading-7 text-white/70">Thứ 2 - Chủ nhật<br />07:00 - 23:00</p></div>
-          <div><h3 className="text-sm font-bold uppercase tracking-[0.16em] text-gold">Liên hệ</h3><p className="mt-4 text-sm leading-7 text-white/70">Hotline: 1900 6868<br />hello@littlehogsmeade.vn</p></div>
-          <div><h3 className="text-sm font-bold uppercase tracking-[0.16em] text-gold">Chi nhánh</h3><p className="mt-4 text-sm leading-7 text-white/70">Quận 1 · TP.HCM<br />Thảo Điền · TP.HCM<br />Hồ Tây · Hà Nội</p></div>
-        </div>
-      </footer>
+          {!hideBrowserChrome && <StorySection />}
+          {!hideBrowserChrome && <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={activeMenuQuery} setQuery={setActiveMenuQuery} />}
+          {!hideBrowserChrome && <EventSection events={publishedEvents} />}
+          {!hideBrowserChrome && <PostSection posts={publishedPosts} />}
+          {!hideBrowserChrome && <BookingSection draft={bookingDraft} setDraft={setBookingDraft} onSubmit={handleBookingSubmit} notice={bookingNotice} />}
+          {!hideBrowserChrome && (
+            <StoreAndMemberSection
+              openingHoursBlock={openingHoursBlock}
+              branches={branchCards}
+              storeQuery={storeQuery}
+              setStoreQuery={setStoreQuery}
+              userLocation={userLocation}
+              onDetectLocation={() => {
+                if (!navigator.geolocation) {
+                  setLocationNotice('Trình duyệt không hỗ trợ định vị.')
+                  return
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    setUserLocation({
+                      lat: position.coords.latitude,
+                      lng: position.coords.longitude,
+                    })
+                    setLocationNotice('Đã lấy vị trí hiện tại để sắp xếp cửa hàng gần nhất.')
+                  },
+                  () => {
+                    setLocationNotice('Không thể lấy vị trí. Bạn có thể nhập từ khóa để tìm cửa hàng.')
+                  },
+                  { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+                )
+              }}
+              locationNotice={locationNotice}
+            />
+          )}
+
+          {hideBrowserChrome && (
+            <div className="space-y-8 p-6">
+              <MiniBlock title="About Us" description="Ảnh hero, câu chuyện thương hiệu và vibe không gian.">
+                <p className="text-sm leading-6 text-muted">{hero.subtitle}</p>
+              </MiniBlock>
+              <MiniBlock title="Menu & Khuyến mãi" description="Card món rõ giá, ảnh và mô tả ngắn.">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {featuredMenuBlock.items.slice(0, 2).map((item) => (
+                    <div key={item.name} className="rounded-[16px] border border-line bg-white p-3">
+                      <img src={item.imageUrl} alt={item.name} className="h-36 w-full rounded-[12px] object-cover" />
+                      <div className="mt-3">
+                        <p className="text-sm font-semibold">{item.name}</p>
+                        <p className="mt-1 text-xs text-muted">{item.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </MiniBlock>
+            </div>
+          )}
+
+          {!hideBrowserChrome && (
+            <footer className="bg-coffee py-16 text-white">
+              <div className="mx-auto grid max-w-[1320px] gap-10 px-4 md:grid-cols-2 md:px-8 lg:grid-cols-[1.4fr_.8fr_.9fr_1fr] lg:px-14">
+                <div>
+                  <h2 className="text-[27px] font-bold">Little Hogsmeade</h2>
+                  <p className="mt-4 max-w-[320px] text-sm leading-7 text-white/65">
+                    Một góc Bistro Cafe hiện đại, nơi hương vị và những cuộc gặp gỡ đáng nhớ bắt đầu.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-gold">Giờ mở cửa</h3>
+                  <p className="mt-4 text-sm leading-7 text-white/70">
+                    {openingHoursBlock.hours.map((item) => `${item.day}: ${item.isClosed ? 'Đóng cửa' : item.hours}`).join('\n')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-gold">Liên hệ</h3>
+                  <p className="mt-4 text-sm leading-7 text-white/70">
+                    Hotline: {contactBlock.phone}
+                    <br />
+                    {contactBlock.email}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-gold">Kết nối</h3>
+                  <p className="mt-4 text-sm leading-7 text-white/70">{contactBlock.socials.join(' · ')}</p>
+                </div>
+              </div>
+            </footer>
+          )}
+        </main>
+      )}
+
+      {onClose && !embedded && (
+        <button type="button" onClick={onClose} className="fixed right-4 top-4 z-[60] rounded-full border border-line bg-white px-4 py-2.5 text-sm font-semibold text-coffee shadow-soft">
+          Đóng preview
+        </button>
+      )}
     </div>
   )
 }
 
-function StorySection() {
+function LandingLoading({ embedded }: { embedded: boolean }) {
   return (
-    <section id="landing-story" className="mx-auto grid max-w-[1280px] grid-cols-[1fr_1.14fr] items-center gap-14 px-14 py-28">
-      <div className="grid grid-cols-[1.45fr_.95fr] gap-3">
-        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=85" alt="Bistro phong cách châu Âu" className="col-span-1 h-[336px] w-full rounded-[18px] object-cover" />
-        <img src="https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=500&q=85" alt="Cà phê thủ công" className="h-[248px] w-full rounded-[18px] object-cover" />
-        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=700&q=85" alt="Món ăn bistro" className="h-[160px] w-full rounded-[18px] object-cover" />
-        <div className="grid h-[174px] place-items-center rounded-[18px] bg-cream text-center"><div><span className="text-[30px] text-gold">✦</span><b className="block text-[32px]">12+</b><small className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Năm kinh nghiệm Bistro</small></div></div>
+    <div className={cn('space-y-6 p-6', !embedded && 'pt-20')}>
+      <div className="h-[320px] animate-pulse rounded-[28px] bg-cream" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="h-[260px] animate-pulse rounded-[24px] bg-cream" />
+        <div className="h-[260px] animate-pulse rounded-[24px] bg-cream" />
       </div>
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Giới thiệu</p>
-        <h2 className="mt-4 text-[46px] font-bold leading-[1.02] tracking-[-0.055em]">Một câu chuyện ấm áp,<br />gói trong từng tách cà phê</h2>
-        <p className="mt-7 text-[16px] leading-7 text-coffee/85">Lấy cảm hứng từ những quán Bistro nhỏ vùng Provence và các café cổ điển của Vienna, Little Hogsmeade được xây dựng để trở thành nơi bạn chậm lại — thưởng thức một bữa ăn ngon, một ly cà phê được pha kỹ lưỡng, hay một chai vang chia sẻ cùng người thân yêu.</p>
-        <p className="mt-5 text-[16px] leading-7 text-coffee/85">Mọi nguyên liệu đều được tuyển chọn từ những nhà cung cấp địa phương tâm huyết — từ hạt cà phê rang thủ công đến bơ Pháp, vang Ý, và bánh mì nướng tươi mỗi ngày.</p>
-        <div className="mt-8 grid grid-cols-3 gap-5 border-t border-line pt-7">
-          {['12 Chi nhánh', '85K+ Khách hài lòng', '4.9★ Google Review'].map((stat) => {
-            const [value, ...label] = stat.split(' ')
-            return <div key={stat}><b className="block text-[29px]">{value}</b><span className="mt-1 block text-xs font-semibold uppercase tracking-[0.12em] text-muted">{label.join(' ')}</span></div>
-          })}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="h-[160px] animate-pulse rounded-[20px] bg-cream" />
+        <div className="h-[160px] animate-pulse rounded-[20px] bg-cream" />
+        <div className="h-[160px] animate-pulse rounded-[20px] bg-cream" />
+      </div>
+    </div>
+  )
+}
+
+function LandingError({ embedded, message, onRetry }: { embedded: boolean; message: string; onRetry: () => void }) {
+  return (
+    <div className={cn('mx-auto max-w-2xl p-6', !embedded && 'pt-24')}>
+      <Card className="border-red-200 bg-red-50 p-6 text-red-800">
+        <p className="text-sm font-semibold">Không tải được Landing Page</p>
+        <p className="mt-2 text-sm leading-6">{message}</p>
+        <button type="button" onClick={onRetry} className="mt-4 rounded-full bg-coffee px-4 py-2 text-sm font-semibold text-white">
+          Tải lại
+        </button>
+      </Card>
+    </div>
+  )
+}
+
+export function HeroSection({
+  hero,
+  onPrimaryAction,
+  onSecondaryAction,
+  embedded,
+}: {
+  hero: { title: string; subtitle: string; image: string; ctaLabel: string; ctaHref: string }
+  onPrimaryAction: () => void
+  onSecondaryAction: () => void
+  embedded: boolean
+}) {
+  return (
+    <section
+      id="landing-hero"
+      className={cn(
+        'relative flex min-h-[760px] items-center justify-center overflow-hidden bg-cover bg-center px-4 py-16 text-center md:min-h-[840px] md:px-6',
+        embedded && 'min-h-[440px] md:min-h-[560px]',
+      )}
+      style={{ backgroundImage: `url('${hero.image}')` }}
+    >
+      <div className="absolute inset-0 bg-white/35" />
+      <div className="absolute inset-0 bg-gradient-to-t from-white/99 via-transparent to-coffee/10" />
+      <div className="relative max-w-[1020px]">
+        <h1 className="text-[44px] font-bold leading-[1.03] tracking-[-0.055em] text-coffee md:text-[68px]">
+          {hero.title}
+        </h1>
+        <p className="mx-auto mt-6 max-w-[760px] text-[16px] font-medium leading-7 text-coffee/85 md:text-[20px] md:leading-8">
+          {hero.subtitle}
+        </p>
+        <div className="mt-9 flex flex-wrap justify-center gap-3">
+          <button type="button" onClick={onPrimaryAction} className="rounded-full bg-coffee px-7 py-3.5 text-sm font-bold text-white shadow-soft transition hover:bg-[#3f2d20]">
+            Khám phá thực đơn <ArrowRight className="ml-1 inline h-4 w-4" />
+          </button>
+          <button type="button" onClick={onSecondaryAction} className="rounded-full border border-coffee bg-white/75 px-7 py-3.5 text-sm font-bold text-coffee backdrop-blur transition hover:bg-white">
+            Đặt bàn / Order
+          </button>
+          {hero.ctaHref !== '#landing-menu' && (
+            <button type="button" onClick={onPrimaryAction} className="rounded-full border border-line bg-white/75 px-7 py-3.5 text-sm font-bold text-muted backdrop-blur transition hover:bg-white">
+              {hero.ctaLabel}
+            </button>
+          )}
         </div>
       </div>
     </section>
   )
 }
 
-function EventsSection() {
-  const items = [
-    ['Đêm Nhạc Acoustic', 'THỨ BẢY', '24 / 05', '20:00 — 23:00', 'Đêm acoustic ấm áp cùng ban nhạc khách mời, free champagne welcome.', 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1000&q=85'],
-    ['Wine Tasting Workshop', 'THỨ NĂM', '29 / 05', '18:30 — 21:00', 'Khám phá 6 nhãn vang chọn lọc cùng sommelier Marco Bianchi đến từ Ý.', 'https://images.unsplash.com/photo-1473973266408-ed4e27abdd47?auto=format&fit=crop&w=1000&q=85'],
-  ]
+export function StorySection() {
+  return (
+    <section id="landing-story" className="mx-auto grid max-w-[1280px] gap-10 px-4 py-20 md:px-8 lg:grid-cols-[1fr_1.14fr] lg:items-center lg:gap-14 lg:px-14 lg:py-28">
+      <div className="grid grid-cols-2 gap-3">
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=85" alt="Bistro phong cách châu Âu" className="h-[240px] w-full rounded-[18px] object-cover md:h-[336px]" />
+        <img src="https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=500&q=85" alt="Cà phê thủ công" className="h-[240px] w-full rounded-[18px] object-cover md:h-[248px]" />
+        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=700&q=85" alt="Món ăn bistro" className="h-[160px] w-full rounded-[18px] object-cover" />
+        <div className="grid h-[160px] place-items-center rounded-[18px] bg-cream text-center md:h-[174px]">
+          <div>
+            <span className="text-[30px] text-gold">✦</span>
+            <b className="block text-[32px]">12+</b>
+            <small className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Năm kinh nghiệm Bistro</small>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Giới thiệu</p>
+        <h2 className="mt-4 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[46px]">
+          Một câu chuyện ấm áp,
+          <br />
+          gói trong từng tách cà phê
+        </h2>
+        <p className="mt-7 text-[16px] leading-7 text-coffee/85">
+          Little Hogsmeade được tạo ra để trở thành nơi bạn chậm lại, thưởng thức một bữa ăn ngon, một ly cà phê được pha kỹ lưỡng hoặc một chai vang chia sẻ cùng người thân.
+        </p>
+        <p className="mt-5 text-[16px] leading-7 text-coffee/85">
+          Nguyên liệu được tuyển chọn từ nhà cung cấp địa phương và nhập khẩu, giữ tinh thần bistro ấm cúng nhưng vẫn đủ tinh tế cho những cuộc hẹn quan trọng.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+export function FeaturedMenuSection({
+  featuredMenuBlock,
+  query,
+  setQuery,
+}: {
+  featuredMenuBlock: FeaturedMenuBlock
+  query: string
+  setQuery: (value: string) => void
+}) {
+  const filteredItems = featuredMenuBlock.items.filter((item) => [item.name, item.description, item.badge ?? ''].some((value) => value.toLowerCase().includes(query.toLowerCase())))
 
   return (
-    <section id="landing-events" className="border-y border-line bg-white py-24">
-      <div className="mx-auto max-w-[1280px] px-14">
-        <p className="text-center text-xs font-bold uppercase tracking-[0.32em] text-gold">Sự kiện sắp tới</p>
-        <h2 className="mx-auto mt-4 max-w-[560px] text-center text-[48px] font-bold leading-[1] tracking-[-0.055em]">Những đêm đáng nhớ<br />tại Little Hogsmeade</h2>
-        <div className="mt-14 grid grid-cols-2 gap-7">
-          {items.map(([title, weekday, date, time, description, image]) => (
-            <article key={title} className="relative min-h-[420px] overflow-hidden rounded-[18px] bg-coffee">
-              <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover opacity-85" />
+    <section id="landing-menu" className="bg-cream py-20 md:py-24">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Menu & khuyến mãi</p>
+            <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">
+              {featuredMenuBlock.title}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{featuredMenuBlock.description}</p>
+          </div>
+          <div className="w-full max-w-md">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm món nổi bật..." className="h-12 w-full rounded-full border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-latte" />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {filteredItems.map((item) => (
+            <article key={item.name} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
+              <img src={item.imageUrl} alt={item.name} className="h-[280px] w-full object-cover" />
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-[18px] font-bold">{item.name}</h3>
+                    <p className="mt-2 min-h-[44px] text-sm leading-6 text-muted">{item.description}</p>
+                  </div>
+                  <span className="rounded-full bg-beige px-3 py-1 text-xs font-semibold text-coffee">{item.badge ?? 'Nổi bật'}</span>
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
+                  <b>{formatVND(item.price)}</b>
+                  <button type="button" className="rounded-full bg-coffee px-4 py-2 text-xs font-bold text-white">
+                    Order
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {filteredItems.length === 0 && (
+          <Card className="mt-8 p-6 text-center">
+            <p className="text-sm font-semibold">Không tìm thấy món phù hợp.</p>
+            <p className="mt-2 text-sm text-muted">Thử xoá từ khoá hoặc cập nhật dữ liệu menu nổi bật trong CMS.</p>
+          </Card>
+        )}
+      </div>
+    </section>
+  )
+}
+
+export function EventSection({ events }: { events: Event[] }) {
+  const items = events.length
+    ? events
+    : [
+      {
+        id: 'fallback-1',
+        title: 'Đêm Nhạc Acoustic',
+        description: 'Đêm acoustic ấm áp cùng ban nhạc khách mời, free welcome drink.',
+        thumbnailUrl: defaultHero.image,
+        eventDate: new Date().toISOString(),
+        startTime: '20:00',
+        endTime: '23:00',
+        locationNote: 'Sân khấu tầng trệt',
+        ticketPrice: 0,
+        isPublished: true,
+      },
+    ]
+
+  return (
+    <section id="landing-events" className="border-y border-line bg-white py-20 md:py-24">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
+        <p className="text-center text-xs font-bold uppercase tracking-[0.32em] text-gold">Sự kiện</p>
+        <h2 className="mx-auto mt-4 max-w-[700px] text-center text-[36px] font-bold leading-[1] tracking-[-0.055em] md:text-[48px]">
+          Những đêm đáng nhớ tại Little Hogsmeade
+        </h2>
+        <div className="mt-14 grid gap-7 lg:grid-cols-2">
+          {items.map((event) => (
+            <article key={event.id} className="relative min-h-[380px] overflow-hidden rounded-[22px] bg-coffee">
+              <img src={event.thumbnailUrl} alt={event.title} className="absolute inset-0 h-full w-full object-cover opacity-85" />
               <div className="absolute inset-0 bg-gradient-to-t from-coffee/95 via-coffee/25 to-transparent" />
-              <span className="absolute left-6 top-6 rounded-[14px] bg-white px-4 py-3 text-center text-coffee shadow-soft"><small className="block text-[11px] tracking-[0.14em] text-muted">{weekday}</small><b className="mt-1 block text-[22px]">{date}</b></span>
-              <div className="absolute bottom-7 left-7 max-w-[520px] text-white"><small className="text-xs font-bold tracking-[0.1em] text-white/75">{time}</small><h3 className="mt-3 text-[29px] font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-white/80">{description}</p><button type="button" className="mt-5 rounded-full bg-white px-5 py-3 text-sm font-bold text-coffee">Đăng ký tham gia / Đặt bàn trước&nbsp; →</button></div>
+              <span className="absolute left-6 top-6 rounded-[14px] bg-white px-4 py-3 text-center text-coffee shadow-soft">
+                <small className="block text-[11px] tracking-[0.14em] text-muted">{formatVnDate(event.eventDate)}</small>
+                <b className="mt-1 block text-[22px]">{event.isPublished ? 'Published' : 'Draft'}</b>
+              </span>
+              <div className="absolute bottom-7 left-7 max-w-[520px] text-white">
+                <small className="text-xs font-bold tracking-[0.1em] text-white/75">
+                  <Clock3 className="mr-1 inline h-4 w-4" />
+                  {formatVnTime(event.startTime)} - {formatVnTime(event.endTime)}
+                </small>
+                <h3 className="mt-3 text-[29px] font-bold">{event.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-white/80">{event.description}</p>
+                <p className="mt-3 text-sm text-white/70">
+                  <MapPin className="mr-1 inline h-4 w-4" />
+                  {event.locationNote}
+                </p>
+                <button type="button" className="mt-5 rounded-full bg-white px-5 py-3 text-sm font-bold text-coffee">
+                  Đăng ký tham gia / Đặt bàn trước <ArrowRight className="ml-1 inline h-4 w-4" />
+                </button>
+              </div>
             </article>
           ))}
         </div>
@@ -146,47 +665,265 @@ function EventsSection() {
   )
 }
 
-function MenuSection({ activeFilter, menuItems, onFilterChange }: { activeFilter: string; menuItems: typeof signatureItems; onFilterChange: (filter: string) => void }) {
+export function PostSection({ posts }: { posts: Post[] }) {
   return (
-    <section id="landing-menu" className="bg-cream py-24">
-      <div className="mx-auto max-w-[1280px] px-14">
-        <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Thực đơn điện tử</p>
-        <div className="mt-3 flex items-end justify-between gap-8"><h2 className="text-[48px] font-bold leading-[1.02] tracking-[-0.055em]">Tinh hoa ẩm thực<br />được trình bày tinh tế</h2><button type="button" className="mb-1 text-sm font-bold">Xem toàn bộ thực đơn&nbsp; ›</button></div>
-        <div className="mt-10 flex gap-2">{menuFilters.map((filter) => <button key={filter} type="button" onClick={() => onFilterChange(filter)} className={cn('rounded-full border px-5 py-2.5 text-sm font-semibold transition', activeFilter === filter ? 'border-coffee bg-coffee text-white' : 'border-line bg-white text-coffee')}>{filter}</button>)}</div>
-        <div className="mt-9 grid min-h-[468px] grid-cols-4 gap-5">
-          {menuItems.map((item) => <article key={item.name} className="overflow-hidden rounded-[14px] border border-line bg-white"><img src={item.image} alt={item.name} className="h-[315px] w-full object-cover" /><div className="p-5"><h3 className="text-[17px] font-bold">{item.name}</h3><p className="mt-2 min-h-[44px] text-sm leading-5 text-muted">{item.description}</p><div className="mt-4 flex items-center justify-between border-t border-line pt-4"><b>{item.price}</b><button type="button" className="rounded-full bg-coffee px-3 py-2 text-[11px] font-bold text-white">Order Giao hàng</button></div></div></article>)}
+    <section id="landing-posts" className="bg-cream py-20 md:py-24">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Tin tức / Blog</p>
+            <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">Bài viết mới từ quán</h2>
+          </div>
         </div>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {posts.map((post) => (
+            <article key={post.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
+              <img src={post.thumbnailUrl} alt={post.title} className="h-[210px] w-full object-cover" />
+              <div className="p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold">{post.category}</p>
+                <h3 className="mt-2 text-[18px] font-bold leading-6">{post.title}</h3>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{post.content}</p>
+                <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-xs text-muted">
+                  <span>{formatVnDate(post.publishedAt ?? post.createdAt)}</span>
+                  <span>{post.tags}</span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {posts.length === 0 && (
+          <Card className="mt-8 p-6 text-center">
+            <p className="text-sm font-semibold">Chưa có bài viết đã publish.</p>
+            <p className="mt-2 text-sm text-muted">Tạo bài viết mới trong CMS để khối Blog hiển thị nội dung thật.</p>
+          </Card>
+        )}
       </div>
     </section>
   )
 }
 
-function BookingSection() {
+export function BookingSection({
+  draft,
+  setDraft,
+  onSubmit,
+  notice,
+}: {
+  draft: BookingDraft
+  setDraft: (value: BookingDraft) => void
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  notice: string | null
+}) {
   return (
-    <section id="landing-booking" className="bg-white py-24">
-      <div className="mx-auto grid max-w-[980px] grid-cols-[1fr_425px] items-center gap-24 px-8">
-        <div><p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Đặt bàn online</p><h2 className="mt-4 text-[46px] font-bold leading-[1.02] tracking-[-0.055em]">Giữ chỗ cho buổi tối<br />không thể quên của bạn</h2><p className="mt-6 text-[15px] leading-6 text-coffee/85">Đặt bàn trước ít nhất 2 giờ để chúng tôi chuẩn bị chỗ ngồi ưng ý nhất. Khách Gold Member nhận free champagne welcome.</p><p className="mt-7 text-sm font-bold text-gold">★ ★ ★ ★ ★ <span className="ml-3 font-medium text-muted">4.9 / 5 · 1,284 đánh giá</span></p></div>
-        <form className="rounded-[18px] border border-line bg-cream p-7 shadow-soft">
+    <section id="landing-booking" className="bg-white py-20 md:py-24">
+      <div className="mx-auto grid max-w-[980px] gap-12 px-4 md:px-8 lg:grid-cols-[1fr_425px] lg:items-center lg:gap-24 lg:px-8">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Đặt bàn / Order</p>
+          <h2 className="mt-4 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[46px]">
+            Giữ chỗ cho buổi tối
+            <br />
+            không thể quên của bạn
+          </h2>
+          <p className="mt-6 text-[15px] leading-7 text-coffee/85">
+            Form này ghi nhận yêu cầu phía frontend. Khi backend booking/order có endpoint chính thức, chỉ cần thay `onSubmit` sang gọi API.
+          </p>
+          <p className="mt-7 flex items-center gap-2 text-sm font-bold text-gold">
+            <Star className="h-4 w-4" />
+            4.9 / 5 · 1,284 đánh giá
+          </p>
+        </div>
+        <Card className="rounded-[18px] border border-line bg-cream p-7 shadow-soft">
           <h3 className="text-xl font-bold">Thông tin đặt bàn</h3>
-          <div className="mt-6 flex flex-col gap-4"><LandingInput label="Họ và tên" placeholder="Trần Mai Anh" /><LandingInput label="Số điện thoại" placeholder="0912 345 678" /><div className="grid grid-cols-2 gap-3"><LandingInput label="Chọn ngày" placeholder="24/05/2026" /><LandingInput label="Chọn giờ" placeholder="19:30" /></div><LandingInput label="Số lượng khách" placeholder="4 khách" /></div>
-          <button type="button" className="mt-5 h-12 w-full rounded-[12px] bg-coffee text-sm font-bold text-white">Xác nhận đặt bàn&nbsp; →</button>
-        </form>
+          {notice && (
+            <div className="mt-4 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              {notice}
+            </div>
+          )}
+          <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
+            <LandingInput label="Họ và tên" value={draft.name} onChange={(value) => setDraft({ ...draft, name: value })} placeholder="Trần Mai Anh" />
+            <LandingInput label="Số điện thoại" value={draft.phone} onChange={(value) => setDraft({ ...draft, phone: value })} placeholder="0912 345 678" />
+            <div className="grid grid-cols-2 gap-3">
+              <LandingInput label="Ngày giờ" value={draft.datetime} onChange={(value) => setDraft({ ...draft, datetime: value })} placeholder="2026-06-20T19:30" type="datetime-local" />
+              <LandingInput label="Số lượng khách" value={draft.guests} onChange={(value) => setDraft({ ...draft, guests: value })} placeholder="4" />
+            </div>
+            <LandingInput label="Ghi chú" value={draft.note} onChange={(value) => setDraft({ ...draft, note: value })} placeholder="Sinh nhật, ghế trẻ em..." />
+            <button type="submit" className="h-12 w-full rounded-[12px] bg-coffee text-sm font-bold text-white">
+              Xác nhận đặt bàn
+            </button>
+          </form>
+        </Card>
       </div>
     </section>
   )
 }
 
-function StoreMemberSection() {
+export function StoreAndMemberSection({
+  openingHoursBlock,
+  branches,
+  storeQuery,
+  setStoreQuery,
+  userLocation,
+  onDetectLocation,
+  locationNotice,
+}: {
+  openingHoursBlock: OpeningHoursBlock
+  branches: Array<Branch & { distanceKm: number | null }>
+  storeQuery: string
+  setStoreQuery: (value: string) => void
+  userLocation: { lat: number; lng: number } | null
+  onDetectLocation: () => void
+  locationNotice: string | null
+}) {
   return (
-    <section id="landing-stores" className="bg-cream py-24">
-      <div className="mx-auto grid max-w-[1080px] grid-cols-2 gap-8 px-8">
-        <div className="rounded-[18px] border border-line bg-white p-7"><p className="text-xs font-bold uppercase tracking-[0.28em] text-gold">Hệ thống cửa hàng</p><h2 className="mt-3 text-[24px] font-bold">Tìm cửa hàng gần nhất</h2><input className="mt-5 h-11 w-full rounded-[12px] border border-line bg-cream px-4 text-sm outline-none" placeholder="⌕  Nhập quận / thành phố..." /><div className="relative mt-4 h-[200px] overflow-hidden rounded-[12px] border border-line bg-[#e9e2d7]"><div className="absolute inset-0 opacity-50 [background-image:linear-gradient(#d8d1c8_6px,transparent_6px),linear-gradient(90deg,#d8d1c8_6px,transparent_6px)] [background-size:120px_80px]" />{['left-[20%] top-[34%]', 'left-[51%] top-[22%]', 'left-[68%] top-[55%]', 'left-[36%] top-[68%]'].map((position) => <span key={position} className={cn('absolute grid h-7 w-7 place-items-center rounded-full bg-coffee text-xs text-white', position)}>⌾</span>)}</div><div className="mt-4 space-y-2">{['Chi nhánh Quận 1|12 Đồng Khởi, P. Bến Nghé', 'Chi nhánh Thảo Điền|45 Xuân Thuỷ, P. Thảo Điền', 'Chi nhánh Phú Mỹ Hưng|Lô R, Sky Garden 1, Q.7', 'Chi nhánh Đà Nẵng|188 Bạch Đằng, Hải Châu'].map((store) => { const [name, address] = store.split('|'); return <div key={name} className="flex items-center gap-3 rounded-[10px] bg-cream px-3 py-2.5"><span>⌾</span><div className="flex-1"><b className="block text-sm">{name}</b><small className="text-muted">{address}</small></div><span>›</span></div> })}</div></div>
-        <div className="rounded-[18px] border border-line bg-white p-7"><p className="text-xs font-bold uppercase tracking-[0.28em] text-gold">Thành viên</p><h2 className="mt-3 text-[24px] font-bold">Tra cứu thẻ thành viên</h2><p className="mt-3 text-sm leading-5 text-coffee/80">Nhập số điện thoại đăng ký để kiểm tra hạng thẻ và điểm thưởng hiện tại. Gold Member nhận giảm 5% và free welcome drink.</p><div className="mt-5 flex rounded-[12px] border border-line bg-cream p-2"><input className="flex-1 bg-transparent px-2 text-sm outline-none" placeholder="⌕  Số điện thoại đăng ký..." /><button type="button" className="rounded-[8px] bg-coffee px-4 py-2 text-xs font-bold text-white">Tra cứu</button></div><div className="mt-5 flex gap-4 rounded-[14px] bg-beige p-4"><span className="grid h-12 w-12 place-items-center rounded-[12px] bg-gold text-white">★</span><div className="flex-1"><b className="text-sm">Gold Member · 248 điểm</b><small className="block text-xs text-muted">Cần thêm 152 điểm để lên Platinum</small><div className="mt-2 h-1.5 rounded-full bg-white"><div className="h-full w-[62%] rounded-full bg-gold" /></div></div></div><div className="mt-5 grid grid-cols-3 gap-3">{['5%|Giảm hoá đơn', '1 ly|Welcome drink', 'Ưu tiên|Đặt bàn'].map((perk) => { const [value, label] = perk.split('|'); return <div key={perk} className="rounded-[10px] bg-cream p-3 text-center"><b className="text-sm">{value}</b><small className="mt-1 block text-xs text-muted">{label}</small></div> })}</div></div>
+    <section id="landing-stores" className="bg-cream py-20 md:py-24">
+      <div className="mx-auto grid max-w-[1080px] gap-8 px-4 md:px-8 lg:grid-cols-2 lg:px-8">
+        <Card className="rounded-[18px] border border-line bg-white p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold">Tìm cửa hàng</p>
+          <h2 className="mt-3 text-[24px] font-bold">Tìm cửa hàng gần nhất</h2>
+          <p className="mt-3 text-sm leading-6 text-coffee/80">Danh sách lấy từ `/api/v1/branches`, ưu tiên sắp xếp theo khoảng cách nếu người dùng cho phép location.</p>
+          <div className="mt-5 flex gap-2 rounded-[14px] border border-line bg-cream p-2">
+            <input value={storeQuery} onChange={(event) => setStoreQuery(event.target.value)} className="flex-1 bg-transparent px-2 text-sm outline-none" placeholder="Nhập quận / thành phố / từ khóa..." />
+            <button type="button" onClick={onDetectLocation} className="rounded-[10px] bg-coffee px-4 py-2 text-xs font-bold text-white">
+              Dùng vị trí
+            </button>
+          </div>
+          {locationNotice && (
+            <div className="mt-3 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              {locationNotice}
+            </div>
+          )}
+          <div className="mt-4 space-y-2">
+            {branches.length > 0 ? (
+              branches.slice(0, 4).map((branch) => (
+                <div key={branch.id} className="rounded-[16px] border border-line bg-white p-4 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-coffee">{branch.name}</p>
+                      <p className="mt-1 text-muted">{branch.address}</p>
+                      <p className="mt-2 text-xs text-muted">
+                        {branch.phone}
+                        {branch.email ? ` · ${branch.email}` : ''}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-coffee">
+                      {branch.distanceKm == null ? 'Xem sau' : `${branch.distanceKm.toFixed(1)} km`}
+                    </span>
+                  </div>
+                  <a
+                    className="mt-3 inline-block text-xs font-semibold text-gold"
+                    href={`https://www.google.com/maps/search/?api=1&query=${branch.lat},${branch.lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Mở bản đồ
+                  </a>
+                  <a
+                    className="ml-4 mt-3 inline-block text-xs font-semibold text-muted"
+                    href={`https://www.google.com/maps/search/?api=1&query=${branch.lat},${branch.lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Xem tuyến đường
+                  </a>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[16px] border border-dashed border-latte bg-cream px-4 py-6 text-center text-sm text-muted">
+                Không có chi nhánh phù hợp.
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card className="rounded-[18px] border border-line bg-white p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold">Thành viên</p>
+          <h2 className="mt-3 text-[24px] font-bold">Tra cứu hạng và điểm</h2>
+          <p className="mt-3 text-sm leading-6 text-coffee/80">
+            Giao diện tra cứu thành viên sẵn khung để nối API khi backend mở endpoint membership/loyalty.
+          </p>
+
+          <div className="mt-5 rounded-[16px] bg-beige p-4">
+            <p className="text-sm font-semibold text-coffee">{openingHoursBlock.title}</p>
+            <div className="mt-3 space-y-2 text-sm text-muted">
+              {openingHoursBlock.hours.map((item) => (
+                <div key={item.day} className="flex items-center justify-between gap-4">
+                  <span>{item.day}</span>
+                  <span>{item.isClosed ? 'Đóng cửa' : item.hours}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 rounded-[16px] border border-line bg-cream p-4">
+            <p className="text-sm font-semibold text-coffee">Vị trí hiện tại</p>
+            <p className="mt-1 text-sm text-muted">{userLocation ? `${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}` : 'Chưa bật định vị'}</p>
+          </div>
+        </Card>
       </div>
     </section>
   )
 }
 
-function LandingInput({ label, placeholder, type = 'text' }: { label: string; placeholder?: string; type?: string }) {
-  return <label className="flex flex-col gap-2 text-sm font-bold">{label}<input type={type} placeholder={placeholder} className="h-12 rounded-[12px] border border-line bg-cream px-4 text-sm outline-none focus:border-latte" /></label>
+function MiniBlock({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  return (
+    <Card className="p-5">
+      <p className="text-sm font-semibold text-coffee">{title}</p>
+      <p className="mt-1 text-xs text-muted">{description}</p>
+      <div className="mt-4">{children}</div>
+    </Card>
+  )
+}
+
+function LandingInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  type?: string
+}) {
+  return (
+    <label className="flex flex-col gap-2 text-sm font-bold">
+      {label}
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        type={type}
+        placeholder={placeholder}
+        className="h-12 rounded-[12px] border border-line bg-cream px-4 text-sm outline-none focus:border-latte"
+      />
+    </label>
+  )
+}
+
+function hydrateBookingDraft(pages: CmsPage[], setDraft: (value: BookingDraft) => void) {
+  const bookingPage = getPageBySlug(pages, 'landing-booking')
+  const parsed = safeParse<BookingDraft>(bookingPage?.content, fallbackBooking)
+  setDraft(parsed)
+}
+
+export function getContactBlock(pages: CmsPage[]) {
+  return safeParse<ContactBlock>(getPageBySlug(pages, 'landing-contact')?.content, fallbackContact)
+}
+
+export function getOpeningHoursBlock(pages: CmsPage[]) {
+  return safeParse<OpeningHoursBlock>(getPageBySlug(pages, 'landing-opening-hours')?.content, fallbackHours)
+}
+
+export function getFeaturedMenuBlock(pages: CmsPage[], banners: Banner[]) {
+  return safeParse<FeaturedMenuBlock>(getPageBySlug(pages, 'landing-featured-menu')?.content, {
+    ...fallbackMenu,
+    items: banners.filter((banner) => banner.isActive).slice(0, 4).map((banner, index) => ({
+      name: banner.title,
+      description: banner.description ?? '',
+      price: 65000 + index * 25000,
+      imageUrl: banner.imageUrl,
+      badge: banner.ctaLabel ?? 'Featured',
+    })),
+  })
 }
