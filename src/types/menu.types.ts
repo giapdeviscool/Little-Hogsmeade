@@ -9,3 +9,20 @@ export interface Category {
     menuItems: number
   }
 }
+
+export interface MenuItem {
+  id: string
+  categoryId: string
+  branchId?: string
+  name: string
+  description?: string
+  imageUrl?: string
+  basePrice: number
+  isActive: boolean
+  isFeatured: boolean
+  itemType: string
+  category: {
+    name: string
+    displayOrder: number
+  }
+}

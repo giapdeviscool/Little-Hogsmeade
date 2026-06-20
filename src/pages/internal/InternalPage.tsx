@@ -7,8 +7,9 @@ import { ScheduleView } from './components/ScheduleView'
 import { AttendanceKiosk } from './components/AttendanceKiosk'
 import { PayrollView } from './components/PayrollView'
 import { CategoryList } from './components/CategoryList'
+import { MenuItemList } from './components/MenuItemList'
 
-type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories'
+type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories' | 'menuItems'
 
 export function InternalPage() {
   const [activeTab, setActiveTab] = useState<InternalTab>('employees')
@@ -21,6 +22,7 @@ export function InternalPage() {
     { key: 'payroll', label: 'Bảng lương' },
     { key: 'inventory', label: 'Tồn kho' },
     { key: 'categories', label: 'Danh mục menu' },
+    { key: 'menuItems', label: 'Danh sách món ăn' },
   ]
 
   return (
@@ -50,6 +52,7 @@ export function InternalPage() {
         { activeTab === 'attendance' && <AttendanceKiosk /> }
         { activeTab === 'payroll' && <PayrollView /> }
         { activeTab === 'categories' && <CategoryList /> }
+        { activeTab === 'menuItems' && <MenuItemList /> }
       </div>
     </div>
   )

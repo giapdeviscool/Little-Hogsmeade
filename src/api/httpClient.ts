@@ -3,7 +3,12 @@ import { getAuthToken } from '../store/auth.store'
 
 export async function httpClient<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAuthToken()
-  const headers: HeadersInit = { 'Content-Type': 'application/json', ...init?.headers }
+  const headers: HeadersInit = { ...init?.headers }
+  
+  if (!(init?.body instanceof FormData)) {
+    (headers as Record<string, string>)['Content-Type'] = 'application/json'
+  }
+
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
   }
