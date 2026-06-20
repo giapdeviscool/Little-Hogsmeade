@@ -69,10 +69,10 @@ SAI:
 ### 3.1 Font Family
 
 ```css
-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ```
 
-Chỉ dùng **Inter** — không dùng serif, không dùng display fonts khác trong admin portal.  
+Chỉ dùng **Manrope** — không dùng serif, không dùng display fonts khác trong admin portal.  
 Landing page có thể thêm `'Playfair Display'` cho heading hero nếu cần feel premium.
 
 ### 3.2 Type Scale
@@ -631,7 +631,7 @@ ARIA labels:
 |-------|---------|
 | Dùng Coffee Brown cho primary text | Dùng pure black (#000000) |
 | Soft Beige cho sidebar | Màu khác cho sidebar |
-| Inter cho tất cả font | Mix nhiều font trong admin |
+| Manrope cho tất cả font | Mix nhiều font trong admin |
 | 8px border-radius cho inputs/buttons | Border-radius < 6px hoặc > 16px cho buttons |
 | Lucide React cho icons | Mix nhiều icon library |
 | Semantic status colors | Hardcode màu status tùy ý |
