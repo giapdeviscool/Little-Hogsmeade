@@ -6,8 +6,9 @@ import { ShiftManagement } from './components/ShiftManagement'
 import { ScheduleView } from './components/ScheduleView'
 import { AttendanceKiosk } from './components/AttendanceKiosk'
 import { PayrollView } from './components/PayrollView'
+import { CategoryList } from './components/CategoryList'
 
-type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll'
+type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories'
 
 export function InternalPage() {
   const [activeTab, setActiveTab] = useState<InternalTab>('employees')
@@ -19,6 +20,7 @@ export function InternalPage() {
     { key: 'attendance', label: 'Chấm công' },
     { key: 'payroll', label: 'Bảng lương' },
     { key: 'inventory', label: 'Tồn kho' },
+    { key: 'categories', label: 'Danh mục menu' },
   ]
 
   return (
@@ -44,9 +46,10 @@ export function InternalPage() {
         {activeTab === 'employees' && <EmployeeList />}
         {activeTab === 'inventory' && <InventoryView />}
         {activeTab === 'shifts' && <ShiftManagement />}
-        {activeTab === 'schedule' && <ScheduleView />}
-        {activeTab === 'attendance' && <AttendanceKiosk />}
-        {activeTab === 'payroll' && <PayrollView />}
+        { activeTab === 'schedule' && <ScheduleView /> }
+        { activeTab === 'attendance' && <AttendanceKiosk /> }
+        { activeTab === 'payroll' && <PayrollView /> }
+        { activeTab === 'categories' && <CategoryList /> }
       </div>
     </div>
   )

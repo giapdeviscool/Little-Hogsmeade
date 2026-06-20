@@ -8,3 +8,4 @@ export type { NavIconKey, NavItem, SidebarNavKey, TabKey } from './navigation.ty
 export type { OwnerActiveTab } from './owner.types'
 export type { ProductMock, ProductStatus } from './product.types'
 export type { TableMapMock, TableShape, TableStatus } from './table.types'
+export * from './menu.types'
