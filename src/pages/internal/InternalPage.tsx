@@ -8,8 +8,9 @@ import { AttendanceKiosk } from './components/AttendanceKiosk'
 import { PayrollView } from './components/PayrollView'
 import { CategoryList } from './components/CategoryList'
 import { MenuItemList } from './components/MenuItemList'
+import { ToppingGroups } from './components/ToppingGroups'
 
-type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories' | 'menuItems'
+type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories' | 'menuItems' | 'toppingGroups'
 
 export function InternalPage() {
   const [activeTab, setActiveTab] = useState<InternalTab>('employees')
@@ -23,6 +24,7 @@ export function InternalPage() {
     { key: 'inventory', label: 'Tồn kho' },
     { key: 'categories', label: 'Danh mục menu' },
     { key: 'menuItems', label: 'Danh sách món ăn' },
+    { key: 'toppingGroups', label: 'Nhóm Topping' },
   ]
 
   return (
@@ -53,6 +55,7 @@ export function InternalPage() {
         { activeTab === 'payroll' && <PayrollView /> }
         { activeTab === 'categories' && <CategoryList /> }
         { activeTab === 'menuItems' && <MenuItemList /> }
+        { activeTab === 'toppingGroups' && <ToppingGroups /> }
       </div>
     </div>
   )

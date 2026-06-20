@@ -1,9 +1,9 @@
 import { httpClient } from './httpClient'
 
-export async function getCategories(params: { page: number; limit: number; search?: string; status?: string; branchId?: string }) {
+export async function getCategories(params: { page?: number; limit?: number; search?: string; status?: string; branchId?: string }) {
   const query = new URLSearchParams()
-  query.append('page', params.page.toString())
-  query.append('limit', params.limit.toString())
+  if (params.page) query.append('page', params.page.toString())
+  if (params.limit) query.append('limit', params.limit.toString())
   
   if (params.search) {
     query.append('search', params.search)

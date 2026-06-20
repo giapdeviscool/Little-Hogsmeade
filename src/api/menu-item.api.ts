@@ -19,3 +19,10 @@ export async function createMenuItem(data: FormData) {
     body: data
   })
 }
+
+export async function updateMenuItemStatus(id: string, isActive: boolean) {
+  return httpClient<any>(`/menu-items/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isActive })
+  })
+}

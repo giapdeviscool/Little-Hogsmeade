@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card } from '../../../components/ui/Card'
 import type { MenuItem, Category } from '../../../types'
-import { getMenuItems } from '../../../api/menu-item.api'
+import { getMenuItems, updateMenuItemStatus } from '../../../api/menu-item.api'
 import { getCategories } from '../../../api/category.api'
 
 import { AddMenuItemModal } from './AddMenuItemModal'
@@ -52,11 +52,30 @@ export function MenuItemList() {
     fetchItems()
   }, [fetchItems])
 
-  const renderStatus = (isActive: boolean) => {
-    if (isActive) {
-      return <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Đang hoạt động</span>
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const isActive = newStatus === 'true'
+      await updateMenuItemStatus(id, isActive)
+      alert('Đổi trạng thái thành công!')
+      fetchItems()
+    } catch (err: any) {
+      alert(err.message || 'Không thể đổi trạng thái món ăn.')
+      // Fetch again to reset the dropdown UI to previous state in case of error
+      fetchItems()
     }
-    return <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">Ngừng hoạt động</span>
+  }
+
+  const renderStatus = (item: MenuItem) => {
+    return (
+      <select
+        className={`rounded-full px-3 py-1 text-xs font-bold ${item.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}
+        value={item.isActive.toString()}
+        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+      >
+        <option value="true">Đang hoạt động</option>
+        <option value="false">Ngừng hoạt động</option>
+      </select>
+    )
   }
 
   const renderImage = (url?: string) => {
@@ -154,7 +173,7 @@ export function MenuItemList() {
                       <td className="border-b border-line px-4 py-4 font-medium text-emerald-600">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.basePrice)}
                       </td>
-                      <td className="border-b border-line px-4 py-4">{renderStatus(item.isActive)}</td>
+                      <td className="border-b border-line px-4 py-4">{renderStatus(item)}</td>
                     </tr>
                   ))}
                   {items.length === 0 && (
