@@ -1,10 +1,12 @@
-import { navItems, type TabKey } from '../constants/navigation'
+import { navItems } from '../constants/navigation'
 import { Icon } from '../components/icons/Icon'
 import { cn } from '../utils/cn'
 import { useLocale } from '../hooks/useLocale'
+import { Link, useLocation } from 'react-router-dom'
 
-export function Sidebar({ active, onSelect, onLogout }: { active: TabKey; onSelect: (key: TabKey) => void; onLogout: () => void }) {
+export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { t } = useLocale()
+  const location = useLocation()
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition hover:bg-white/65'
 
   return (
@@ -23,19 +25,22 @@ export function Sidebar({ active, onSelect, onLogout }: { active: TabKey; onSele
       </div>
 
       <nav className="flex flex-col gap-2">
-        {navItems.map((item) => (
-          <button key={item.key} type="button" onClick={() => onSelect(item.key)} className={cn(navButton, active === item.key ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee')}>
-            <Icon name={item.icon} />
-            <span>{t.navigation[item.key]}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location.pathname.includes(`/admin/${item.key}`)
+          return (
+            <Link key={item.key} to={`/admin/${item.key}`} className={cn(navButton, isActive ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee')}>
+              <Icon name={item.icon} />
+              <span>{t.navigation[item.key]}</span>
+            </Link>
+          )
+        })}
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
-        <button type="button" onClick={() => onSelect('settings')} className={cn(navButton, active === 'settings' ? 'bg-latte text-white' : 'text-coffee')}>
+        <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee')}>
           <Icon name="settings" />
           {t.common.settings}
-        </button>
+        </Link>
         <button type="button" onClick={onLogout} className={`${navButton} text-coffee`}>
           <Icon name="logout" />
           {t.common.logout}

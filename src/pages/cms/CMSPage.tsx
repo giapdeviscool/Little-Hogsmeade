@@ -26,7 +26,7 @@ import {
   updatePost,
   uploadImage,
 } from '../../api/cms.api'
-import type { Banner, CmsPage, Event, EventPayload, Post, PostPayload } from '../../types'
+import type { Banner, CmsPage, CmsPagePayload, Event, EventPayload, Post, PostPayload } from '../../types'
 
 type CmsTab = 'landing' | 'posts' | 'events' | 'promotions'
 
@@ -88,12 +88,24 @@ const cmsTabs: Array<{ key: CmsTab; label: string; description: string }> = [
 ]
 
 const landingPageSlugs = {
+  landingPage: 'landing-page',
   contact: 'landing-contact',
   openingHours: 'landing-opening-hours',
   featuredMenu: 'landing-featured-menu',
 }
 
 const dayOptions = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật']
+
+const defaultLandingPageDraft: CmsPagePayload = {
+  slug: 'landing-page',
+  title: '',
+  content: '',
+  imageUrl: '',
+  aboutTitle: '',
+  aboutContent: '',
+  yearsOfExperience: 0,
+  isPublished: true,
+}
 
 const defaultContactBlock: ContactBlock = {
   phone: '1900 6868',
@@ -212,10 +224,12 @@ function LandingEditor() {
   const [notice, setNotice] = useState<NoticeState | null>(null)
   const [saving, setSaving] = useState(false)
   const [bannerDraft, setBannerDraft] = useState<BannerDraft>(defaultBannerDraft)
+  const [landingPageDraft, setLandingPageDraft] = useState<CmsPagePayload>(defaultLandingPageDraft)
   const [contactDraft, setContactDraft] = useState<ContactBlock>(defaultContactBlock)
   const [openingHoursDraft, setOpeningHoursDraft] = useState<OpeningHoursBlock>(defaultOpeningHoursBlock)
   const [featuredMenuDraft, setFeaturedMenuDraft] = useState<FeaturedMenuBlock>(defaultFeaturedMenuBlock)
   const bannerFileRef = useRef<HTMLInputElement>(null)
+  const landingPageFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let alive = true
@@ -230,7 +244,7 @@ function LandingEditor() {
         const sortedBanners = normalizeList<Banner>(bannerResponse.data).sort((a, b) => a.sortOrder - b.sortOrder)
         setBanners(sortedBanners)
         setPages(normalizeList<CmsPage>(pageResponse.data))
-        hydrateLandingBlocks(pageResponse.data, sortedBanners, setContactDraft, setOpeningHoursDraft, setFeaturedMenuDraft)
+        hydrateLandingBlocks(pageResponse.data, sortedBanners, setContactDraft, setOpeningHoursDraft, setFeaturedMenuDraft, setLandingPageDraft)
       } catch (loadError) {
         if (!alive) return
         setError(loadError instanceof Error ? loadError.message : 'Không tải được dữ liệu Landing Page.')
@@ -424,12 +438,73 @@ function LandingEditor() {
     setBannerDraft({ ...defaultBannerDraft, sortOrder: banners.length + 1 })
   }
 
+  async function handleLandingPageSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSaving(true)
+    setNotice(null)
+    try {
+      const existing = getPageBySlug(pages, landingPageSlugs.landingPage)
+      const response = existing ? await updatePage(existing.id, landingPageDraft) : await createPage(landingPageDraft)
+      const saved = response.data
+      setPages((current) => {
+        const withoutCurrent = current.filter((page) => page.id !== saved.id)
+        return [...withoutCurrent, saved]
+      })
+      setNotice({ type: 'success', message: 'Đã lưu Hero & Giới thiệu.' })
+    } catch (saveError) {
+      setNotice({ type: 'error', message: saveError instanceof Error ? saveError.message : 'Không lưu được nội dung.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleLandingPageUpload(file: File) {
+    setSaving(true)
+    setNotice(null)
+    try {
+      const response = await uploadImage(file, 'landing/hero')
+      setLandingPageDraft((current) => ({ ...current, imageUrl: response.data.secure_url }))
+      setNotice({ type: 'success', message: 'Ảnh hero đã tải lên thành công.' })
+    } catch (uploadError) {
+      setNotice({ type: 'error', message: uploadError instanceof Error ? uploadError.message : 'Không tải được ảnh.' })
+    } finally {
+      setSaving(false)
+    }
+  }
   return (
     <div className="grid gap-6 xl:grid-cols-[1.25fr_.95fr]">
       <div className="space-y-6">
         <StateShell loading={loading} error={error} empty={banners.length === 0 && !loading} title="Landing Page" description="Chưa có dữ liệu banner." onRetry={() => window.location.reload()} />
 
         {notice && <InlineNotice notice={notice} />}
+
+        <Card className="p-6">
+          <SectionHeading title="Hero Banner & Giới thiệu" description="Cấu hình nội dung chính cho trang Landing Page." />
+          <form className="mt-6 grid gap-4" onSubmit={handleLandingPageSave}>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <TextField label="Hero Title" value={landingPageDraft.title} onChange={(val) => setLandingPageDraft(d => ({ ...d, title: val }))} />
+              <TextField label="Hero Subtitle" value={landingPageDraft.content} onChange={(val) => setLandingPageDraft(d => ({ ...d, content: val }))} />
+            </div>
+            <ImageField label="Hero Image (Để trống để dùng Default Hero của source code)" value={landingPageDraft.imageUrl ?? ''} onChange={(val) => setLandingPageDraft(d => ({ ...d, imageUrl: val }))} onUpload={handleLandingPageUpload} fileRef={landingPageFileRef} />
+            
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-gold">Về chúng tôi (Story)</p>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <TextField label="Tiêu đề Story" value={landingPageDraft.aboutTitle ?? ''} onChange={(val) => setLandingPageDraft(d => ({ ...d, aboutTitle: val }))} />
+                <NumberField label="Số năm kinh nghiệm" value={landingPageDraft.yearsOfExperience ?? 0} onChange={(val) => setLandingPageDraft(d => ({ ...d, yearsOfExperience: val }))} />
+              </div>
+              <div className="mt-4">
+                <TextAreaField label="Nội dung Story" value={landingPageDraft.aboutContent ?? ''} onChange={(val) => setLandingPageDraft(d => ({ ...d, aboutContent: val }))} rows={4} />
+              </div>
+            </div>
+
+            <button type="submit" disabled={saving} className="mt-2 inline-flex items-center gap-2 justify-center rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft disabled:opacity-70">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Lưu thay đổi Landing Page
+            </button>
+            <PageSyncMeta page={getPageBySlug(pages, landingPageSlugs.landingPage) ?? { slug: 'landing-page', title: '', content: '', isPublished: true, id: '' } as CmsPage} />
+          </form>
+        </Card>
 
         <Card className="p-6">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
@@ -1513,7 +1588,24 @@ function hydrateLandingBlocks(
   setContactDraft: (value: ContactBlock) => void,
   setOpeningHoursDraft: (value: OpeningHoursBlock) => void,
   setFeaturedMenuDraft: (value: FeaturedMenuBlock) => void,
+  setLandingPageDraft: (value: CmsPagePayload) => void,
 ) {
+  const landingPage = getPageBySlug(pages, landingPageSlugs.landingPage)
+  if (landingPage) {
+    setLandingPageDraft({
+      slug: landingPage.slug,
+      title: landingPage.title,
+      content: landingPage.content,
+      imageUrl: landingPage.imageUrl,
+      aboutTitle: landingPage.aboutTitle,
+      aboutContent: landingPage.aboutContent,
+      yearsOfExperience: landingPage.yearsOfExperience,
+      isPublished: landingPage.isPublished,
+    })
+  } else {
+    setLandingPageDraft(defaultLandingPageDraft)
+  }
+
   const contact = safeParse<ContactBlock>(getPageBySlug(pages, landingPageSlugs.contact)?.content, defaultContactBlock)
   const openingHours = safeParse<OpeningHoursBlock>(getPageBySlug(pages, landingPageSlugs.openingHours)?.content, defaultOpeningHoursBlock)
   const featuredMenu = safeParse<FeaturedMenuBlock>(getPageBySlug(pages, landingPageSlugs.featuredMenu)?.content, {
