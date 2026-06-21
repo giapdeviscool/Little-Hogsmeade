@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   BookingSection,
   EventSection,
   FeaturedMenuSection,
-  HeroSection,
   PostSection,
   StoreAndMemberSection,
   StorySection,
-  defaultHero,
   getFeaturedMenuBlock,
   getOpeningHoursBlock,
   normalizeBranches,
@@ -18,7 +15,6 @@ import {
 import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
 import { getBranches } from '../../api/chain.api'
 import type { Banner, Branch, CmsPage, Event, Post } from '../../types'
-import { ROUTES } from '../../constants/routes'
 
 function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180
@@ -31,53 +27,6 @@ function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: num
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-export function CustomerHomePage() {
-  const navigate = useNavigate()
-  const [banners, setBanners] = useState<Banner[]>([])
-  const [events, setEvents] = useState<Event[]>([])
-
-  useEffect(() => {
-    let alive = true
-    Promise.all([listBanners(), listEvents()]).then(([b, e]) => {
-      if (alive) {
-        setBanners(normalizeList<Banner>(b.data))
-        setEvents(normalizeList<Event>(e.data))
-      }
-    })
-    return () => { alive = false }
-  }, [])
-
-  const activeHero = banners.find((b) => b.isActive) ?? banners[0]
-  const hero = activeHero
-    ? {
-        title: activeHero.title,
-        subtitle: activeHero.description || defaultHero.subtitle,
-        image: activeHero.imageUrl || defaultHero.image,
-        ctaLabel: activeHero.ctaLabel || 'Khám phá ngay',
-        ctaHref: activeHero.ctaHref || ROUTES.customerMenu,
-      }
-    : {
-        title: defaultHero.title,
-        subtitle: defaultHero.subtitle,
-        image: defaultHero.image,
-        ctaLabel: 'Khám phá ngay',
-        ctaHref: ROUTES.customerMenu,
-      }
-
-  const publishedEvents = events.filter((e) => e.isPublished).slice(0, 4)
-
-  return (
-    <>
-      <HeroSection
-        hero={hero}
-        onPrimaryAction={() => navigate(ROUTES.customerMenu)}
-        onSecondaryAction={() => navigate(ROUTES.customerBooking)}
-        embedded={true}
-      />
-      <EventSection events={publishedEvents} />
-    </>
-  )
-}
 
 export function CustomerMenuPage() {
   const [banners, setBanners] = useState<Banner[]>([])

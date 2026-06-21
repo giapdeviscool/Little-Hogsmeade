@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowRight, Clock3, MapPin, Search, Star, X } from 'lucide-react'
+import { ArrowRight, Clock3, MapPin, Search, Star, X, Navigation } from 'lucide-react'
 import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
 import { Card } from '../../components/ui/Card'
 import defaultHeroImage from '../../assets/image/default.jpg'
@@ -7,9 +7,9 @@ import { cn } from '../../utils/cn'
 import { formatVND } from '../../utils/formatCurrency'
 import { formatVnDate, formatVnTime } from '../../utils/date'
 import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
-import type { Banner, CmsPage, Event, Post } from '../../types'
 import { getBranches } from '../../api/chain.api'
-import type { Branch } from '../../types'
+import { createReservation } from '../../api/reservation.api'
+import type { Banner, CmsPage, Event, Post, Branch } from '../../types'
 
 export type ContactBlock = {
   phone: string
@@ -42,6 +42,7 @@ export type FeaturedMenuBlock = {
 }
 
 export type BookingDraft = {
+  branchId: string
   name: string
   phone: string
   guests: string
@@ -102,6 +103,7 @@ const fallbackMenu: FeaturedMenuBlock = {
 }
 
 const fallbackBooking: BookingDraft = {
+  branchId: '',
   name: '',
   phone: '',
   guests: '4',
@@ -234,6 +236,8 @@ export function LandingPage({
       })
   }, [branches, storeQuery, userLocation])
 
+
+
   const activeHero = useMemo(() => {
     const bannerList = Array.isArray(banners) ? banners : []
     return bannerList.find((banner) => banner.isActive) ?? bannerList[0]
@@ -243,29 +247,88 @@ export function LandingPage({
   const featuredMenuBlock = useMemo(() => getFeaturedMenuBlock(pages, banners), [pages, banners])
   const publishedPosts = useMemo(() => posts.filter((post) => post.isPublished).slice(0, 4), [posts])
   const publishedEvents = useMemo(() => events.filter((event) => event.isPublished).slice(0, 4), [events])
-  const hero = activeHero
+  const landingPageContent = useMemo(() => getPageBySlug(pages, 'landing-page'), [pages])
+
+  const hero = landingPageContent && (landingPageContent.title || landingPageContent.imageUrl)
     ? {
-      title: activeHero.title,
-      subtitle: activeHero.description || defaultHero.subtitle,
-      image: activeHero.imageUrl || defaultHero.image,
-      ctaLabel: activeHero.ctaLabel || 'Khám phá ngay',
-      ctaHref: activeHero.ctaHref || '#landing-menu',
+      title: landingPageContent.title || defaultHero.title,
+      subtitle: landingPageContent.content || defaultHero.subtitle,
+      image: landingPageContent.imageUrl || activeHero?.imageUrl || defaultHero.image,
+      ctaLabel: activeHero?.ctaLabel || 'Khám phá ngay',
+      ctaHref: activeHero?.ctaHref || '#landing-menu',
     }
-    : {
-      title: defaultHero.title,
-      subtitle: defaultHero.subtitle,
-      image: defaultHero.image,
-      ctaLabel: 'Khám phá ngay',
-      ctaHref: '#landing-menu',
-    }
+    : activeHero
+      ? {
+        title: activeHero.title,
+        subtitle: activeHero.description || defaultHero.subtitle,
+        image: activeHero.imageUrl || defaultHero.image,
+        ctaLabel: activeHero.ctaLabel || 'Khám phá ngay',
+        ctaHref: activeHero.ctaHref || '#landing-menu',
+      }
+      : {
+        title: defaultHero.title,
+        subtitle: defaultHero.subtitle,
+        image: defaultHero.image,
+        ctaLabel: 'Khám phá ngay',
+        ctaHref: '#landing-menu',
+      }
 
   function scrollToSection(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  function handleBookingSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleBookingSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setBookingNotice('Đã ghi nhận yêu cầu. Vui lòng kiểm tra lại trong backend booking/order khi endpoint sẵn sàng.')
+    
+    if (!bookingDraft.branchId) {
+      setBookingNotice('Vui lòng chọn chi nhánh.')
+      return
+    }
+
+    try {
+      const [datePart, timePart] = bookingDraft.datetime.split('T')
+      if (!datePart || !timePart) {
+        setBookingNotice('Vui lòng chọn ngày giờ hợp lệ.')
+        return
+      }
+
+      await createReservation({
+        branchId: bookingDraft.branchId,
+        guestName: bookingDraft.name,
+        guestPhone: bookingDraft.phone,
+        guestCount: parseInt(bookingDraft.guests, 10) || 1,
+        reservedDate: new Date(datePart).toISOString(),
+        reservedTime: new Date(bookingDraft.datetime).toISOString(),
+        note: bookingDraft.note,
+        status: 'pending'
+      })
+
+      setBookingNotice('Đã gửi yêu cầu đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn sớm nhất.')
+      setBookingDraft(fallbackBooking)
+    } catch (err) {
+      setBookingNotice('Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại sau.')
+    }
+  }
+
+  function handleDetectLocation() {
+    if (!navigator.geolocation) {
+      setLocationNotice('Trình duyệt không hỗ trợ định vị.')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        })
+        setLocationNotice('Đã lấy vị trí hiện tại để sắp xếp cửa hàng gần nhất.')
+      },
+      () => {
+        setLocationNotice('Không thể lấy vị trí. Bạn có thể nhập từ khóa để tìm cửa hàng.')
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    )
   }
 
   const shellClassName = embedded
@@ -334,11 +397,11 @@ export function LandingPage({
             </div>
           )}
 
-          {!hideBrowserChrome && <StorySection />}
+          {!hideBrowserChrome && <StorySection landingPage={landingPageContent} />}
           {!hideBrowserChrome && <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={activeMenuQuery} setQuery={setActiveMenuQuery} />}
           {!hideBrowserChrome && <EventSection events={publishedEvents} />}
           {!hideBrowserChrome && <PostSection posts={publishedPosts} />}
-          {!hideBrowserChrome && <BookingSection draft={bookingDraft} setDraft={setBookingDraft} onSubmit={handleBookingSubmit} notice={bookingNotice} />}
+          {!hideBrowserChrome && <BookingSection draft={bookingDraft} setDraft={setBookingDraft} onSubmit={handleBookingSubmit} notice={bookingNotice} branches={branchCards} onDetectLocation={handleDetectLocation} locationNotice={locationNotice} />}
           {!hideBrowserChrome && (
             <StoreAndMemberSection
               openingHoursBlock={openingHoursBlock}
@@ -346,26 +409,7 @@ export function LandingPage({
               storeQuery={storeQuery}
               setStoreQuery={setStoreQuery}
               userLocation={userLocation}
-              onDetectLocation={() => {
-                if (!navigator.geolocation) {
-                  setLocationNotice('Trình duyệt không hỗ trợ định vị.')
-                  return
-                }
-
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    setUserLocation({
-                      lat: position.coords.latitude,
-                      lng: position.coords.longitude,
-                    })
-                    setLocationNotice('Đã lấy vị trí hiện tại để sắp xếp cửa hàng gần nhất.')
-                  },
-                  () => {
-                    setLocationNotice('Không thể lấy vị trí. Bạn có thể nhập từ khóa để tìm cửa hàng.')
-                  },
-                  { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
-                )
-              }}
+              onDetectLocation={handleDetectLocation}
               locationNotice={locationNotice}
             />
           )}
@@ -511,7 +555,12 @@ export function HeroSection({
   )
 }
 
-export function StorySection() {
+export function StorySection({ landingPage }: { landingPage?: CmsPage | null }) {
+  const title = landingPage?.aboutTitle || 'Một câu chuyện ấm áp,\ngói trong từng tách cà phê'
+  const years = landingPage?.yearsOfExperience || 12
+  const content = landingPage?.aboutContent || 'Little Hogsmeade được tạo ra để trở thành nơi bạn chậm lại, thưởng thức một bữa ăn ngon, một ly cà phê được pha kỹ lưỡng hoặc một chai vang chia sẻ cùng người thân.\nNguyên liệu được tuyển chọn từ nhà cung cấp địa phương và nhập khẩu, giữ tinh thần bistro ấm cúng nhưng vẫn đủ tinh tế cho những cuộc hẹn quan trọng.'
+  const contentParagraphs = content.split('\\n').filter(Boolean)
+
   return (
     <section id="landing-story" className="mx-auto grid max-w-[1280px] gap-10 px-4 py-20 md:px-8 lg:grid-cols-[1fr_1.14fr] lg:items-center lg:gap-14 lg:px-14 lg:py-28">
       <div className="grid grid-cols-2 gap-3">
@@ -521,24 +570,21 @@ export function StorySection() {
         <div className="grid h-[160px] place-items-center rounded-[18px] bg-cream text-center md:h-[174px]">
           <div>
             <span className="text-[30px] text-gold">✦</span>
-            <b className="block text-[32px]">12+</b>
+            <b className="block text-[32px]">{years}+</b>
             <small className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Năm kinh nghiệm Bistro</small>
           </div>
         </div>
       </div>
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Giới thiệu</p>
-        <h2 className="mt-4 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[46px]">
-          Một câu chuyện ấm áp,
-          <br />
-          gói trong từng tách cà phê
+        <h2 className="mt-4 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] whitespace-pre-line md:text-[46px]">
+          {title}
         </h2>
-        <p className="mt-7 text-[16px] leading-7 text-coffee/85">
-          Little Hogsmeade được tạo ra để trở thành nơi bạn chậm lại, thưởng thức một bữa ăn ngon, một ly cà phê được pha kỹ lưỡng hoặc một chai vang chia sẻ cùng người thân.
-        </p>
-        <p className="mt-5 text-[16px] leading-7 text-coffee/85">
-          Nguyên liệu được tuyển chọn từ nhà cung cấp địa phương và nhập khẩu, giữ tinh thần bistro ấm cúng nhưng vẫn đủ tinh tế cho những cuộc hẹn quan trọng.
-        </p>
+        {contentParagraphs.map((para, index) => (
+          <p key={index} className="mt-7 text-[16px] leading-7 text-coffee/85">
+            {para}
+          </p>
+        ))}
       </div>
     </section>
   )
@@ -709,11 +755,17 @@ export function BookingSection({
   setDraft,
   onSubmit,
   notice,
+  branches,
+  onDetectLocation,
+  locationNotice,
 }: {
   draft: BookingDraft
   setDraft: (value: BookingDraft) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   notice: string | null
+  branches: Array<{ id: string; name: string; address: string; distanceKm: number | null }>
+  onDetectLocation: () => void
+  locationNotice: string | null
 }) {
   return (
     <section id="landing-booking" className="bg-white py-20 md:py-24">
@@ -740,7 +792,53 @@ export function BookingSection({
               {notice}
             </div>
           )}
-          <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
+          
+          {!draft.branchId ? (
+            <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold">Chọn cửa hàng bạn muốn đặt bàn <span className="text-red-500">*</span></p>
+                <button type="button" onClick={onDetectLocation} className="flex items-center rounded-full bg-cream px-3 py-1.5 text-xs font-semibold text-coffee hover:bg-beige transition">
+                  <Navigation className="mr-1.5 h-3.5 w-3.5" /> Tìm cửa hàng gần nhất
+                </button>
+              </div>
+              {locationNotice && <p className="mb-4 text-xs italic text-muted">{locationNotice}</p>}
+              <div className="grid max-h-[360px] gap-3 overflow-y-auto pr-2">
+                {branches.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setDraft({ ...draft, branchId: b.id })}
+                    className="flex w-full flex-col gap-2 rounded-[14px] border border-line bg-white p-4 text-left shadow-soft transition hover:border-coffee"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <strong className="text-[15px] leading-snug">{b.name}</strong>
+                      {b.distanceKm !== null && (
+                        <span className="shrink-0 rounded-full bg-cream px-2 py-1 text-[10px] font-bold text-coffee">{b.distanceKm.toFixed(1)} km</span>
+                      )}
+                    </div>
+                    <p className="text-xs leading-5 text-muted">{b.address}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="mb-5 flex items-center justify-between rounded-[14px] border border-emerald-200 bg-emerald-50 p-4">
+                <div>
+                  <p className="text-xs text-emerald-700">Chi nhánh đã chọn:</p>
+                  <strong className="text-sm text-emerald-900">{branches.find((b) => b.id === draft.branchId)?.name}</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDraft({ ...draft, branchId: '' })}
+                  className="text-xs font-bold text-emerald-700 underline underline-offset-2 hover:text-emerald-900"
+                >
+                  Đổi
+                </button>
+              </div>
+
+              <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+
             <LandingInput label="Họ và tên" value={draft.name} onChange={(value) => setDraft({ ...draft, name: value })} placeholder="Trần Mai Anh" />
             <LandingInput label="Số điện thoại" value={draft.phone} onChange={(value) => setDraft({ ...draft, phone: value })} placeholder="0912 345 678" />
             <div className="grid grid-cols-2 gap-3">
@@ -752,6 +850,8 @@ export function BookingSection({
               Xác nhận đặt bàn
             </button>
           </form>
+          </div>
+          )}
         </Card>
       </div>
     </section>

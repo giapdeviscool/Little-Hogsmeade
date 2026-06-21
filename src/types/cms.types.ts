@@ -1,8 +1,13 @@
 export type CmsPage = {
   id: string
+  branchId: string | null
   slug: string
   title: string
   content: string
+  imageUrl: string | null
+  aboutTitle: string | null
+  aboutContent: string | null
+  yearsOfExperience: number | null
   isPublished: boolean
   updatedAt?: string | null
   createdAt?: string | null
@@ -12,6 +17,10 @@ export type CmsPagePayload = {
   slug: string
   title: string
   content: string
+  imageUrl?: string | null
+  aboutTitle?: string | null
+  aboutContent?: string | null
+  yearsOfExperience?: number | null
   isPublished: boolean
 }
 
