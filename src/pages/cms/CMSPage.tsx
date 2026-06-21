@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card'
 import { cn } from '../../utils/cn'
 import { formatVND } from '../../utils/formatCurrency'
 import { formatVnDate, formatVnDateTime, formatVnTime } from '../../utils/date'
+import { getBranches } from '../../api/chain.api'
 import {
   createBanner,
   createEvent,
@@ -26,7 +27,7 @@ import {
   updatePost,
   uploadImage,
 } from '../../api/cms.api'
-import type { Banner, CmsPage, CmsPagePayload, Event, EventPayload, Post, PostPayload } from '../../types'
+import type { Banner, CmsPage, CmsPagePayload, Event, EventPayload, Post, PostPayload, Branch } from '../../types'
 
 type CmsTab = 'landing' | 'posts' | 'events' | 'promotions'
 
@@ -152,6 +153,7 @@ const defaultBannerDraft: BannerDraft = {
 
 const emptyEventDraft: EventPayload = {
   title: '',
+  branchId: '',
   description: '',
   thumbnailUrl: '',
   eventDate: '',
@@ -486,7 +488,7 @@ function LandingEditor() {
               <TextField label="Hero Subtitle" value={landingPageDraft.content} onChange={(val) => setLandingPageDraft(d => ({ ...d, content: val }))} />
             </div>
             <ImageField label="Hero Image (Để trống để dùng Default Hero của source code)" value={landingPageDraft.imageUrl ?? ''} onChange={(val) => setLandingPageDraft(d => ({ ...d, imageUrl: val }))} onUpload={handleLandingPageUpload} fileRef={landingPageFileRef} />
-            
+
             <div className="mt-4 border-t border-line pt-4">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-gold">Về chúng tôi (Story)</p>
               <div className="grid gap-4 lg:grid-cols-2">
@@ -928,6 +930,7 @@ function EventsPanel() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [branches, setBranches] = useState<Branch[]>([])
 
   useEffect(() => {
     let alive = true
@@ -935,9 +938,10 @@ function EventsPanel() {
       setLoading(true)
       setError(null)
       try {
-        const response = await listEvents()
+        const [eventsRes, branchesRes] = await Promise.all([listEvents(), getBranches()])
         if (!alive) return
-        setEvents(normalizeList<Event>(response.data))
+        setEvents(normalizeList<Event>(eventsRes.data))
+        setBranches(normalizeList<Branch>(branchesRes.data))
       } catch (loadError) {
         if (!alive) return
         setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách sự kiện.')
@@ -1026,22 +1030,21 @@ function EventsPanel() {
       {notice && <InlineNotice notice={notice} />}
       <StateShell loading={loading} error={error} empty={filteredEvents.length === 0 && !loading} title="Chưa có sự kiện" description="Tạo sự kiện đầu tiên cho chiến dịch, voucher hoặc combo." />
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredEvents.map((event) => (
           <article key={event.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
-            <div className="relative h-[240px]">
+            <div className="relative aspect-video bg-beige">
               <img src={event.thumbnailUrl} alt={event.title} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-coffee/90 via-coffee/25 to-transparent" />
               <div className="absolute left-4 top-4 flex gap-2">
                 <StatusPill active={event.isPublished} />
                 <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-coffee">
                   {formatVnDate(event.eventDate)}
                 </span>
               </div>
-              <div className="absolute bottom-4 left-4 right-4 text-white">
-                <h3 className="text-[24px] font-bold">{event.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/80">{event.description}</p>
-              </div>
+            </div>
+            <div className="border-b border-line p-5">
+              <h3 className="text-[20px] font-bold">{event.title}</h3>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{event.description}</p>
             </div>
             <div className="space-y-4 p-5">
               <div className="grid gap-3 text-sm text-muted lg:grid-cols-2">
@@ -1068,6 +1071,7 @@ function EventsPanel() {
       {editorOpen && (
         <EventEditorDialog
           event={editingEvent}
+          branches={branches}
           onClose={() => setEditorOpen(false)}
           onSave={async (payload) => {
             await handleSave(payload, editingEvent?.id)
@@ -1091,15 +1095,15 @@ function PostEditorDialog({
   const [draft, setDraft] = useState<PostPayload>(
     post
       ? {
-          title: post.title,
-          slug: post.slug,
-          thumbnailUrl: post.thumbnailUrl,
-          content: post.content,
-          category: post.category,
-          tags: post.tags || '',
-          isPublished: post.isPublished,
-          publishedAt: post.publishedAt ?? null,
-        }
+        title: post.title,
+        slug: post.slug,
+        thumbnailUrl: post.thumbnailUrl,
+        content: post.content,
+        category: post.category,
+        tags: post.tags || '',
+        isPublished: post.isPublished,
+        publishedAt: post.publishedAt ?? null,
+      }
       : { title: '', slug: '', thumbnailUrl: '', content: '', category: '', tags: '', isPublished: false, publishedAt: null },
   )
   const [saving, setSaving] = useState(false)
@@ -1155,7 +1159,6 @@ function PostEditorDialog({
     <CmsEditorModal
       open
       title={post ? 'Sửa bài viết' : 'Tạo bài viết mới'}
-      description="Nhập nội dung, upload ảnh đại diện và bật/tắt publish."
       onOpenChange={(open) => {
         if (!open) handleClose()
       }}
@@ -1164,7 +1167,12 @@ function PostEditorDialog({
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <TextField label="Tiêu đề" value={draft.title} onChange={(value) => updateDraft('title', value)} required />
         <TextField label="Slug" value={draft.slug} onChange={(value) => updateDraft('slug', value)} required />
-        <TextField label="Danh mục" value={draft.category} onChange={(value) => updateDraft('category', value)} />
+        <SelectField
+          label="Danh mục"
+          value={draft.category}
+          onChange={(value) => updateDraft('category', value)}
+          options={['Coffee', 'Food', 'Beverage', 'Lifestyle', 'Event', 'Promotion']}
+        />
         <TextField
           label="Tags"
           value={draft.tags}
@@ -1196,26 +1204,29 @@ function PostEditorDialog({
 
 function EventEditorDialog({
   event,
+  branches,
   onClose,
   onSave,
 }: {
   event: Event | null
+  branches: Branch[]
   onClose: () => void
   onSave: (payload: EventPayload) => Promise<void>
 }) {
   const [draft, setDraft] = useState<EventPayload>(
     event
       ? {
-          title: event.title,
-          description: event.description,
-          thumbnailUrl: event.thumbnailUrl,
-          eventDate: event.eventDate,
-          startTime: event.startTime,
-          endTime: event.endTime,
-          locationNote: event.locationNote,
-          ticketPrice: event.ticketPrice,
-          isPublished: event.isPublished,
-        }
+        title: event.title,
+        branchId: event.branchId,
+        description: event.description,
+        thumbnailUrl: event.thumbnailUrl,
+        eventDate: event.eventDate.split('T')[0],
+        startTime: event.startTime.includes('T') ? event.startTime.split('T')[1].slice(0, 5) : event.startTime,
+        endTime: event.endTime.includes('T') ? event.endTime.split('T')[1].slice(0, 5) : event.endTime,
+        locationNote: event.locationNote,
+        ticketPrice: event.ticketPrice,
+        isPublished: event.isPublished,
+      }
       : { ...emptyEventDraft },
   )
   const [saving, setSaving] = useState(false)
@@ -1249,12 +1260,13 @@ function EventEditorDialog({
       await onSave({
         ...draft,
         title: draft.title.trim(),
+        branchId: draft.branchId,
         description: draft.description.trim(),
         locationNote: draft.locationNote.trim(),
         thumbnailUrl: draft.thumbnailUrl.trim(),
-        eventDate: draft.eventDate,
-        startTime: draft.startTime,
-        endTime: draft.endTime,
+        eventDate: new Date(draft.eventDate).toISOString(),
+        startTime: new Date(`${draft.eventDate}T${draft.startTime}:00.000Z`).toISOString(),
+        endTime: new Date(`${draft.eventDate}T${draft.endTime}:00.000Z`).toISOString(),
       })
       setUnsaved(false)
     } catch (saveError) {
@@ -1273,14 +1285,30 @@ function EventEditorDialog({
     <CmsEditorModal
       open
       title={event ? 'Sửa sự kiện' : 'Tạo sự kiện mới'}
-      description="Ngày giờ được lưu theo ISO, ảnh upload qua Cloudinary."
       onOpenChange={(open) => {
         if (!open) handleClose()
       }}
     >
       {notice && <InlineNotice notice={notice} />}
       <form className="grid gap-4" onSubmit={handleSubmit}>
-        <TextField label="Tiêu đề" value={draft.title} onChange={(value) => updateDraft('title', value)} required />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TextField label="Tiêu đề" value={draft.title} onChange={(value) => updateDraft('title', value)} required />
+          <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
+            <span>Chi nhánh tổ chức</span>
+            <select
+              value={draft.branchId}
+              onChange={(e) => updateDraft('branchId', e.target.value)}
+              required
+              className="h-12 w-full appearance-none rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte"
+              style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+            >
+              <option value="" disabled>Chọn chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         <TextAreaField label="Mô tả" value={draft.description} onChange={(value) => updateDraft('description', value)} rows={5} />
         <ImageField label="Thumbnail" value={draft.thumbnailUrl} onChange={(value) => updateDraft('thumbnailUrl', value)} onUpload={handleUpload} fileRef={fileRef} />
         <div className="grid gap-4 lg:grid-cols-2">
@@ -1405,6 +1433,37 @@ function TextField({
         required={required}
         className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte"
       />
+    </label>
+  )
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  className = '',
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  options: string[]
+  className?: string
+}) {
+  return (
+    <label className={cn('flex flex-col gap-2 text-sm font-semibold text-coffee', className)}>
+      <span>{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-12 w-full appearance-none rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte"
+        style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+      >
+        <option value="" disabled>Chọn danh mục</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
     </label>
   )
 }
