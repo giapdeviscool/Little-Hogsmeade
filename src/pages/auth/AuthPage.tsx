@@ -61,7 +61,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
       if (isCustomer) {
         navigate(ROUTES.customerHome)
       } else {
-        navigate(ROUTES.home)
+        navigate(ROUTES.adminDashboard)
       }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to connect to server')

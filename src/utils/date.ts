@@ -28,6 +28,16 @@ export function formatVnDateTime(value?: string | null) {
 
 export function formatVnTime(value?: string | null) {
   if (!value) return '--:--'
+  if (value.includes('T')) {
+    const date = new Date(value)
+    if (!Number.isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC' // Server saves local time as UTC (e.g. 18:00Z)
+      }).format(date)
+    }
+  }
   return value.slice(0, 5)
 }
 

@@ -5,11 +5,12 @@ import { cn } from '../../utils/cn'
 type CmsEditorModalProps = {
   open: boolean
   title: string
+  description?: string
   onOpenChange: (open: boolean) => void
   children: ReactNode
 }
 
-export function CmsEditorModal({ open, title, onOpenChange, children }: CmsEditorModalProps) {
+export function CmsEditorModal({ open, title, description, onOpenChange, children }: CmsEditorModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -21,6 +22,7 @@ export function CmsEditorModal({ open, title, onOpenChange, children }: CmsEdito
           <DialogHeader>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold">CMS editor</p>
             <DialogTitle className="mt-1 text-[24px] font-bold">{title}</DialogTitle>
+            {description && <p className="mt-1 text-sm text-muted">{description}</p>}
           </DialogHeader>
         </div>
         <div className="overflow-y-auto px-6 py-5">{children}</div>

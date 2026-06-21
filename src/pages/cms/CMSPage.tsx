@@ -1030,7 +1030,7 @@ function EventsPanel() {
       {notice && <InlineNotice notice={notice} />}
       <StateShell loading={loading} error={error} empty={filteredEvents.length === 0 && !loading} title="Chưa có sự kiện" description="Tạo sự kiện đầu tiên cho chiến dịch, voucher hoặc combo." />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2">
         {filteredEvents.map((event) => (
           <article key={event.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
             <div className="relative aspect-video bg-beige">
