@@ -48,7 +48,7 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
           </div>
           <div>
             <h3 className="font-bold text-coffee text-sm">{customer.fullName}</h3>
-            <p className="text-xs text-muted font-medium">{customer.phone} • {customer.totalPoints || 0} điểm</p>
+            {/* <p className="text-xs text-muted font-medium">{customer.phone} • {customer.totalPoints || 0} điểm</p> */}
           </div>
         </div>
         <button 
@@ -92,7 +92,7 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
                 <div className="text-xs text-muted">{c.phone}</div>
               </div>
               <div className="text-xs font-bold text-gold bg-gold/10 px-2 py-1 rounded-lg">
-                {c.totalPoints || 0} đ
+                {/* {c.totalPoints || 0} đ */}
               </div>
             </button>
           ))}
