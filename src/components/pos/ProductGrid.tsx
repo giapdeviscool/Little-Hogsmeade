@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ProductCard } from '@/components/pos/ProductCard';
-import { getMenuItems, type MenuItem } from '@/api/menu-items.api';
+import { getMenuItems } from '@/api/menu-item.api';
+import type { MenuItem } from '@/types/menu.types';
+interface ProductGridProps {
+  onProductClick: (product: MenuItem) => void;
+}
 
-export function ProductGrid() {
+export function ProductGrid({ onProductClick }: ProductGridProps) {
   const [products, setProducts] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +17,15 @@ export function ProductGrid() {
         setLoading(true);
         setError(null);
         const response = await getMenuItems({ limit: 20, skip: 0 });
-        setProducts(response.data || []);
+        let dataToSet: MenuItem[] = [];
+        if (Array.isArray(response.data)) {
+          dataToSet = response.data;
+        } else if (Array.isArray(response)) {
+          dataToSet = response;
+        } else if (response && typeof response === 'object' && 'items' in response && Array.isArray((response as any).items)) {
+          dataToSet = (response as any).items;
+        }
+        setProducts(dataToSet);
       } catch (err: any) {
         setError(err.message || 'Lỗi khi tải danh sách món');
       } finally {
@@ -44,7 +56,7 @@ export function ProductGrid() {
     );
   }
 
-  if (products.length === 0) {
+  if (!Array.isArray(products) || products.length === 0) {
     return (
       <div className="flex-1 p-6 flex justify-center items-center">
         <div className="text-muted font-semibold">Chưa có món nào được thêm.</div>
@@ -64,6 +76,7 @@ export function ProductGrid() {
             image={product.imageUrl || 'https://placehold.co/400x300/F5F0E6/8a7560?text=Chưa+Có+Ảnh'}
             outOfStock={!product.isActive}
             isBestSeller={product.isFeatured}
+            onClick={() => onProductClick(product)}
           />
         ))}
       </div>

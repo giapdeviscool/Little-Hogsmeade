@@ -5,9 +5,10 @@ interface ProductCardProps {
   image: string;
   outOfStock?: boolean;
   isBestSeller?: boolean;
+  onClick?: () => void;
 }
 
-export function ProductCard({ name, category, price, image, outOfStock, isBestSeller }: ProductCardProps) {
+export function ProductCard({ name, category, price, image, outOfStock, isBestSeller, onClick }: ProductCardProps) {
   if (outOfStock) {
     return (
       <button disabled className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm transition-all text-left border border-line group cursor-not-allowed">
@@ -29,7 +30,7 @@ export function ProductCard({ name, category, price, image, outOfStock, isBestSe
   }
 
   return (
-    <button className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left border border-line group">
+    <button onClick={onClick} className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left border border-line group">
       <div className="relative h-32 overflow-hidden">
         <img alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src={image}/>
         {isBestSeller && (

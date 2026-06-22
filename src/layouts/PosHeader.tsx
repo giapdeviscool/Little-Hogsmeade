@@ -1,4 +1,4 @@
-import { Bell, Clock, LogOut } from 'lucide-react';
+import { Bell, Clock } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 

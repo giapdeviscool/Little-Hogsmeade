@@ -1,44 +1,100 @@
-import { Trash2, User, Award, X, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, X, Plus } from 'lucide-react';
+import type { OrderType } from '@/pages/pos/index';
+import type { Customer } from '@/types/customer.types';
+import { CustomerSearch } from '@/components/pos/CustomerSearch';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
-export function OrderTabs() {
+interface OrderTabsProps {
+  orders: OrderType[];
+  activeOrderId: string;
+  activeOrder: OrderType;
+  onAddOrder: () => void;
+  onDeleteOrder: (id: string) => void;
+  onChangeOrder: (id: string) => void;
+  onSetCustomer: (customer: Customer | null) => void;
+}
+
+export function OrderTabs({
+  orders,
+  activeOrderId,
+  activeOrder,
+  onAddOrder,
+  onDeleteOrder,
+  onChangeOrder,
+  onSetCustomer
+}: OrderTabsProps) {
+  const [tabToDelete, setTabToDelete] = useState<string | null>(null);
+
   return (
     <>
-      {/* Multi-Tab Row (Pending Orders) */}
-      <div className="flex items-end px-4 pt-4 gap-1 bg-beige/50 border-b border-line">
-        <div className="px-6 py-2.5 bg-beige text-muted font-bold text-sm rounded-t-xl flex items-center gap-2 cursor-pointer hover:bg-white transition-all border-x border-t border-transparent">
-          Bàn #12
-          <X className="w-4 h-4 hover:text-red-500" />
-        </div>
-        <div className="px-6 py-3.5 bg-white text-coffee font-bold text-sm rounded-t-xl flex items-center gap-2 border-t border-x border-line active-tab-shadow -mb-[1px]">
-          Bàn #13 (Active)
-          <X className="w-4 h-4 hover:text-red-500" />
-        </div>
-        <button className="p-2.5 mb-2 ml-1 rounded-full hover:bg-white text-coffee transition-colors flex items-center justify-center">
+      <div className="flex items-end px-4 pt-4 gap-1 bg-beige/50 border-b border-line overflow-x-auto custom-scrollbar">
+        {orders.map(order => {
+          const isActive = order.id === activeOrderId;
+          return (
+            <div 
+              key={order.id}
+              onClick={() => onChangeOrder(order.id)}
+              className={`px-6 py-2.5 font-bold text-sm rounded-t-xl flex items-center gap-2 cursor-pointer transition-all whitespace-nowrap border-t border-x ${
+                isActive 
+                  ? 'bg-white text-coffee border-line active-tab-shadow -mb-[1px] py-3.5' 
+                  : 'bg-beige text-muted border-transparent hover:bg-white/80'
+              }`}
+            >
+              {order.title}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTabToDelete(order.id);
+                }}
+                className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-red-500 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
+        
+        <button 
+          onClick={onAddOrder}
+          className="p-2.5 mb-2 ml-1 rounded-full hover:bg-white text-coffee transition-colors flex items-center justify-center shrink-0"
+        >
           <Plus className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Order Header Info */}
       <div className="px-6 py-6 border-b border-line bg-white">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-coffee">Đơn hàng #1024</h2>
-            <p className="text-xs text-muted uppercase tracking-wider font-semibold mt-1">NV: Nguyễn Anh Tuấn • 14:25 PM</p>
+            <h2 className="text-2xl font-bold text-coffee">{activeOrder.title}</h2>
           </div>
-          <button className="text-muted hover:text-red-500 w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 transition-all">
+          <button 
+            onClick={() => setTabToDelete(activeOrder.id)}
+            className="text-muted hover:text-red-500 w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 transition-all"
+            title="Xóa đơn hàng"
+          >
             <Trash2 className="w-6 h-6" />
           </button>
         </div>
-        {/* Guest Selection */}
-        <div className="flex gap-2 p-1 bg-beige rounded-xl">
-          <button className="flex-1 h-12 text-sm font-bold rounded-lg bg-white shadow-sm flex items-center justify-center gap-2 border border-line/50 text-coffee">
-            <User className="w-5 h-5" /> Khách vãng lai
-          </button>
-          <button className="flex-1 h-12 text-sm font-bold text-muted flex items-center justify-center gap-2 hover:bg-white/50 transition-colors rounded-lg">
-            <Award className="w-5 h-5 text-gold" /> Thành viên
-          </button>
-        </div>
+        
+        <CustomerSearch 
+          customer={activeOrder.customer}
+          onSelect={onSetCustomer}
+          onClear={() => onSetCustomer(null)}
+        />
       </div>
+
+      <ConfirmModal
+        isOpen={!!tabToDelete}
+        title="Xác nhận xoá đơn hàng"
+        message="Bạn có chắc chắn muốn xoá đơn hàng này không? Hành động này không thể hoàn tác."
+        confirmText="Xoá đơn hàng"
+        onConfirm={() => {
+          if (tabToDelete) onDeleteOrder(tabToDelete);
+          setTabToDelete(null);
+        }}
+        onCancel={() => setTabToDelete(null)}
+      />
     </>
   );
 }
