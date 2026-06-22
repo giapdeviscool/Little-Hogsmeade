@@ -1,28 +1,51 @@
-import { env } from '../config/env'
-import { getAuthToken } from '../store/auth.store'
+import { env } from "../config/env";
+import { getAuthToken } from "../store/auth.store";
 
-export async function httpClient<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAuthToken()
-  const headers: HeadersInit = { ...init?.headers }
-  
-  if (!(init?.body instanceof FormData)) {
-    (headers as Record<string, string>)['Content-Type'] = 'application/json'
-  }
-
+export async function httpClient<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const token = getAuthToken();
+  const isFormData = init?.body instanceof FormData;
+  const headers: HeadersInit = {
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...init?.headers,
+  };
   if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    ...init,
-    headers,
-  })
+  const response = await fetch(
+    `http://localhost:3000${env.apiBaseUrl}${path}`,
+    {
+      ...init,
+      headers,
+    },
+  );
 
   if (!response.ok) {
-    const errorPayload = await response.json().catch(() => null) as { message?: string; errors?: Array<{ message: string }> } | null
-    const validationMessage = errorPayload?.errors?.map((error) => error.message).join('. ')
-    throw new Error(validationMessage || errorPayload?.message || `Request failed: ${response.status}`)
+    const errorPayload = (await response.json().catch(() => null)) as {
+      message?: string;
+      errors?: Array<{ message: string }>;
+    } | null;
+    const validationMessage = errorPayload?.errors
+      ?.map((error) => error.message)
+      .join(". ");
+    throw new Error(
+      validationMessage ||
+        errorPayload?.message ||
+        `Request failed: ${response.status}`,
+    );
   }
 
-  return response.json() as Promise<T>
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  return JSON.parse(text) as T;
 }

@@ -7,6 +7,7 @@ import { cn } from '../../utils/cn'
 import type { AuthMode } from '../../types'
 import { login, register } from '../../api/auth.api'
 import { saveAuthSession } from '../../store/auth.store'
+import { ROUTES } from '../../constants/routes'
 
 export function AuthPage({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate()
@@ -53,7 +54,15 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           })
 
       saveAuthSession(response.data)
-      navigate('/home')
+
+      const role = response.data.user.role || response.data.user.roleName || ''
+      const isCustomer = role.toLowerCase() === 'customer'
+      
+      if (isCustomer) {
+        navigate(ROUTES.customerHome)
+      } else {
+        navigate(ROUTES.adminDashboard)
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to connect to server')
     } finally {
