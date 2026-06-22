@@ -3,7 +3,7 @@ import { ProductGrid } from './ProductGrid';
 
 export function ProductSection() {
   return (
-    <section className="flex-1 p-6 flex flex-col h-full overflow-hidden">
+    <section className="w-[65%] flex flex-col h-full overflow-hidden border-r border-line">
       <SearchFilter />
       <ProductGrid />
     </section>

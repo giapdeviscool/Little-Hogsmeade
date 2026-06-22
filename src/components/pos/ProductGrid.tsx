@@ -55,10 +55,12 @@ export function ProductGrid() {
   ]);
 
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto pr-2 pb-6">
-      {products.map((product) => (
-        <ProductCard key={product.id} {...product} />
-      ))}
+    <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+      <div className="grid grid-cols-3 xl:grid-cols-4 gap-4 pb-6">
+        {products.map((product) => (
+          <ProductCard key={product.id} {...product} />
+        ))}
+      </div>
     </div>
   );
 }

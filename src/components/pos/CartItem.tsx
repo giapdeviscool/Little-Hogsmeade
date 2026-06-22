@@ -25,7 +25,7 @@ export function CartItem({ name, note, price, quantity }: CartItemProps) {
           <button className="text-xs text-latte font-bold hover:underline h-10 px-3 flex items-center">Ghi chú</button>
         </div>
       </div>
-      <div className="h-px bg-line/50 my-6"></div>
+      <div className="h-px bg-line/50"></div>
     </>
   );
 }

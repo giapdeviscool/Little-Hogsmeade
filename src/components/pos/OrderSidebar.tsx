@@ -29,9 +29,9 @@ export function OrderSidebar() {
   ]);
 
   return (
-    <aside className="w-[440px] bg-white border-l border-line shadow-xl flex flex-col z-10">
+    <aside className="w-[35%] bg-white shadow-xl flex flex-col z-10">
       <OrderTabs />
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-6">
         {cartItems.map((item) => (
           <CartItem key={item.id} {...item} />
         ))}
