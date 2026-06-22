@@ -25,4 +25,17 @@ export interface MenuItem {
     name: string
     displayOrder: number
   }
+  _count?: {
+    menuItemToppingGroups: number
+  }
 }
+
+export interface ToppingGroupAssignment {
+  id: string
+  name: string
+  minSelect: number
+  maxSelect: number
+  toppingsCount: number
+  isAssigned: boolean
+}
+

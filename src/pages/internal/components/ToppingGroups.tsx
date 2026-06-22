@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card } from '../../../components/ui/Card'
 import { getToppingGroups, softDeleteToppingGroup } from '../../../api/topping-group.api'
 import { ToppingGroupModal } from './ToppingGroupModal'
+import { ConfirmModal } from '../../../components/ui/ConfirmModal'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 export function ToppingGroups() {
   const [groups, setGroups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean; id: string | null}>({ isOpen: false, id: null })
+  const [alertConfig, setAlertConfig] = useState<{isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({ isOpen: false, title: '', message: '', type: 'info' })
 
   const fetchGroups = useCallback(async () => {
     setLoading(true)
@@ -24,14 +28,20 @@ export function ToppingGroups() {
     fetchGroups()
   }, [fetchGroups])
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xoá nhóm Topping này?')) return
+  const handleDeleteClick = (id: string) => {
+    setConfirmConfig({ isOpen: true, id })
+  }
+
+  const handleDeleteConfirm = async () => {
+    const id = confirmConfig.id
+    if (!id) return
+    setConfirmConfig({ isOpen: false, id: null })
     try {
       await softDeleteToppingGroup(id)
-      alert('Đã xoá nhóm Topping thành công')
+      setAlertConfig({ isOpen: true, title: 'Thành công', message: 'Đã xoá nhóm Topping thành công', type: 'success' })
       fetchGroups()
     } catch (err: any) {
-      alert(err.message || 'Lỗi khi xoá nhóm Topping')
+      setAlertConfig({ isOpen: true, title: 'Lỗi', message: err.message || 'Lỗi khi xoá nhóm Topping', type: 'error' })
     }
   }
 
@@ -45,7 +55,7 @@ export function ToppingGroups() {
         <div className="flex gap-2">
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="rounded-[14px] bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+            className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
           >
             + Thêm nhóm Topping
           </button>
@@ -78,7 +88,7 @@ export function ToppingGroups() {
                     </td>
                     <td className="border-b border-line px-4 py-4">
                       <button 
-                        onClick={() => handleDelete(g.id)}
+                        onClick={() => handleDeleteClick(g.id)}
                         className="text-red-600 hover:text-red-800 font-medium"
                       >
                         Xoá
@@ -104,6 +114,22 @@ export function ToppingGroups() {
           setIsModalOpen(false)
           fetchGroups()
         }}
+      />
+
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title="Xác nhận xoá"
+        message="Bạn có chắc chắn muốn xoá nhóm Topping này? Hành động này có thể làm thay đổi các món ăn đang sử dụng nó."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmConfig({ isOpen: false, id: null })}
+      />
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
       />
     </>
   )

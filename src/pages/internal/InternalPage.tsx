@@ -9,8 +9,9 @@ import { PayrollView } from './components/PayrollView'
 import { CategoryList } from './components/CategoryList'
 import { MenuItemList } from './components/MenuItemList'
 import { ToppingGroups } from './components/ToppingGroups'
+import { RecipesList } from './components/RecipesList'
 
-type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories' | 'menuItems' | 'toppingGroups'
+type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories' | 'menuItems' | 'toppingGroups' | 'recipes'
 
 export function InternalPage() {
   const [activeTab, setActiveTab] = useState<InternalTab>('employees')
@@ -25,6 +26,7 @@ export function InternalPage() {
     { key: 'categories', label: 'Danh mục menu' },
     { key: 'menuItems', label: 'Danh sách món ăn' },
     { key: 'toppingGroups', label: 'Nhóm Topping' },
+    { key: 'recipes', label: 'Công thức BOM' },
   ]
 
   return (
@@ -56,6 +58,7 @@ export function InternalPage() {
         { activeTab === 'categories' && <CategoryList /> }
         { activeTab === 'menuItems' && <MenuItemList /> }
         { activeTab === 'toppingGroups' && <ToppingGroups /> }
+        { activeTab === 'recipes' && <RecipesList /> }
       </div>
     </div>
   )

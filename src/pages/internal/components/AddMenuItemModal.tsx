@@ -140,7 +140,7 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-coffee px-4 py-2 text-white hover:opacity-90 disabled:opacity-50"
             >
               {loading ? 'Đang lưu...' : 'Lưu món ăn'}
             </button>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createToppingGroup } from '../../../api/topping-group.api'
+import { AlertModal } from '../../../components/ui/AlertModal'
 
 interface ToppingGroupModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [alertConfig, setAlertConfig] = useState<{isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({ isOpen: false, title: '', message: '', type: 'info' })
 
   if (!isOpen) return null
 
@@ -48,13 +50,7 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
         maxSelect,
         toppings
       })
-      alert('Lưu nhóm Topping thành công!')
-      // Reset
-      setName('')
-      setMinSelect(0)
-      setMaxSelect(1)
-      setToppings([])
-      onSuccess()
+      setAlertConfig({ isOpen: true, title: 'Thành công', message: 'Lưu nhóm Topping thành công!', type: 'success' })
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi tạo nhóm Topping')
     } finally {
@@ -116,7 +112,7 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
               <button 
                 type="button"
                 onClick={handleAddTopping}
-                className="text-emerald-600 font-medium hover:underline text-sm"
+                className="text-coffee font-medium hover:underline text-sm"
               >
                 + Thêm lựa chọn
               </button>
@@ -172,13 +168,30 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
             <button
               type="submit"
               disabled={loading || toppings.length === 0}
-              className="rounded-[14px] bg-emerald-600 px-6 py-3 font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-[14px] bg-coffee px-6 py-3 font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {loading ? 'Đang lưu...' : 'Lưu nhóm Topping'}
             </button>
           </div>
         </form>
       </div>
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => {
+          setAlertConfig({ ...alertConfig, isOpen: false })
+          if (alertConfig.type === 'success') {
+            setName('')
+            setMinSelect(0)
+            setMaxSelect(1)
+            setToppings([])
+            onSuccess()
+          }
+        }}
+      />
     </div>
   )
 }

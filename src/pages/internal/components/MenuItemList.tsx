@@ -5,12 +5,17 @@ import { getMenuItems, updateMenuItemStatus } from '../../../api/menu-item.api'
 import { getCategories } from '../../../api/category.api'
 
 import { AddMenuItemModal } from './AddMenuItemModal'
+import { AssignToppingModal } from './AssignToppingModal'
+import { RecipeConfigModal } from './RecipeConfigModal'
 
 export function MenuItemList() {
   const [items, setItems] = useState<MenuItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [assignModalState, setAssignModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
+  const [recipeModalState, setRecipeModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
+  const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   
   // Pagination & Filtering
   const [page, setPage] = useState(1)
@@ -56,10 +61,10 @@ export function MenuItemList() {
     try {
       const isActive = newStatus === 'true'
       await updateMenuItemStatus(id, isActive)
-      alert('Đổi trạng thái thành công!')
+      setAlertMessage({ message: 'Đổi trạng thái thành công!', type: 'success' })
       fetchItems()
     } catch (err: any) {
-      alert(err.message || 'Không thể đổi trạng thái món ăn.')
+      setAlertMessage({ message: err.message || 'Không thể đổi trạng thái món ăn.', type: 'error' })
       // Fetch again to reset the dropdown UI to previous state in case of error
       fetchItems()
     }
@@ -108,7 +113,7 @@ export function MenuItemList() {
         <div className="flex flex-wrap gap-2">
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="rounded-[14px] bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+            className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
           >
             + Thêm món ăn
           </button>
@@ -156,7 +161,7 @@ export function MenuItemList() {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr>
-                    {['Mã món', 'Hình ảnh', 'Tên món', 'Danh mục', 'Giá cơ bản', 'Trạng thái'].map((h) => (
+                    {['Mã món', 'Hình ảnh', 'Tên món', 'Danh mục', 'Giá cơ bản', 'Trạng thái', 'Hành động'].map((h) => (
                       <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>
                     ))}
                   </tr>
@@ -174,11 +179,30 @@ export function MenuItemList() {
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.basePrice)}
                       </td>
                       <td className="border-b border-line px-4 py-4">{renderStatus(item)}</td>
+                      <td className="border-b border-line px-4 py-4">
+                        <div className="flex flex-col gap-2 items-start">
+                          <button 
+                            onClick={() => setAssignModalState({ isOpen: true, item })}
+                            className="text-xs font-bold text-coffee hover:underline flex items-center gap-1"
+                          >
+                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[10px]">
+                              {item._count?.menuItemToppingGroups || 0}
+                            </span>
+                            Gán Topping
+                          </button>
+                          <button 
+                            onClick={() => setRecipeModalState({ isOpen: true, item })}
+                            className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1"
+                          >
+                            Cấu hình BOM
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {items.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="border-b border-line px-4 py-8 text-center text-muted">Không tìm thấy món ăn nào phù hợp</td>
+                      <td colSpan={7} className="border-b border-line px-4 py-8 text-center text-muted">Không tìm thấy món ăn nào phù hợp</td>
                     </tr>
                   )}
                 </tbody>
@@ -218,6 +242,57 @@ export function MenuItemList() {
         }}
         categories={categories}
       />
+
+      <AssignToppingModal
+        isOpen={assignModalState.isOpen}
+        onClose={() => setAssignModalState({ isOpen: false, item: null })}
+        onSuccess={() => {
+          setAssignModalState({ isOpen: false, item: null })
+          fetchItems()
+        }}
+        menuItemId={assignModalState.item?.id || null}
+        menuItemName={assignModalState.item?.name || ''}
+      />
+
+      <RecipeConfigModal
+        isOpen={recipeModalState.isOpen}
+        onClose={() => setRecipeModalState({ isOpen: false, item: null })}
+        onSuccess={() => {
+          setRecipeModalState({ isOpen: false, item: null })
+        }}
+        menuItemId={recipeModalState.item?.id || null}
+        menuItemName={recipeModalState.item?.name || ''}
+      />
+
+      {alertMessage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl text-center">
+            <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${alertMessage.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+              {alertMessage.type === 'success' ? (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </div>
+            <h3 className="mb-2 text-lg font-bold text-gray-900">
+              {alertMessage.type === 'success' ? 'Thành công' : 'Thất bại'}
+            </h3>
+            <p className="mb-6 text-sm text-gray-500">
+              {alertMessage.message}
+            </p>
+            <button
+              onClick={() => setAlertMessage(null)}
+              className="w-full rounded-lg bg-coffee px-4 py-2 font-bold text-white hover:opacity-90"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

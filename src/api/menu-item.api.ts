@@ -26,3 +26,15 @@ export async function updateMenuItemStatus(id: string, isActive: boolean) {
     body: JSON.stringify({ isActive })
   })
 }
+
+export async function getMenuItemToppingGroups(id: string) {
+  return httpClient<any>(`/menu-items/${id}/topping-groups`)
+}
+
+export async function assignMenuItemToppingGroups(id: string, toppingGroupIds: string[]) {
+  return httpClient<any>(`/menu-items/${id}/topping-groups`, {
+    method: 'PUT',
+    body: JSON.stringify({ toppingGroupIds })
+  })
+}
+
