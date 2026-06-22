@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Branch, BranchPayload } from "../../../types";
 import { StatusBadge } from "./OwnerFields";
 import {
@@ -6,9 +7,10 @@ import {
   TooltipTrigger,
   Tooltip,
 } from "@/components/ui/tooltip";
-import { Pencil, Power, PowerOff, Plus } from "lucide-react";
+import { Eye, Pencil, Power, PowerOff, Plus } from "lucide-react";
 import { DataTable } from "./DataTable";
 import { BranchDialog } from "./BranchDialog";
+import { BranchDetailDialog } from "./BranchDetailDialog";
 
 export function BranchesPanel({
   branches,
@@ -35,6 +37,8 @@ export function BranchesPanel({
   onEdit: (branch: Branch) => void;
   onToggleStatus: (id: string) => void;
 }) {
+  const [detailBranch, setDetailBranch] = useState<Branch | null>(null);
+
   return (
     <TooltipProvider>
       <section className="space-y-4">
@@ -68,7 +72,8 @@ export function BranchesPanel({
           renderRow={(branch) => (
             <tr
               key={branch.id}
-              className="border-t border-line bg-white hover:bg-cream"
+              className="cursor-pointer border-t border-line bg-white hover:bg-cream"
+              onClick={() => setDetailBranch(branch)}
             >
               <td className="px-3 py-3 font-semibold">{branch.name}</td>
               <td className="max-w-[260px] px-3 py-3 text-muted">
@@ -87,7 +92,27 @@ export function BranchesPanel({
                     <TooltipTrigger asChild>
                       <button
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
-                        onClick={() => onEdit(branch)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetailBranch(branch);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Xem chi tiết</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(branch);
+                        }}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -105,7 +130,10 @@ export function BranchesPanel({
                             ? "text-red-700 hover:bg-red-50"
                             : "text-green-700 hover:bg-green-50"
                         }`}
-                        onClick={() => onToggleStatus(branch.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleStatus(branch.id);
+                        }}
                       >
                         {branch.status === "active" ? (
                           <PowerOff className="h-4 w-4" />
@@ -136,6 +164,12 @@ export function BranchesPanel({
           saving={saving}
           onFormChange={onFormChange}
           onSave={onSave}
+        />
+
+        <BranchDetailDialog
+          isOpen={detailBranch !== null}
+          onClose={() => setDetailBranch(null)}
+          branch={detailBranch}
         />
       </section>
     </TooltipProvider>
