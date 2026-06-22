@@ -13,7 +13,7 @@ export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice }: Invoi
     <div className={`absolute top-0 right-0 h-full w-[35%] border-l border-line bg-white flex flex-col transition-transform duration-300 z-10 ${isOpen ? 'translate-x-0 shadow-2xl' : 'translate-x-full shadow-none'}`}>
       <div className="p-8 border-b border-line flex justify-between items-center bg-cream/30">
         <div>
-          <h3 className="text-2xl font-bold text-coffee font-serif">Chi tiết Đơn hàng</h3>
+          <h3 className="text-2xl font-bold text-coffee">Chi tiết Đơn hàng</h3>
           <p className="text-xs font-bold text-gold tracking-widest mt-1">MÃ ĐƠN: {invoice?.id || '#LH-98210'}</p>
         </div>
         <div className="flex items-center gap-4">

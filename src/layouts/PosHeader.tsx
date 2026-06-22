@@ -1,8 +1,17 @@
 import { Bell, Clock, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 
+const NAV_LINKS = [
+  { name: 'Thu Ngân', link: ROUTES.pos, exact: true },
+  { name: 'Hóa Đơn', link: ROUTES.invoices, exact: false },
+  // { name: 'Inventory', link: '#', exact: false },
+  { name: 'Tổng Quan', link: '#', exact: false },
+];
+
 export function PosHeader() {
+  const location = useLocation();
+
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white border-b border-line shadow-sm">
       <div className="flex items-center gap-6">
@@ -10,10 +19,21 @@ export function PosHeader() {
           Little Hogsmeade
         </h1>
         <div className="hidden md:flex items-center gap-6 ml-8">
-          <Link className="text-sm font-bold text-coffee border-b-2 border-coffee pb-1" to={ROUTES.home}>Dashboard</Link>
-          <Link className="text-sm font-semibold text-muted hover:text-coffee transition-colors" to={ROUTES.invoices}>Orders</Link>
-          <a className="text-sm font-semibold text-muted hover:text-coffee transition-colors" href="#">Inventory</a>
-          <a className="text-sm font-semibold text-muted hover:text-coffee transition-colors" href="#">Reports</a>
+          {NAV_LINKS.map((item) => {
+            const isActive = item.link !== '#' && (
+              item.exact ? location.pathname === item.link : location.pathname.includes(item.link)
+            );
+            
+            return (
+              <Link 
+                key={item.name}
+                to={item.link}
+                className={`text-sm transition-colors ${isActive ? 'font-bold text-coffee border-b-2 border-coffee pb-1' : 'font-semibold text-muted hover:text-coffee'}`}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
         </div>
       </div>
       <div className="flex items-center gap-3">

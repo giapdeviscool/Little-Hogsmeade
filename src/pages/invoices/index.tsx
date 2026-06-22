@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { InvoiceLayout } from '@/layouts/InvoiceLayout';
+import { PosLayout } from '@/layouts/PosLayout';
 import { InvoiceTable, type Invoice } from '@/components/invoices/InvoiceTable';
 import { InvoiceDetailPanel } from '@/components/invoices/InvoiceDetailPanel';
 import { RefundModal } from '@/components/invoices/RefundModal';
@@ -26,7 +26,7 @@ export function InvoicePage() {
   };
 
   return (
-    <InvoiceLayout>
+    <PosLayout>
       <div className="flex w-full h-full relative overflow-hidden bg-beige">
         <section className={`p-8 overflow-y-auto custom-scrollbar transition-all duration-300 h-full ${isDetailOpen ? 'w-[65%] border-r border-line' : 'w-full'}`}>
           <InvoiceTable invoices={MOCK_INVOICES} onSelectInvoice={handleSelectInvoice} />
@@ -45,6 +45,6 @@ export function InvoicePage() {
         onClose={() => setIsRefundModalOpen(false)} 
         invoiceId={selectedInvoice?.id || ''}
       />
-    </InvoiceLayout>
+    </PosLayout>
   );
 }

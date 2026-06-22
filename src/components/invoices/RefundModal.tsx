@@ -16,7 +16,7 @@ export function RefundModal({ isOpen, onClose, invoiceId }: RefundModalProps) {
           <div className="w-20 h-20 bg-red-500/10 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <Shield className="w-10 h-10" />
           </div>
-          <h3 className="text-2xl font-bold text-coffee mb-2 font-serif">Xác thực Hoàn tiền</h3>
+          <h3 className="text-2xl font-bold text-coffee mb-2">Xác thực Hoàn tiền</h3>
           <p className="text-muted text-sm mb-8 leading-relaxed">
             Vui lòng nhập mã OTP để tiếp tục hoàn tiền cho đơn hàng <span className="font-bold text-gold">{invoiceId}</span>
           </p>

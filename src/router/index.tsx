@@ -42,7 +42,7 @@ export function AppRouter() {
         <Route path={ROUTES.customerStores} element={<CustomerStoresPage />} />
         <Route path={ROUTES.customerMembership} element={<CustomerMembershipPage />} />
       </Route>
-      
+
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to={ROUTES.adminDashboard} replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
@@ -55,14 +55,15 @@ export function AppRouter() {
       </Route>
 
       <Route path="/home" element={<Navigate to="/admin/dashboard" replace />} />
-      
+
       <Route path={ROUTES.login} element={<LoginPage />} />
       <Route path={ROUTES.register} element={<RegisterPage />} />
       <Route path={ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
       <Route path="*" element={<Navigate to={ROUTES.customerHome} replace />} />
+
       <Route path={ROUTES.pos} element={<PosPage />} />
       <Route path={ROUTES.invoices} element={<InvoicePage />} />
-      <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
+      {/* <Route path="*" element={<Navigate to={ROUTES.home} replace />} /> */}
     </Routes>
   )
 }
