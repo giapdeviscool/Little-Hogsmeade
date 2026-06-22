@@ -1,5 +1,5 @@
 import React from 'react';
-import { PosHeader } from './PosHeader';
+import { PosHeader } from '@/layouts/PosHeader';
 
 interface PosLayoutProps {
   children: React.ReactNode;

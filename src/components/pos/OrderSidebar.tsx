@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { OrderTabs } from './OrderTabs';
-import { CartItem } from './CartItem';
-import { CartSummary } from './CartSummary';
+import { OrderTabs } from '@/components/pos/OrderTabs';
+import { CartItem } from '@/components/pos/CartItem';
+import { CartSummary } from '@/components/pos/CartSummary';
 
 export function OrderSidebar() {
   const [cartItems] = useState([

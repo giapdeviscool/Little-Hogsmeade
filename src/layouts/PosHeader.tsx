@@ -1,6 +1,6 @@
 import { Bell, Clock, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../constants/routes';
+import { ROUTES } from '@/constants/routes';
 
 export function PosHeader() {
   return (
@@ -11,7 +11,7 @@ export function PosHeader() {
         </h1>
         <div className="hidden md:flex items-center gap-6 ml-8">
           <Link className="text-sm font-bold text-coffee border-b-2 border-coffee pb-1" to={ROUTES.home}>Dashboard</Link>
-          <Link className="text-sm font-semibold text-muted hover:text-coffee transition-colors" to={ROUTES.pos}>Orders</Link>
+          <Link className="text-sm font-semibold text-muted hover:text-coffee transition-colors" to={ROUTES.invoices}>Orders</Link>
           <a className="text-sm font-semibold text-muted hover:text-coffee transition-colors" href="#">Inventory</a>
           <a className="text-sm font-semibold text-muted hover:text-coffee transition-colors" href="#">Reports</a>
         </div>

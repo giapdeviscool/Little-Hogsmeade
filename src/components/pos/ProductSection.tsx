@@ -1,5 +1,5 @@
-import { SearchFilter } from './SearchFilter';
-import { ProductGrid } from './ProductGrid';
+import { SearchFilter } from '@/components/pos/SearchFilter';
+import { ProductGrid } from '@/components/pos/ProductGrid';
 
 export function ProductSection() {
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ProductCard } from './ProductCard';
+import { ProductCard } from '@/components/pos/ProductCard';
 
 export function ProductGrid() {
   const [products] = useState([

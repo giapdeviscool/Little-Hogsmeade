@@ -4,7 +4,8 @@ import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { RegisterPage } from '../pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
-import { PosPage } from '../pages/pos/index'
+import { PosPage } from '@/pages/pos/index'
+import { InvoicePage } from '@/pages/invoices/index'
 
 export function AppRouter() {
   return (
@@ -15,6 +16,7 @@ export function AppRouter() {
       <Route path={ROUTES.register} element={<RegisterPage />} />
       <Route path={ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
       <Route path={ROUTES.pos} element={<PosPage />} />
+      <Route path={ROUTES.invoices} element={<InvoicePage />} />
       <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
     </Routes>
   )
