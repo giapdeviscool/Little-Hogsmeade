@@ -3,4 +3,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   forgotPassword: '/forgot-password',
+  pos: '/pos',
 } as const
+
+// trigger HMR
