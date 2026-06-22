@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react'
 import { ChevronDown, ChevronUp, Clock3, Edit3, Eye, ImagePlus, Loader2, Plus, Search, Trash2 } from 'lucide-react'
 import { LandingPage } from '../landing/LandingPage'
 import { CmsEditorModal } from './CmsEditorModal'
 import { PromotionsPanel } from './PromotionsPanel'
 import { Card } from '../../components/ui/Card'
+import { Pagination } from '../../components/ui/Pagination'
 import { cn } from '../../utils/cn'
 import { formatVND } from '../../utils/formatCurrency'
 import { formatVnDate, formatVnDateTime, formatVnTime } from '../../utils/date'
@@ -766,44 +767,55 @@ function PostsPanel() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<NoticeState | null>(null)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
+  // Debounce search input (400ms)
   useEffect(() => {
-    let alive = true
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await listPosts()
-        if (!alive) return
+    const timer = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const fetchPosts = useCallback(async (currentPage: number, currentSearch: string, currentStatus: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const params: Record<string, string | number> = { page: currentPage, limit: 5 }
+      if (currentSearch.trim()) params.search = currentSearch.trim()
+      if (currentStatus !== 'all') params.status = currentStatus
+      const response = await listPosts(params)
+      const paginated = response.data
+      if (paginated && typeof paginated === 'object' && 'items' in paginated) {
+        setPosts((paginated as { items: Post[] }).items)
+        const pag = (paginated as { pagination: { page: number; limit: number; total: number; totalPages: number } }).pagination
+        setTotalPages(pag.totalPages)
+        setTotal(pag.total)
+      } else {
         setPosts(normalizeList<Post>(response.data))
-      } catch (loadError) {
-        if (!alive) return
-        setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách bài viết.')
-      } finally {
-        if (alive) setLoading(false)
+        setTotalPages(1)
+        setTotal(0)
       }
-    }
-
-    void load()
-
-    return () => {
-      alive = false
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách bài viết.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
-  const filteredPosts = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return posts
-      .filter((post) => {
-        const matchesKeyword = !keyword || [post.title, post.slug, post.category, post.tags || ''].some((value) => value.toLowerCase().includes(keyword))
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'published' ? post.isPublished : !post.isPublished)
-        return matchesKeyword && matchesStatus
-      })
-      .sort((a, b) => (b.publishedAt ?? b.createdAt ?? '').localeCompare(a.publishedAt ?? a.createdAt ?? ''))
-  }, [posts, search, statusFilter])
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter])
+
+  // Fetch posts when page, search, or status changes
+  useEffect(() => {
+    void fetchPosts(page, debouncedSearch, statusFilter)
+  }, [page, debouncedSearch, statusFilter, fetchPosts])
 
   function startCreate() {
     setEditingPost(null)
@@ -819,8 +831,8 @@ function PostsPanel() {
     if (!window.confirm('Xóa bài viết này?')) return
     try {
       await deletePost(id)
-      setPosts((current) => current.filter((item) => item.id !== id))
       setNotice({ type: 'success', message: 'Đã xóa bài viết.' })
+      void fetchPosts(page, debouncedSearch, statusFilter)
     } catch (deleteError) {
       setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : 'Không xóa được bài viết.' })
     }
@@ -837,6 +849,7 @@ function PostsPanel() {
       return [saved, ...next]
     })
     setNotice({ type: 'success', message: id ? 'Đã cập nhật bài viết.' : 'Đã tạo bài viết mới.' })
+    void fetchPosts(page, debouncedSearch, statusFilter)
   }
 
   return (
@@ -868,10 +881,10 @@ function PostsPanel() {
       </Card>
 
       {notice && <InlineNotice notice={notice} />}
-      <StateShell loading={loading} error={error} empty={filteredPosts.length === 0 && !loading} title="Chưa có bài viết" description="Tạo bài viết đầu tiên cho blog / tin tức." />
+      <StateShell loading={loading} error={error} empty={posts.length === 0 && !loading} title="Chưa có bài viết" description="Tạo bài viết đầu tiên cho blog / tin tức." />
 
       <div className="grid gap-4">
-        {filteredPosts.map((post) => (
+        {posts.map((post) => (
           <article key={post.id} className="grid gap-4 rounded-[22px] border border-line bg-white p-4 shadow-soft lg:grid-cols-[160px_1fr]">
             <img src={post.thumbnailUrl} alt={post.title} className="h-[140px] w-full rounded-[16px] object-cover" />
             <div className="space-y-4">
@@ -907,6 +920,10 @@ function PostsPanel() {
         ))}
       </div>
 
+      {!loading && totalPages > 0 && (
+        <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label="bài viết" />
+      )}
+
       {editorOpen && (
         <PostEditorDialog
           post={editingPost}
@@ -927,46 +944,61 @@ function EventsPanel() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<NoticeState | null>(null)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [branches, setBranches] = useState<Branch[]>([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
+  // Debounce search input (400ms)
   useEffect(() => {
-    let alive = true
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const [eventsRes, branchesRes] = await Promise.all([listEvents(), getBranches()])
-        if (!alive) return
-        setEvents(normalizeList<Event>(eventsRes.data))
-        setBranches(normalizeList<Branch>(branchesRes.data))
-      } catch (loadError) {
-        if (!alive) return
-        setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách sự kiện.')
-      } finally {
-        if (alive) setLoading(false)
+    const timer = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // Load branches once
+  useEffect(() => {
+    void getBranches().then((res) => setBranches(normalizeList<Branch>(res.data))).catch(() => {})
+  }, [])
+
+  const fetchEvents = useCallback(async (currentPage: number, currentSearch: string, currentStatus: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const params: Record<string, string | number> = { page: currentPage, limit: 4 }
+      if (currentSearch.trim()) params.search = currentSearch.trim()
+      if (currentStatus !== 'all') params.status = currentStatus
+      const response = await listEvents(params)
+      const paginated = response.data
+      if (paginated && typeof paginated === 'object' && 'items' in paginated) {
+        setEvents((paginated as { items: Event[] }).items)
+        const pag = (paginated as { pagination: { page: number; limit: number; total: number; totalPages: number } }).pagination
+        setTotalPages(pag.totalPages)
+        setTotal(pag.total)
+      } else {
+        setEvents(normalizeList<Event>(response.data))
+        setTotalPages(1)
+        setTotal(0)
       }
-    }
-
-    void load()
-
-    return () => {
-      alive = false
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách sự kiện.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
-  const filteredEvents = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return events
-      .filter((event) => {
-        const matchesKeyword = !keyword || [event.title, event.description, event.locationNote].some((value) => value.toLowerCase().includes(keyword))
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'published' ? event.isPublished : !event.isPublished)
-        return matchesKeyword && matchesStatus
-      })
-      .sort((a, b) => (b.eventDate + b.startTime).localeCompare(a.eventDate + a.startTime))
-  }, [events, search, statusFilter])
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter])
+
+  // Fetch events when page, search, or status changes
+  useEffect(() => {
+    void fetchEvents(page, debouncedSearch, statusFilter)
+  }, [page, debouncedSearch, statusFilter, fetchEvents])
 
   function startCreate() {
     setEditingEvent(null)
@@ -982,8 +1014,8 @@ function EventsPanel() {
     if (!window.confirm('Xóa sự kiện này?')) return
     try {
       await deleteEvent(id)
-      setEvents((current) => current.filter((item) => item.id !== id))
       setNotice({ type: 'success', message: 'Đã xóa sự kiện.' })
+      void fetchEvents(page, debouncedSearch, statusFilter)
     } catch (deleteError) {
       setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : 'Không xóa được sự kiện.' })
     }
@@ -997,6 +1029,7 @@ function EventsPanel() {
       return [saved, ...next]
     })
     setNotice({ type: 'success', message: id ? 'Đã cập nhật sự kiện.' : 'Đã tạo sự kiện mới.' })
+    void fetchEvents(page, debouncedSearch, statusFilter)
   }
 
   return (
@@ -1028,10 +1061,10 @@ function EventsPanel() {
       </Card>
 
       {notice && <InlineNotice notice={notice} />}
-      <StateShell loading={loading} error={error} empty={filteredEvents.length === 0 && !loading} title="Chưa có sự kiện" description="Tạo sự kiện đầu tiên cho chiến dịch, voucher hoặc combo." />
+      <StateShell loading={loading} error={error} empty={events.length === 0 && !loading} title="Chưa có sự kiện" description="Tạo sự kiện đầu tiên cho chiến dịch, voucher hoặc combo." />
 
       <div className="grid gap-6 md:grid-cols-2">
-        {filteredEvents.map((event) => (
+        {events.map((event) => (
           <article key={event.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
             <div className="relative aspect-video bg-beige">
               <img src={event.thumbnailUrl} alt={event.title} className="h-full w-full object-cover" />
@@ -1067,6 +1100,10 @@ function EventsPanel() {
           </article>
         ))}
       </div>
+
+      {!loading && totalPages > 0 && (
+        <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label="sự kiện" />
+      )}
 
       {editorOpen && (
         <EventEditorDialog
@@ -1631,6 +1668,7 @@ function safeParse<T>(value: string | null | undefined, fallback: T): T {
     return fallback
   }
 }
+
 
 function normalizeList<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[]

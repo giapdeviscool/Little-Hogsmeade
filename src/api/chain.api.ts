@@ -1,6 +1,6 @@
 import { httpClient } from './httpClient'
 import { getAuthToken } from '../store/auth.store'
-import type { ApiResponse, Branch, BranchListResponse, BranchPayload, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from '../types'
+import type { ApiResponse, PaginatedData, Branch, BranchListResponse, BranchPayload, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from '../types'
 
 function authHeaders(): Record<string, string> {
   const token = getAuthToken()
@@ -84,8 +84,9 @@ export function updatePricing(payload: { menuItemId: string; basePrice: number; 
   })
 }
 
-export function getPromotions() {
-  return httpClient<ApiResponse<Promotion[]>>('/promotions', {
+export function getPromotions(params?: Record<string, string | number>) {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  return httpClient<ApiResponse<PaginatedData<Promotion>>>(`/promotions${query}`, {
     headers: authHeaders(),
   })
 }

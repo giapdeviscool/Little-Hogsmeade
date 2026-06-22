@@ -406,7 +406,7 @@ export function LandingPage({
             </div>
           )}
 
-          {!hideBrowserChrome && (
+          {!hideBrowserChrome && !embedded && (
             <footer className="bg-coffee py-16 text-white">
               <div className="mx-auto grid max-w-[1320px] gap-10 px-4 md:grid-cols-2 md:px-8 lg:grid-cols-[1.4fr_.8fr_.9fr_1fr] lg:px-14">
                 <div>
@@ -625,7 +625,7 @@ export function FeaturedMenuSection({
   )
 }
 
-export function EventSection({ events }: { events: Event[] }) {
+export function EventSection({ events, className }: { events: Event[]; className?: string }) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
   const items = events.length
@@ -646,7 +646,7 @@ export function EventSection({ events }: { events: Event[] }) {
     ]
 
   return (
-    <section id="landing-events" className="border-y border-line bg-white py-20 md:py-24">
+    <section id="landing-events" className={className || "border-y border-line bg-white py-20 md:py-24"}>
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
         <p className="text-center text-xs font-bold uppercase tracking-[0.32em] text-gold">Sự kiện</p>
         <h2 className="mx-auto mt-4 max-w-[700px] text-center text-[36px] font-bold leading-[1] tracking-[-0.055em] md:text-[48px]">
