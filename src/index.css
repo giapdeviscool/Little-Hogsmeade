@@ -121,3 +121,127 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
+
+/* ── Quill rich-text editor overrides ── */
+.cms-rich-editor .ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 1px solid var(--color-line);
+  border-radius: 0;
+  background: var(--color-cream);
+  font-family: var(--font-sans);
+}
+
+.cms-rich-editor .ql-container.ql-snow {
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-coffee);
+  min-height: 180px;
+}
+
+.cms-rich-editor .ql-editor {
+  min-height: 180px;
+  line-height: 1.75;
+  padding: 14px 16px;
+}
+
+.cms-rich-editor .ql-editor.ql-blank::before {
+  color: var(--color-muted);
+  font-style: normal;
+}
+
+.cms-rich-editor .ql-snow .ql-stroke {
+  stroke: var(--color-coffee);
+}
+
+.cms-rich-editor .ql-snow .ql-fill,
+.cms-rich-editor .ql-snow .ql-stroke.ql-fill {
+  fill: var(--color-coffee);
+}
+
+.cms-rich-editor .ql-snow .ql-picker-label {
+  color: var(--color-coffee);
+}
+
+.cms-rich-editor .ql-snow button:hover .ql-stroke,
+.cms-rich-editor .ql-snow .ql-picker-label:hover .ql-stroke {
+  stroke: var(--color-gold);
+}
+
+.cms-rich-editor .ql-snow button:hover .ql-fill,
+.cms-rich-editor .ql-snow .ql-picker-label:hover .ql-fill {
+  fill: var(--color-gold);
+}
+
+.cms-rich-editor .ql-snow button.ql-active .ql-stroke {
+  stroke: var(--color-gold);
+}
+
+.cms-rich-editor .ql-snow button.ql-active .ql-fill {
+  fill: var(--color-gold);
+}
+
+.cms-rich-editor > div:has(.ql-container:focus-within) {
+  border-color: var(--color-latte);
+}
+
+/* ── Rendered HTML content inside detail dialogs ── */
+.cms-rendered-content h1 {
+  font-size: 1.5em;
+  font-weight: 700;
+  margin: 0.6em 0 0.4em;
+}
+
+.cms-rendered-content h2 {
+  font-size: 1.25em;
+  font-weight: 700;
+  margin: 0.5em 0 0.3em;
+}
+
+.cms-rendered-content h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.4em 0 0.2em;
+}
+
+.cms-rendered-content p {
+  margin: 0.5em 0;
+}
+
+.cms-rendered-content ul,
+.cms-rendered-content ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.cms-rendered-content li {
+  margin: 0.25em 0;
+}
+
+.cms-rendered-content blockquote {
+  border-left: 3px solid var(--color-latte);
+  padding-left: 1em;
+  margin: 0.75em 0;
+  color: var(--color-muted);
+}
+
+.cms-rendered-content a {
+  color: var(--color-gold);
+  text-decoration: underline;
+}
+
+.cms-rendered-content img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 0.5em 0;
+}
+
+.cms-rendered-content pre {
+  background: var(--color-cream);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  font-size: 0.9em;
+}
