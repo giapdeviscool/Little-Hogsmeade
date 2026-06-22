@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as payrollApi from '../../../api/payroll.api'
 import * as employeeApi from '../../../api/employee.api'
+import { getAuthSession } from '../../../store/auth.store'
 import type { PayrollSummary, Branch } from '../../../types'
 
 function getCurrentMonth(): string {
@@ -9,9 +10,13 @@ function getCurrentMonth(): string {
 }
 
 export function PayrollView() {
+  const authSession = getAuthSession()
+  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const userBranchId = authSession?.user?.branchId || ''
+
   const [payroll, setPayroll] = useState<PayrollSummary[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
-  const [selectedBranch, setSelectedBranch] = useState('')
+  const [selectedBranch, setSelectedBranch] = useState(isChainOwner ? '' : userBranchId)
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -28,7 +33,9 @@ export function PayrollView() {
   async function loadBranches() {
     try {
       const res = await employeeApi.getBranches()
-      setBranches(Array.isArray(res.data) ? res.data : [])
+      const data = res.data
+      const items = Array.isArray(data) ? data : (data as any)?.items || []
+      setBranches(items)
     } catch { /* ignore */ }
   }
 
@@ -68,14 +75,22 @@ export function PayrollView() {
           <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}
             className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm" />
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-muted">Chi nhánh:</label>
-          <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm">
-            <option value="">Tất cả</option>
-            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        </div>
+        {/* Branch filter - Only show for Owner */}
+        {isChainOwner && (
+          <div className="flex gap-3 items-center">
+            <label className="text-sm font-medium text-secondary min-w-[100px]">Chi nhánh:</label>
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="w-full sm:w-64 rounded-lg border border-border bg-white px-4 py-2 text-sm focus:border-coffee focus:outline-none"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Summary cards */}
