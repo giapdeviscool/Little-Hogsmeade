@@ -117,10 +117,10 @@ export function OwnerPage() {
         chainApi.getPromotions(),
       ]);
 
-      setBranches(branchResponse.data.items);
-      setConfig(configResponse.data);
-      setMenuPreview(previewResponse.data);
-      setPromotions(promotionsResponse.data);
+      setBranches(branchResponse.data?.items || []);
+      setConfig(configResponse.data || null);
+      setMenuPreview(previewResponse.data || { categories: [], menuItems: [] });
+      setPromotions(promotionsResponse.data?.items || []);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -135,7 +135,7 @@ export function OwnerPage() {
         startDate,
         endDate,
       });
-      setDashboard(response.data);
+      setDashboard(response.data || null);
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -182,7 +182,7 @@ export function OwnerPage() {
       setSaving(true);
       setError("");
       const response = await chainApi.updateChainConfig(nextConfig);
-      setConfig(response.data);
+      setConfig(response.data || null);
       setNotice("Đã lưu cấu hình chuỗi.");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -197,7 +197,7 @@ export function OwnerPage() {
       setError("");
       const response = await chainApi.syncMenu();
       setNotice(
-        `Đã đồng bộ ${response.data.syncedBranches} chi nhánh đang hoạt động.`,
+        `Đã đồng bộ ${response.data?.syncedBranches} chi nhánh đang hoạt động.`,
       );
       setConfirmSyncOpen(false);
       await loadModule();
@@ -226,7 +226,7 @@ export function OwnerPage() {
         branchIds,
       });
       setNotice(
-        `Đã cập nhật ${response.data.updatedBranchItems} giá bán tại chi nhánh.`,
+        `Đã cập nhật ${response.data?.updatedBranchItems} giá bán tại chi nhánh.`,
       );
       await loadModule();
     } catch (err) {
@@ -258,7 +258,7 @@ export function OwnerPage() {
       setIsPromotionModalOpen(false);
       setSelectedPromotionId(null);
       const response = await chainApi.getPromotions();
-      setPromotions(response.data);
+      setPromotions(response.data?.items || []);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -309,7 +309,7 @@ export function OwnerPage() {
       setNotice("Đã cập nhật trạng thái khuyến mãi.");
       setConfirmTogglePromotionId(null);
       const response = await chainApi.getPromotions();
-      setPromotions(response.data);
+      setPromotions(response.data?.items || []);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
