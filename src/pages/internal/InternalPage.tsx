@@ -6,8 +6,12 @@ import { ShiftManagement } from './components/ShiftManagement'
 import { ScheduleView } from './components/ScheduleView'
 import { AttendanceKiosk } from './components/AttendanceKiosk'
 import { PayrollView } from './components/PayrollView'
+import { CategoryList } from './components/CategoryList'
+import { MenuItemList } from './components/MenuItemList'
+import { ToppingGroups } from './components/ToppingGroups'
+import { RecipesList } from './components/RecipesList'
 
-type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll'
+type InternalTab = 'employees' | 'inventory' | 'shifts' | 'schedule' | 'attendance' | 'payroll' | 'categories' | 'menuItems' | 'toppingGroups' | 'recipes'
 
 export function InternalPage() {
   const [activeTab, setActiveTab] = useState<InternalTab>('employees')
@@ -19,6 +23,10 @@ export function InternalPage() {
     { key: 'attendance', label: 'Chấm công' },
     { key: 'payroll', label: 'Bảng lương' },
     { key: 'inventory', label: 'Tồn kho' },
+    { key: 'categories', label: 'Danh mục menu' },
+    { key: 'menuItems', label: 'Danh sách món ăn' },
+    { key: 'toppingGroups', label: 'Nhóm Topping' },
+    { key: 'recipes', label: 'Công thức BOM' },
   ]
 
   return (
@@ -44,9 +52,13 @@ export function InternalPage() {
         {activeTab === 'employees' && <EmployeeList />}
         {activeTab === 'inventory' && <InventoryView />}
         {activeTab === 'shifts' && <ShiftManagement />}
-        {activeTab === 'schedule' && <ScheduleView />}
-        {activeTab === 'attendance' && <AttendanceKiosk />}
-        {activeTab === 'payroll' && <PayrollView />}
+        { activeTab === 'schedule' && <ScheduleView /> }
+        { activeTab === 'attendance' && <AttendanceKiosk /> }
+        { activeTab === 'payroll' && <PayrollView /> }
+        { activeTab === 'categories' && <CategoryList /> }
+        { activeTab === 'menuItems' && <MenuItemList /> }
+        { activeTab === 'toppingGroups' && <ToppingGroups /> }
+        { activeTab === 'recipes' && <RecipesList /> }
       </div>
     </div>
   )
