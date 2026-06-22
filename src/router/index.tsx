@@ -28,8 +28,8 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to={ROUTES.customerHome} replace />} />
-      <Route path={ROUTES.landing} element={<LandingPage embedded />} />
       <Route element={<CustomerLayout />}>
+        <Route path={ROUTES.landing} element={<LandingPage embedded />} />
         <Route path={ROUTES.customerAbout} element={<CustomerAboutPage />} />
         <Route path={ROUTES.customerMenu} element={<CustomerMenuPage />} />
         <Route path={ROUTES.customerPromotions} element={<CustomerPromotionsPage />} />

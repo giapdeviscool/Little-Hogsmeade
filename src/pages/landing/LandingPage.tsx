@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowRight, Clock3, MapPin, Search, Star, X, Navigation } from 'lucide-react'
-import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
+import { ArrowRight, Clock3, MapPin, Search, Star, Navigation, Eye } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
+import { EventDetailModal, PostDetailModal } from '../../components/customer/DetailModals'
 import defaultHeroImage from '../../assets/image/default.jpg'
 import { cn } from '../../utils/cn'
 import { formatVND } from '../../utils/formatCurrency'
@@ -194,8 +194,8 @@ export function LandingPage({
         const normalizedBranches = normalizeBranches(branchResponse.data)
         setBanners(normalizedBanners)
         setPages(normalizedPages)
-        setPosts(normalizedPosts)
-        setEvents(normalizedEvents)
+        setPosts(normalizedPosts.filter((p) => p.isPublished).slice(0, 3))
+        setEvents(normalizedEvents.filter((e) => e.isPublished).slice(0, 2))
         setBranches(normalizedBranches)
         hydrateBookingDraft(normalizedPages, setBookingDraft)
       } catch (loadError) {
@@ -279,7 +279,7 @@ export function LandingPage({
 
   async function handleBookingSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    
+
     if (!bookingDraft.branchId) {
       setBookingNotice('Vui lòng chọn chi nhánh.')
       return
@@ -337,35 +337,6 @@ export function LandingPage({
 
   return (
     <div className={shellClassName}>
-      {!hideBrowserChrome && (
-        <header className="sticky top-0 z-50 border-b border-line/80 bg-white/95 backdrop-blur">
-          <div className="mx-auto flex h-[80px] max-w-[1440px] items-center gap-4 px-4 md:px-8 lg:px-14">
-            <button type="button" onClick={() => scrollToSection('landing-hero')} className="mr-auto text-[22px] font-bold tracking-[-0.04em] md:text-[24px]">
-              Little Hogsmeade
-            </button>
-            <nav className="hidden items-center gap-5 text-sm font-semibold xl:flex">
-              <button type="button" onClick={() => scrollToSection('landing-story')}>Giới thiệu</button>
-              <button type="button" onClick={() => scrollToSection('landing-menu')}>Thực đơn</button>
-              <button type="button" onClick={() => scrollToSection('landing-events')}>Sự kiện</button>
-              <button type="button" onClick={() => scrollToSection('landing-posts')}>Tin tức</button>
-              <button type="button" onClick={() => scrollToSection('landing-stores')}>Cửa hàng</button>
-            </nav>
-            <button type="button" aria-label="Tìm kiếm" className="hidden rounded-full border border-line bg-white px-3 py-2 text-sm font-semibold text-coffee md:inline-flex">
-              <Search className="h-4 w-4" />
-            </button>
-            <LanguageSwitch />
-            <button type="button" onClick={() => scrollToSection('landing-booking')} className="rounded-full bg-coffee px-4 py-2.5 text-sm font-semibold text-white shadow-soft md:px-5">
-              Đặt bàn ngay
-            </button>
-            {onClose && (
-              <button type="button" onClick={onClose} className="rounded-full border border-line bg-white px-4 py-2.5 text-sm font-semibold text-coffee shadow-soft" aria-label="Đóng preview">
-                <span className="hidden md:inline">Đóng preview</span>
-                <X className="h-4 w-4 md:hidden" />
-              </button>
-            )}
-          </div>
-        </header>
-      )}
 
       {loading ? (
         <LandingLoading embedded={embedded} />
@@ -655,6 +626,8 @@ export function FeaturedMenuSection({
 }
 
 export function EventSection({ events }: { events: Event[] }) {
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+
   const items = events.length
     ? events
     : [
@@ -662,14 +635,14 @@ export function EventSection({ events }: { events: Event[] }) {
         id: 'fallback-1',
         title: 'Đêm Nhạc Acoustic',
         description: 'Đêm acoustic ấm áp cùng ban nhạc khách mời, free welcome drink.',
-        thumbnailUrl: defaultHero.image,
+        thumbnailUrl: defaultHeroImage,
         eventDate: new Date().toISOString(),
         startTime: '20:00',
         endTime: '23:00',
         locationNote: 'Sân khấu tầng trệt',
         ticketPrice: 0,
         isPublished: true,
-      },
+      } as unknown as Event,
     ]
 
   return (
@@ -677,12 +650,12 @@ export function EventSection({ events }: { events: Event[] }) {
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
         <p className="text-center text-xs font-bold uppercase tracking-[0.32em] text-gold">Sự kiện</p>
         <h2 className="mx-auto mt-4 max-w-[700px] text-center text-[36px] font-bold leading-[1] tracking-[-0.055em] md:text-[48px]">
-          Những đêm đáng nhớ tại Little Hogsmeade
+          Khoảnh khắc đáng nhớ tại Little Hogsmeade
         </h2>
         <div className="mt-14 grid gap-7 lg:grid-cols-2">
           {items.map((event) => (
-            <article key={event.id} className="relative min-h-[380px] overflow-hidden rounded-[22px] bg-coffee">
-              <img src={event.thumbnailUrl} alt={event.title} className="absolute inset-0 h-full w-full object-cover opacity-85" />
+            <article key={event.id} className="relative min-h-[380px] overflow-hidden rounded-[22px] bg-coffee group cursor-pointer" onClick={() => setSelectedEvent(event)}>
+              <img src={event.thumbnailUrl} alt={event.title} className="absolute inset-0 h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105 group-hover:opacity-100" />
               <div className="absolute inset-0 bg-gradient-to-t from-coffee/95 via-coffee/25 to-transparent" />
               <span className="absolute left-6 top-6 rounded-[14px] bg-white px-4 py-3 text-center text-coffee shadow-soft">
                 <small className="block text-[11px] tracking-[0.14em] text-muted">{formatVnDate(event.eventDate)}</small>
@@ -694,24 +667,27 @@ export function EventSection({ events }: { events: Event[] }) {
                   {formatVnTime(event.startTime)} - {formatVnTime(event.endTime)}
                 </small>
                 <h3 className="mt-3 text-[29px] font-bold">{event.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/80">{event.description}</p>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/80">{event.description}</p>
                 <p className="mt-3 text-sm text-white/70">
                   <MapPin className="mr-1 inline h-4 w-4" />
                   {event.locationNote}
                 </p>
-                <button type="button" className="mt-5 rounded-full bg-white px-5 py-3 text-sm font-bold text-coffee">
-                  Đăng ký tham gia / Đặt bàn trước <ArrowRight className="ml-1 inline h-4 w-4" />
-                </button>
+                <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-3 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/30">
+                  <Eye className="h-4 w-4" /> Xem chi tiết event
+                </div>
               </div>
             </article>
           ))}
         </div>
       </div>
+      <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </section>
   )
 }
 
-export function PostSection({ posts }: { posts: Post[] }) {
+export function PostSection({ posts, showSeeMore = false }: { posts: Post[], showSeeMore?: boolean }) {
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
+
   return (
     <section id="landing-posts" className="bg-cream py-20 md:py-24">
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
@@ -720,19 +696,26 @@ export function PostSection({ posts }: { posts: Post[] }) {
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Tin tức / Blog</p>
             <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">Bài viết mới từ quán</h2>
           </div>
+          {showSeeMore && (
+            <a href="/blog" className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-6 py-3 text-sm font-bold text-coffee transition hover:border-coffee">
+              Xem tất cả bài viết <ArrowRight className="h-4 w-4" />
+            </a>
+          )}
         </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
           {posts.map((post) => (
-            <article key={post.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
-              <img src={post.thumbnailUrl} alt={post.title} className="h-[210px] w-full object-cover" />
-              <div className="p-5">
+            <article key={post.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft group cursor-pointer transition hover:border-coffee hover:-translate-y-1" onClick={() => setSelectedPost(post)}>
+              <div className="overflow-hidden">
+                <img src={post.thumbnailUrl} alt={post.title} className="h-[210px] w-full object-cover transition duration-500 group-hover:scale-105" />
+              </div>
+              <div className="p-5 flex flex-col h-[calc(100%-210px)]">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold">{post.category}</p>
-                <h3 className="mt-2 text-[18px] font-bold leading-6">{post.title}</h3>
-                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{post.content}</p>
+                <h3 className="mt-2 text-[18px] font-bold leading-6 transition group-hover:text-coffee">{post.title}</h3>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted flex-1">{post.content}</p>
                 <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-xs text-muted">
                   <span>{formatVnDate(post.publishedAt ?? post.createdAt)}</span>
-                  <span>{post.tags}</span>
+                  <span className="flex items-center gap-1 font-bold text-coffee"><Eye className="h-3.5 w-3.5" /> Đọc tiếp</span>
                 </div>
               </div>
             </article>
@@ -746,6 +729,7 @@ export function PostSection({ posts }: { posts: Post[] }) {
           </Card>
         )}
       </div>
+      <PostDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />
     </section>
   )
 }
@@ -792,7 +776,7 @@ export function BookingSection({
               {notice}
             </div>
           )}
-          
+
           {!draft.branchId ? (
             <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -802,13 +786,13 @@ export function BookingSection({
                 </button>
               </div>
               {locationNotice && <p className="mb-4 text-xs italic text-muted">{locationNotice}</p>}
-              <div className="grid max-h-[360px] gap-3 overflow-y-auto pr-2">
+              <div className="grid max-h-[360px] gap-3 overflow-y-auto">
                 {branches.map((b) => (
                   <button
                     key={b.id}
                     type="button"
                     onClick={() => setDraft({ ...draft, branchId: b.id })}
-                    className="flex w-full flex-col gap-2 rounded-[14px] border border-line bg-white p-4 text-left shadow-soft transition hover:border-coffee"
+                    className="flex w-full flex-col gap-2 rounded-[14px] border border-line bg-white p-4 text-left transition hover:border-coffee"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <strong className="text-[15px] leading-snug">{b.name}</strong>
@@ -839,18 +823,18 @@ export function BookingSection({
 
               <form className="flex flex-col gap-4" onSubmit={onSubmit}>
 
-            <LandingInput label="Họ và tên" value={draft.name} onChange={(value) => setDraft({ ...draft, name: value })} placeholder="Trần Mai Anh" />
-            <LandingInput label="Số điện thoại" value={draft.phone} onChange={(value) => setDraft({ ...draft, phone: value })} placeholder="0912 345 678" />
-            <div className="grid grid-cols-2 gap-3">
-              <LandingInput label="Ngày giờ" value={draft.datetime} onChange={(value) => setDraft({ ...draft, datetime: value })} placeholder="2026-06-20T19:30" type="datetime-local" />
-              <LandingInput label="Số lượng khách" value={draft.guests} onChange={(value) => setDraft({ ...draft, guests: value })} placeholder="4" />
+                <LandingInput label="Họ và tên" value={draft.name} onChange={(value) => setDraft({ ...draft, name: value })} placeholder="Trần Mai Anh" />
+                <LandingInput label="Số điện thoại" value={draft.phone} onChange={(value) => setDraft({ ...draft, phone: value })} placeholder="0912 345 678" />
+                <div className="grid grid-cols-2 gap-3">
+                  <LandingInput label="Ngày giờ" value={draft.datetime} onChange={(value) => setDraft({ ...draft, datetime: value })} placeholder="2026-06-20T19:30" type="datetime-local" />
+                  <LandingInput label="Số lượng khách" value={draft.guests} onChange={(value) => setDraft({ ...draft, guests: value })} placeholder="4" />
+                </div>
+                <LandingInput label="Ghi chú" value={draft.note} onChange={(value) => setDraft({ ...draft, note: value })} placeholder="Sinh nhật, ghế trẻ em..." />
+                <button type="submit" className="h-12 w-full rounded-[12px] bg-coffee text-sm font-bold text-white">
+                  Xác nhận đặt bàn
+                </button>
+              </form>
             </div>
-            <LandingInput label="Ghi chú" value={draft.note} onChange={(value) => setDraft({ ...draft, note: value })} placeholder="Sinh nhật, ghế trẻ em..." />
-            <button type="submit" className="h-12 w-full rounded-[12px] bg-coffee text-sm font-bold text-white">
-              Xác nhận đặt bàn
-            </button>
-          </form>
-          </div>
           )}
         </Card>
       </div>

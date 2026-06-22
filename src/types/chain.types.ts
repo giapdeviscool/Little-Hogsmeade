@@ -107,4 +107,5 @@ export type PromotionPayload = {
   discountType: 'percent' | 'fixed'
   scope: 'global' | 'specific'
   appliedBranches: string[]
+  isActive?: boolean
 }

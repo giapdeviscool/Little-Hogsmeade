@@ -110,7 +110,7 @@ export function CustomerLayout() {
           <nav className="hidden items-center gap-5 text-sm font-semibold xl:flex">
             <Link to={ROUTES.customerHome}>Trang chủ</Link>
             <Link to={ROUTES.customerMenu}>Thực đơn</Link>
-            <Link to={ROUTES.customerPromotions}>Sự kiện & KM</Link>
+            <Link to={ROUTES.customerPromotions}>Sự kiện</Link>
             <Link to={ROUTES.customerBlog}>Tin tức</Link>
             <Link to={ROUTES.customerStores}>Cửa hàng</Link>
             <Link to={ROUTES.customerMembership}>Thành viên</Link>
@@ -119,10 +119,10 @@ export function CustomerLayout() {
             <Search className="h-4 w-4" />
           </button>
           <LanguageSwitch />
-          
+
           <div className="flex items-center gap-3">
             {user ? (
-              <Link to={isEmployee ? ROUTES.home : ROUTES.customerMembership} className="hidden text-sm font-semibold text-coffee hover:underline md:block">
+              <Link to={isEmployee ? ROUTES.adminDashboard : ROUTES.customerMembership} className="hidden text-sm font-semibold text-coffee hover:underline md:block">
                 {isEmployee ? 'Bảng điều khiển' : 'Tài khoản'}
               </Link>
             ) : (

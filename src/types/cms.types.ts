@@ -76,6 +76,7 @@ export type PostPayload = {
 
 export type Event = {
   id: string
+  branchId: string
   title: string
   description: string
   thumbnailUrl: string
@@ -90,6 +91,7 @@ export type Event = {
 }
 
 export type EventPayload = {
+  branchId: string
   title: string
   description: string
   thumbnailUrl: string

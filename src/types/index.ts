@@ -10,3 +10,5 @@ export type { OwnerActiveTab } from './owner.types'
 export type { ProductMock, ProductStatus } from './product.types'
 export type { TableMapMock, TableShape, TableStatus } from './table.types'
 export type { Reservation, ReservationPayload, ReservationStatus } from './reservation.types'
+export * from './customer.types'  
+ 

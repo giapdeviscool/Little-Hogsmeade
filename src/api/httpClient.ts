@@ -20,5 +20,14 @@ export async function httpClient<T>(path: string, init?: RequestInit): Promise<T
     throw new Error(validationMessage || errorPayload?.message || `Request failed: ${response.status}`)
   }
 
-  return response.json() as Promise<T>
+  if (response.status === 204) {
+    return {} as T
+  }
+
+  const text = await response.text()
+  if (!text) {
+    return {} as T
+  }
+
+  return JSON.parse(text) as T
 }

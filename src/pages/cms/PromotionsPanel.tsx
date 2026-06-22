@@ -4,42 +4,58 @@ import { Card } from '../../components/ui/Card'
 import { CmsEditorModal } from './CmsEditorModal'
 import {
   createPromotion,
-  deletePromotion,
-  listPromotions,
-  updatePromotion,
-} from '../../api/cms.api'
-import type { Promotion, PromotionPayload } from '../../types/cms.types'
+  getPromotions,
+} from '../../api/chain.api'
+import { getBranches } from '../../api/chain.api'
+import { httpClient } from '../../api/httpClient'
+import type { Promotion, PromotionPayload, Branch, ApiResponse } from '../../types'
 import { formatVnDate } from '../../utils/date'
 import { cn } from '../../utils/cn'
+import { getAuthToken } from '../../store/auth.store'
 
 type NoticeState = { type: 'success' | 'error'; message: string }
 
 const emptyPromotionDraft: PromotionPayload = {
   name: '',
   description: '',
-  discountInfo: '',
-  applicableProducts: [],
-  startDate: '',
-  endDate: '',
-  status: 'draft',
+  startDate: new Date().toISOString().slice(0, 10),
+  endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+  discountValue: 0,
+  discountType: 'percent',
+  scope: 'global',
+  appliedBranches: [],
+  isActive: true,
 }
 
-function normalizeList<T>(value: unknown): T[] {
-  if (Array.isArray(value)) return value as T[]
-  if (value && typeof value === 'object') {
-    const items = (value as { items?: unknown }).items
-    if (Array.isArray(items)) return items as T[]
-  }
-  return []
+// These are missing from chain.api.ts so we define them here locally
+function authHeaders(): Record<string, string> {
+  const token = getAuthToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+function updatePromotion(id: string, payload: PromotionPayload) {
+  return httpClient<ApiResponse<Promotion>>(`/promotions/${id}`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+}
+
+function deletePromotion(id: string) {
+  return httpClient<ApiResponse<{ id: string }>>(`/promotions/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
 }
 
 export function PromotionsPanel() {
   const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<NoticeState | null>(null)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'draft'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null)
 
@@ -49,9 +65,13 @@ export function PromotionsPanel() {
       setLoading(true)
       setError(null)
       try {
-        const response = await listPromotions()
+        const [promoRes, branchRes] = await Promise.all([
+          getPromotions(),
+          getBranches()
+        ])
         if (!alive) return
-        setPromotions(normalizeList<Promotion>(response.data))
+        setPromotions(promoRes.data || [])
+        setBranches(branchRes.data?.items || [])
       } catch (loadError) {
         if (!alive) return
         setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách khuyến mãi.')
@@ -63,12 +83,19 @@ export function PromotionsPanel() {
     return () => { alive = false }
   }, [])
 
+  useEffect(() => {
+    if (notice) {
+      const timer = setTimeout(() => setNotice(null), 10000)
+      return () => clearTimeout(timer)
+    }
+  }, [notice])
+
   const filteredPromotions = useMemo(() => {
     const keyword = search.trim().toLowerCase()
     return promotions
       .filter((promo) => {
-        const matchesKeyword = !keyword || [promo.name, promo.description, promo.discountInfo].some((value) => value.toLowerCase().includes(keyword))
-        const matchesStatus = statusFilter === 'all' || promo.status === statusFilter
+        const matchesKeyword = !keyword || [promo.name, promo.description].some((value) => value?.toLowerCase().includes(keyword))
+        const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? promo.isActive : !promo.isActive)
         return matchesKeyword && matchesStatus
       })
       .sort((a, b) => (b.startDate).localeCompare(a.startDate))
@@ -111,25 +138,24 @@ export function PromotionsPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Promotions</p>
-            <h2 className="mt-1 text-[24px] font-bold">Quản lý Khuyến mãi</h2>
-            <p className="mt-2 text-sm text-muted">Lưu ngày giờ theo ISO string, lọc theo trạng thái và sắp xếp theo ngày.</p>
+            <h2 className="mt-1 text-[24px] font-bold">Quản lý Khuyến mãi (Chiến dịch)</h2>
+            <p className="mt-2 text-sm text-muted">Tạo các chiến dịch giảm giá. Mã giảm giá (Voucher) sẽ được sinh tự động.</p>
           </div>
-          <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft">
+          <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft hover:bg-opacity-90">
             <Plus className="h-4 w-4" />
-            New Promotion
+            Tạo Campaign
           </button>
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_220px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên, mô tả..." className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-latte" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên, mô tả..." className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-coffee" />
           </div>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none">
             <option value="all">Tất cả trạng thái</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="draft">Draft</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Đã tạm dừng</option>
           </select>
         </div>
       </Card>
@@ -164,18 +190,18 @@ export function PromotionsPanel() {
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {filteredPromotions.map((promo) => (
-            <article key={promo.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft">
+            <article key={promo.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft transition hover:border-coffee cursor-pointer">
               <div className="space-y-4 p-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[20px] font-semibold">{promo.name}</h3>
-                      <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', promo.status === 'active' ? 'bg-emerald-100 text-emerald-700' : promo.status === 'inactive' ? 'bg-red-100 text-red-700' : 'bg-beige text-muted')}>
-                        {promo.status}
+                      <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', promo.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')}>
+                        {promo.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                     <p className="mt-2 text-sm text-muted">{promo.description}</p>
-                    <p className="mt-2 text-sm font-semibold text-gold">{promo.discountInfo}</p>
+                    <p className="mt-2 text-sm font-semibold text-gold">Giảm: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString()}đ`}</p>
                   </div>
                 </div>
                 <div className="grid gap-3 text-sm text-muted lg:grid-cols-2">
@@ -189,11 +215,11 @@ export function PromotionsPanel() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => startEdit(promo)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
+                  <button type="button" onClick={() => startEdit(promo)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee hover:bg-cream">
                     <Edit3 className="h-4 w-4" />
                     Sửa
                   </button>
-                  <button type="button" onClick={() => handleDelete(promo.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700">
+                  <button type="button" onClick={() => handleDelete(promo.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50">
                     <Trash2 className="h-4 w-4" />
                     Xóa
                   </button>
@@ -207,6 +233,7 @@ export function PromotionsPanel() {
       {editorOpen && (
         <PromotionEditorDialog
           promotion={editingPromotion}
+          branches={branches}
           onClose={() => setEditorOpen(false)}
           onSave={async (payload) => {
             await handleSave(payload, editingPromotion?.id)
@@ -220,10 +247,12 @@ export function PromotionsPanel() {
 
 function PromotionEditorDialog({
   promotion,
+  branches,
   onClose,
   onSave,
 }: {
   promotion: Promotion | null
+  branches: Branch[]
   onClose: () => void
   onSave: (payload: PromotionPayload) => Promise<void>
 }) {
@@ -231,12 +260,14 @@ function PromotionEditorDialog({
     promotion
       ? {
           name: promotion.name,
-          description: promotion.description,
-          discountInfo: promotion.discountInfo,
-          applicableProducts: promotion.applicableProducts,
-          startDate: promotion.startDate,
-          endDate: promotion.endDate,
-          status: promotion.status,
+          description: promotion.description || undefined,
+          startDate: new Date(promotion.startDate).toISOString().slice(0, 10),
+          endDate: new Date(promotion.endDate).toISOString().slice(0, 10),
+          discountValue: promotion.discountValue,
+          discountType: promotion.discountType,
+          scope: promotion.scope,
+          appliedBranches: promotion.appliedBranches,
+          isActive: promotion.isActive,
         }
       : { ...emptyPromotionDraft },
   )
@@ -256,9 +287,7 @@ function PromotionEditorDialog({
       await onSave({
         ...draft,
         name: draft.name.trim(),
-        description: draft.description.trim(),
-        discountInfo: draft.discountInfo.trim(),
-        applicableProducts: draft.applicableProducts.map((p) => p.trim()).filter(Boolean),
+        description: draft.description ? draft.description.trim() : undefined,
       })
       setUnsaved(false)
     } catch (saveError) {
@@ -276,8 +305,8 @@ function PromotionEditorDialog({
   return (
     <CmsEditorModal
       open
-      title={promotion ? 'Sửa khuyến mãi' : 'Tạo khuyến mãi mới'}
-      description="Quản lý chi tiết khuyến mãi."
+      title={promotion ? 'Sửa Chiến dịch Khuyến mãi' : 'Tạo Chiến dịch Khuyến mãi mới'}
+      description="Chiến dịch (Campaign) giúp tự động sinh mã Voucher cho khách hàng đổi điểm."
       onOpenChange={(open) => {
         if (!open) handleClose()
       }}
@@ -289,52 +318,76 @@ function PromotionEditorDialog({
       )}
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Tên khuyến mãi</span>
-          <input value={draft.name} onChange={(e) => updateDraft('name', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte" />
+          <span>Tên chiến dịch</span>
+          <input value={draft.name} onChange={(e) => updateDraft('name', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
         </label>
         
         <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Mô tả</span>
-          <textarea value={draft.description} onChange={(e) => updateDraft('description', e.target.value)} rows={3} className="rounded-[14px] border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-latte" />
-        </label>
-
-        <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Thông tin giảm giá</span>
-          <input value={draft.discountInfo} onChange={(e) => updateDraft('discountInfo', e.target.value)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte" />
-        </label>
-
-        <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Sản phẩm áp dụng (cách nhau bởi dấu phẩy)</span>
-          <input value={draft.applicableProducts.join(', ')} onChange={(e) => updateDraft('applicableProducts', e.target.value.split(','))} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte" />
+          <span>Mô tả (Điều kiện / thông báo)</span>
+          <textarea value={draft.description || ''} onChange={(e) => updateDraft('description', e.target.value)} rows={2} className="rounded-[14px] border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-coffee" />
         </label>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
             <span>Ngày bắt đầu</span>
-            <input type="date" value={draft.startDate} onChange={(e) => updateDraft('startDate', e.target.value)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte" />
+            <input type="date" value={draft.startDate} onChange={(e) => updateDraft('startDate', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
             <span>Ngày kết thúc</span>
-            <input type="date" value={draft.endDate} onChange={(e) => updateDraft('endDate', e.target.value)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte" />
+            <input type="date" value={draft.endDate} onChange={(e) => updateDraft('endDate', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
           </label>
         </div>
 
-        <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Trạng thái</span>
-          <select value={draft.status} onChange={(e) => updateDraft('status', e.target.value as any)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="draft">Draft</option>
-          </select>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
+            <span>Mức giảm giá</span>
+            <input type="number" min={0} value={draft.discountValue} onChange={(e) => updateDraft('discountValue', Number(e.target.value))} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
+            <span>Loại giảm giá</span>
+            <select value={draft.discountType} onChange={(e) => updateDraft('discountType', e.target.value as any)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee">
+              <option value="percent">Phần trăm (%)</option>
+              <option value="fixed">Số tiền mặt (VND)</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
+            <span>Phạm vi áp dụng</span>
+            <select value={draft.scope} onChange={(e) => updateDraft('scope', e.target.value as any)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee">
+              <option value="global">Toàn chuỗi</option>
+              <option value="specific">Chi nhánh cụ thể</option>
+            </select>
+          </label>
+          
+          {draft.scope === 'specific' && (
+            <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
+              <span>Chi nhánh</span>
+              <select value={draft.appliedBranches[0] || ''} onChange={(e) => updateDraft('appliedBranches', e.target.value ? [e.target.value] : [])} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee">
+                <option value="">Chọn chi nhánh...</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+
+        <label className="flex flex-col gap-2 text-sm font-semibold text-coffee mt-2">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={draft.isActive} onChange={(e) => updateDraft('isActive', e.target.checked)} className="h-4 w-4 rounded border-line text-coffee focus:ring-coffee" />
+            <span>Kích hoạt Campaign (Khách hàng có thể đổi Voucher)</span>
+          </div>
         </label>
 
-        <div className="flex flex-wrap gap-3 pt-2">
-          <button type="button" onClick={handleClose} className="rounded-full border border-line bg-white px-5 py-3 text-sm font-semibold text-coffee">
+        <div className="flex flex-wrap gap-3 pt-4 border-t border-line mt-2">
+          <button type="button" onClick={handleClose} className="rounded-full border border-line bg-white px-5 py-3 text-sm font-semibold text-coffee hover:bg-cream">
             Hủy
           </button>
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft disabled:opacity-70">
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft hover:bg-opacity-90 disabled:opacity-70">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {promotion ? 'Lưu thay đổi' : 'Tạo khuyến mãi'}
+            {promotion ? 'Lưu thay đổi' : 'Tạo Campaign'}
           </button>
         </div>
       </form>
