@@ -97,3 +97,18 @@ export function createPromotion(payload: PromotionPayload) {
     body: JSON.stringify(payload),
   })
 }
+
+export function updatePromotion(id: string, payload: PromotionPayload) {
+  return httpClient<ApiResponse<Promotion>>(`/promotions/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+}
+
+export function togglePromotionStatus(id: string) {
+  return httpClient<ApiResponse<Promotion>>(`/promotions/${id}/toggle-status`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+  })
+}
