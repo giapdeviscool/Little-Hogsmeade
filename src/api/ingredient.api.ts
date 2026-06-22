@@ -14,7 +14,7 @@ export interface Ingredient {
   isActive: boolean
 }
 
-export async function getIngredients(params?: { search?: string, branchId?: string }) {
+export function getIngredients(params?: { search?: string, branchId?: string }) {
   const query = new URLSearchParams()
   if (params?.search) query.append('search', params.search)
   if (params?.branchId) query.append('branchId', params.branchId)
@@ -23,14 +23,14 @@ export async function getIngredients(params?: { search?: string, branchId?: stri
   return httpClient<{ data: Ingredient[] }>(url)
 }
 
-export async function createIngredient(data: Partial<Ingredient>) {
+export function createIngredient(data: Partial<Ingredient>) {
   return httpClient<{ data: Ingredient }>('/ingredients', {
     method: 'POST',
     body: JSON.stringify(data)
   })
 }
 
-export async function updateIngredient(id: string, data: Partial<Ingredient>) {
+export function updateIngredient(id: string, data: Partial<Ingredient>) {
   return httpClient<{ data: Ingredient }>(`/ingredients/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
