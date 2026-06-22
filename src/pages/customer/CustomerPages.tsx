@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { BookingSection } from '../landing/components/BookingSection'
+import { EventSection } from '../landing/components/EventSection'
+import { FeaturedMenuSection } from '../landing/components/FeaturedMenuSection'
+import { StoreAndMemberSection } from '../landing/components/StoreAndMemberSection'
+import { StorySection } from '../landing/components/StorySection'
 import {
-  BookingSection,
-  EventSection,
-  FeaturedMenuSection,
-  StoreAndMemberSection,
-  StorySection,
   getFeaturedMenuBlock,
   getOpeningHoursBlock,
   normalizeBranches,
   normalizeList,
-  type BookingDraft,
-} from '../landing/LandingPage'
+} from '../landing/landing.utils'
+import type { BookingDraft } from '../landing/landing.types'
 import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
 import { searchCustomerByPhone, getCustomerMemberships, getPointTransactions, getActiveCampaigns, redeemPoints, updateMembershipPoints } from '../../api/customer.api'
 import { getBranches } from '../../api/chain.api'
