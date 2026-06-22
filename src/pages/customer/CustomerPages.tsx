@@ -12,11 +12,14 @@ import {
   type BookingDraft,
 } from '../landing/LandingPage'
 import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
+import { searchCustomerByPhone, getCustomerMemberships, getPointTransactions, getActiveCampaigns, redeemPoints, updateMembershipPoints } from '../../api/customer.api'
 import { getBranches } from '../../api/chain.api'
-import type { Banner, Branch, CmsPage, Event, Post } from '../../types'
-import { formatVnDate } from '../../utils/date'
-import { Eye } from 'lucide-react'
+import type { Banner, Branch, CmsPage, Event, Post, Promotion } from '../../types'
+import type { Customer, CustomerMembership, PointTransaction } from '../../types/customer.types'
+import { formatVnDate, formatVnDateTime } from '../../utils/date'
+import { Eye, Search, Gift, Award, History, X } from 'lucide-react'
 import { PostDetailModal } from '../../components/customer/DetailModals'
+import { cn } from '../../utils/cn'
 
 function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180
@@ -52,19 +55,193 @@ export function CustomerMenuPage() {
 }
 
 export function CustomerPromotionsPage() {
-  const [events, setEvents] = useState<Event[]>([])
+  const [campaigns, setCampaigns] = useState<Promotion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [phone, setPhone] = useState('')
+  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [membership, setMembership] = useState<CustomerMembership | null>(null)
+  const [redeemingId, setRedeemingId] = useState<string | null>(null)
+  const [notice, setNotice] = useState<{type: 'success' | 'error', msg: string} | null>(null)
 
   useEffect(() => {
     let alive = true
-    listEvents().then((e) => {
-      if (alive) setEvents(normalizeList<Event>(e.data))
+    getActiveCampaigns().then((res) => {
+      if (alive) {
+        setCampaigns(res.data || [])
+        setLoading(false)
+      }
+    }).catch(() => {
+      if (alive) setLoading(false)
     })
     return () => { alive = false }
   }, [])
 
-  const publishedEvents = events.filter((e) => e.isPublished)
+  useEffect(() => {
+    if (notice) {
+      const timer = setTimeout(() => setNotice(null), 10000)
+      return () => clearTimeout(timer)
+    }
+  }, [notice])
 
-  return <EventSection events={publishedEvents} />
+  async function handleCheckPhone(e: FormEvent) {
+    e.preventDefault()
+    if (!phone) return
+    try {
+      const cusRes = await searchCustomerByPhone(phone)
+      if (cusRes.data && cusRes.data.length > 0) {
+        setCustomer(cusRes.data[0])
+        const memRes = await getCustomerMemberships(cusRes.data[0].id)
+        if (memRes.data && memRes.data.length > 0) {
+          setMembership(memRes.data[0])
+          setNotice({ type: 'success', msg: 'Đã xác thực thành viên thành công.' })
+        } else {
+          setNotice({ type: 'error', msg: 'Chưa có thông tin hạng thẻ.' })
+        }
+      } else {
+        setNotice({ type: 'error', msg: 'Không tìm thấy số điện thoại này.' })
+        setCustomer(null)
+        setMembership(null)
+      }
+    } catch {
+      setNotice({ type: 'error', msg: 'Lỗi khi kiểm tra thông tin.' })
+    }
+  }
+
+  async function handleRedeem(campaign: Promotion) {
+    if (!membership) {
+      setNotice({ type: 'error', msg: 'Vui lòng xác thực số điện thoại trước khi đổi ưu đãi.' })
+      return
+    }
+    
+    // Giả định: Đổi mã tốn 50 điểm
+    const requiredPoints = 50
+    if (membership.totalPoints < requiredPoints) {
+      setNotice({ type: 'error', msg: `Bạn không đủ điểm. Cần ${requiredPoints} điểm để đổi.` })
+      return
+    }
+
+    if (!window.confirm(`Bạn có chắc muốn dùng ${requiredPoints} điểm để đổi ưu đãi "${campaign.name}"?`)) return
+
+    setRedeemingId(campaign.id)
+    try {
+      // 1. Trừ điểm
+      const newPoints = membership.totalPoints - requiredPoints
+      await updateMembershipPoints(membership.id, newPoints)
+      
+      // 2. Ghi log transaction
+      await redeemPoints({
+        customerMembershipId: membership.id,
+        points: requiredPoints,
+        note: `Đổi voucher chiến dịch: ${campaign.name}`
+      })
+      
+      // Update local state
+      setMembership({ ...membership, totalPoints: newPoints })
+      setNotice({ type: 'success', msg: `Đổi thành công! Ưu đãi đã được thêm vào tài khoản của bạn.` })
+    } catch {
+      setNotice({ type: 'error', msg: 'Có lỗi xảy ra khi đổi điểm. Vui lòng thử lại.' })
+    } finally {
+      setRedeemingId(null)
+    }
+  }
+
+  return (
+    <section className="bg-cream py-20 md:py-24 min-h-[80vh]">
+      <div className="mx-auto max-w-[1000px] px-4 md:px-8">
+        <div className="text-center mb-12">
+          <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Offers & Rewards</p>
+          <h2 className="mt-3 text-[36px] font-bold md:text-[48px]">Đổi Điểm Nhận Ưu Đãi</h2>
+          <p className="mt-4 text-muted mx-auto max-w-xl">Sử dụng điểm tích lũy của bạn để đổi lấy các voucher giảm giá cực hấp dẫn từ Little Hogsmeade.</p>
+        </div>
+
+        <div className="bg-white rounded-[24px] p-6 md:p-8 shadow-soft mb-12 border border-line flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex-1 w-full">
+            {membership ? (
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-coffee/10 flex items-center justify-center">
+                  <Award className="h-6 w-6 text-coffee" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-coffee">{customer?.fullName}</p>
+                  <p className="text-sm text-muted">Hạng: <span className="font-bold text-gold">{membership.tier?.name || 'Thành viên'}</span> • Hiện có: <span className="font-bold text-coffee">{membership.totalPoints} điểm</span></p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleCheckPhone} className="flex gap-3 w-full">
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)} 
+                  placeholder="Nhập số điện thoại để xem điểm..."
+                  className="flex-1 h-[48px] rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coffee"
+                />
+                <button type="submit" className="h-[48px] rounded-xl bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90">
+                  Xác thực
+                </button>
+              </form>
+            )}
+          </div>
+          
+          {membership && (
+            <button onClick={() => { setMembership(null); setCustomer(null); setPhone(''); setNotice(null); }} className="text-sm text-muted hover:text-coffee font-semibold underline">
+              Đổi số điện thoại khác
+            </button>
+          )}
+        </div>
+
+        {notice && (
+          <div className={cn("mb-8 rounded-xl p-4 text-center text-sm font-semibold border", notice.type === 'success' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200")}>
+            {notice.msg}
+          </div>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            <div className="col-span-full text-center py-10 text-muted">Đang tải ưu đãi...</div>
+          ) : campaigns.length > 0 ? (
+            campaigns.map(campaign => (
+              <div key={campaign.id} className="group overflow-hidden rounded-[24px] bg-white border border-line shadow-soft transition hover:-translate-y-1 hover:shadow-hover flex flex-col">
+                <div className="h-[140px] bg-coffee p-6 text-white flex flex-col justify-center relative overflow-hidden">
+                  <div className="absolute right-[-20px] top-[-20px] h-[100px] w-[100px] rounded-full bg-white/10" />
+                  <Gift className="h-8 w-8 mb-2 text-gold" />
+                  <h3 className="font-bold text-xl relative z-10 leading-tight truncate">{campaign.name}</h3>
+                </div>
+                
+                <div className="p-6 flex-1 flex flex-col">
+                  <p className="text-sm text-muted mb-4 flex-1">{campaign.description || 'Voucher giảm giá hóa đơn áp dụng cho các chi nhánh.'}</p>
+                  
+                  <div className="flex items-center justify-between mb-6 pt-4 border-t border-line border-dashed">
+                    <div>
+                      <p className="text-xs text-muted uppercase font-bold tracking-wider mb-1">Mức giảm</p>
+                      <p className="font-bold text-lg text-coffee">
+                        {campaign.discountType === 'percent' ? `${campaign.discountValue}%` : `${new Intl.NumberFormat('vi-VN').format(campaign.discountValue)}đ`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted uppercase font-bold tracking-wider mb-1">Cần dùng</p>
+                      <p className="font-bold text-lg text-gold">50 Điểm</p>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => handleRedeem(campaign)}
+                    disabled={redeemingId === campaign.id || (membership && membership.totalPoints < 50) || !membership}
+                    className="w-full h-12 rounded-full bg-coffee font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50"
+                  >
+                    {redeemingId === campaign.id ? 'Đang xử lý...' : membership ? 'Đổi ưu đãi' : 'Đăng nhập để đổi'}
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-20 text-muted">
+              Hiện chưa có chương trình ưu đãi nào. Bạn quay lại sau nhé!
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 export function CustomerBookingPage() {
@@ -306,11 +483,166 @@ export function CustomerStoresPage() {
 }
 
 export function CustomerMembershipPage() {
+  const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [membership, setMembership] = useState<CustomerMembership | null>(null)
+  const [transactions, setTransactions] = useState<PointTransaction[]>([])
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 10000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
+  async function handleSearch(e: FormEvent) {
+    e.preventDefault()
+    if (!phone) return
+    
+    setLoading(true)
+    setError(null)
+    try {
+      const cusRes = await searchCustomerByPhone(phone)
+      if (cusRes.data && cusRes.data.length > 0) {
+        const foundCustomer = cusRes.data[0]
+        setCustomer(foundCustomer)
+        
+        const memRes = await getCustomerMemberships(foundCustomer.id)
+        if (memRes.data && memRes.data.length > 0) {
+          const foundMem = memRes.data[0]
+          setMembership(foundMem)
+          
+          const transRes = await getPointTransactions(foundMem.id)
+          setTransactions(transRes.data || [])
+        } else {
+          setMembership(null)
+        }
+      } else {
+        setError('Không tìm thấy thông tin cho số điện thoại này.')
+        setCustomer(null)
+        setMembership(null)
+      }
+    } catch (err) {
+      setError('Đã xảy ra lỗi khi tra cứu.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <section className="bg-cream py-20 md:py-24">
+    <section className="bg-cream py-20 md:py-24 min-h-[80vh]">
       <div className="mx-auto max-w-[800px] px-4 md:px-8">
-        <h2 className="text-[36px] font-bold">Tra cứu hạng và điểm</h2>
-        <p className="mt-4 text-muted">Chức năng đang được cập nhật...</p>
+        <div className="text-center mb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Little Hogsmeade</p>
+          <h2 className="mt-3 text-[36px] font-bold md:text-[48px]">Tra cứu Thẻ thành viên</h2>
+        </div>
+        
+        <form onSubmit={handleSearch} className="relative flex items-center mx-auto max-w-[500px] mb-12">
+          <input 
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Nhập số điện thoại của bạn..."
+            className="h-[60px] w-full rounded-full border border-line bg-white pl-6 pr-32 text-base outline-none focus:border-coffee shadow-soft"
+          />
+          <button 
+            type="submit" 
+            disabled={loading || !phone}
+            className="absolute right-2 top-2 bottom-2 rounded-full bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50"
+          >
+            {loading ? 'Đang tìm...' : 'Tra cứu'}
+          </button>
+        </form>
+
+        {error && (
+          <div className="mx-auto max-w-[500px] rounded-[16px] border border-red-200 bg-red-50 p-4 text-center text-sm text-red-800 mb-8">
+            {error}
+          </div>
+        )}
+
+        {customer && membership && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+            <div className="grid md:grid-cols-[1fr_300px] gap-6">
+              <div className="rounded-[24px] border border-line bg-white p-6 md:p-8 shadow-soft flex flex-col justify-between">
+                <div>
+                  <p className="text-sm text-muted mb-1">Thẻ thành viên của</p>
+                  <h3 className="text-[24px] font-bold text-coffee">{customer.fullName}</h3>
+                  <p className="text-sm font-semibold mt-2 px-3 py-1 bg-gold/10 text-gold rounded-full inline-block">
+                    Hạng: {membership.tier?.name || 'Khách hàng mới'}
+                  </p>
+                </div>
+                
+                <div className="mt-8 flex items-center justify-between border-t border-line pt-6">
+                  <div>
+                    <p className="text-xs text-muted mb-1 uppercase tracking-wider font-bold">Điểm hiện tại</p>
+                    <p className="text-[32px] font-bold text-coffee leading-none">{membership.totalPoints}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted mb-1 uppercase tracking-wider font-bold">Chi tiêu tích lũy</p>
+                    <p className="text-[20px] font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(membership.totalSpent)}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="rounded-[24px] border border-line bg-coffee text-white p-6 md:p-8 shadow-soft">
+                <div className="flex items-center gap-3 mb-6">
+                  <Award className="h-6 w-6 text-gold" />
+                  <h3 className="font-bold text-lg">Đặc quyền hạng thẻ</h3>
+                </div>
+                {membership.tier ? (
+                  <ul className="space-y-4 text-sm text-white/80">
+                    {membership.tier.discountPercent > 0 && (
+                      <li className="flex items-start gap-2">
+                        <span className="text-gold">★</span>
+                        <span>Giảm <strong>{membership.tier.discountPercent}%</strong> cho mọi hóa đơn.</span>
+                      </li>
+                    )}
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold">★</span>
+                      <span>{membership.tier.description || 'Tham gia tích điểm đổi quà.'}</span>
+                    </li>
+                  </ul>
+                ) : (
+                  <p className="text-sm text-white/70">Chưa có thông tin đặc quyền.</p>
+                )}
+                <div className="mt-8 pt-6 border-t border-white/20">
+                  <a href="/promotions" className="w-full block text-center rounded-xl bg-white text-coffee font-bold py-3 hover:bg-cream transition">
+                    Đổi thưởng ngay
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Lịch sử giao dịch */}
+            <div className="rounded-[24px] border border-line bg-white p-6 md:p-8 shadow-soft mt-8">
+              <div className="flex items-center gap-2 mb-6">
+                <History className="h-5 w-5 text-muted" />
+                <h3 className="font-bold text-lg">Lịch sử tích/tiêu điểm</h3>
+              </div>
+              
+              {transactions.length > 0 ? (
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                  {transactions.map(tx => (
+                    <div key={tx.id} className="flex items-center justify-between border-b border-line pb-4 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-semibold text-[15px]">{tx.type === 'earn' ? 'Tích điểm từ hóa đơn' : tx.type === 'redeem' ? 'Đổi điểm nhận ưu đãi' : 'Điều chỉnh điểm'}</p>
+                        <p className="text-xs text-muted mt-1">{formatVnDateTime(tx.createdAt)}</p>
+                      </div>
+                      <div className={`font-bold text-lg ${tx.points > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {tx.points > 0 ? '+' : ''}{tx.points}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted text-center py-6">Chưa có giao dịch nào.</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

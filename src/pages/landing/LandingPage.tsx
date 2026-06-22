@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowRight, Clock3, MapPin, Search, Star, X, Navigation, Eye } from 'lucide-react'
-import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
+import { ArrowRight, Clock3, MapPin, Search, Star, Navigation, Eye } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { EventDetailModal, PostDetailModal } from '../../components/customer/DetailModals'
 import defaultHeroImage from '../../assets/image/default.jpg'
