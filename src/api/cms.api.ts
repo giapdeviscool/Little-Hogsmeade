@@ -1,5 +1,5 @@
 import { httpClient } from './httpClient'
-import type { ApiResponse } from '../types'
+import type { ApiResponse, PaginatedData } from '../types'
 import type { Banner, BannerPayload, CmsPage, CmsPagePayload, Event, EventPayload, Post, PostPayload, Promotion, PromotionPayload, UploadImageResponse } from '../types/cms.types'
 
 export function listPages() {
@@ -50,8 +50,9 @@ export function deleteBanner(id: string) {
   })
 }
 
-export function listPosts() {
-  return httpClient<ApiResponse<Post[]>>('/posts')
+export function listPosts(params?: Record<string, string | number>) {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  return httpClient<ApiResponse<PaginatedData<Post>>>(`/posts${query}`)
 }
 
 export function createPost(payload: PostPayload) {
@@ -74,8 +75,9 @@ export function deletePost(id: string) {
   })
 }
 
-export function listEvents() {
-  return httpClient<ApiResponse<Event[]>>('/events')
+export function listEvents(params?: Record<string, string | number>) {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  return httpClient<ApiResponse<PaginatedData<Event>>>(`/events${query}`)
 }
 
 export function createEvent(payload: EventPayload) {

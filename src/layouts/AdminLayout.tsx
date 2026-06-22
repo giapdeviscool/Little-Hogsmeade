@@ -1,6 +1,5 @@
 import { Outlet, useNavigate, Navigate } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
-import { TopHeader } from './TopHeader'
 import { clearAuthSession, getAuthSession } from '../store/auth.store'
 import { ROUTES } from '../constants/routes'
 
@@ -28,7 +27,6 @@ export function AdminLayout() {
     <div className="grid min-h-screen grid-cols-[290px_minmax(990px,1fr)] bg-white text-coffee">
       <Sidebar onLogout={logout} />
       <main className="min-w-0">
-        <TopHeader />
         <div className="px-10 py-8"><Outlet /></div>
       </main>
     </div>

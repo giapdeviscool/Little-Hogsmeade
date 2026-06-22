@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Edit3, Plus, Search, Trash2, Loader2 } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Edit3, Plus, Search, Trash2 } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
+import { Pagination } from '../../components/ui/Pagination'
 import { CmsEditorModal } from './CmsEditorModal'
 import {
   createPromotion,
@@ -54,10 +55,25 @@ export function PromotionsPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<NoticeState | null>(null)
+  
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter])
 
   useEffect(() => {
     let alive = true
@@ -66,11 +82,21 @@ export function PromotionsPanel() {
       setError(null)
       try {
         const [promoRes, branchRes] = await Promise.all([
-          getPromotions(),
+          getPromotions({
+            page,
+            limit: 20,
+            search: debouncedSearch,
+            status: statusFilter
+          }),
           getBranches()
         ])
         if (!alive) return
-        setPromotions(promoRes.data || [])
+        if (promoRes.data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setPromotions((promoRes.data as any).items || promoRes.data)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setTotalPages((promoRes.data as any).pagination?.totalPages || 1)
+        }
         setBranches(branchRes.data?.items || [])
       } catch (loadError) {
         if (!alive) return
@@ -81,7 +107,7 @@ export function PromotionsPanel() {
     }
     void load()
     return () => { alive = false }
-  }, [])
+  }, [page, debouncedSearch, statusFilter])
 
   useEffect(() => {
     if (notice) {
@@ -89,17 +115,6 @@ export function PromotionsPanel() {
       return () => clearTimeout(timer)
     }
   }, [notice])
-
-  const filteredPromotions = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return promotions
-      .filter((promo) => {
-        const matchesKeyword = !keyword || [promo.name, promo.description].some((value) => value?.toLowerCase().includes(keyword))
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? promo.isActive : !promo.isActive)
-        return matchesKeyword && matchesStatus
-      })
-      .sort((a, b) => (b.startDate).localeCompare(a.startDate))
-  }, [promotions, search, statusFilter])
 
   function startCreate() {
     setEditingPromotion(null)
@@ -125,10 +140,12 @@ export function PromotionsPanel() {
   async function handleSave(payload: PromotionPayload, id?: string) {
     const response = id ? await updatePromotion(id, payload) : await createPromotion(payload)
     const saved = response.data
-    setPromotions((current) => {
-      const next = current.filter((item) => item.id !== saved.id)
-      return [saved, ...next]
-    })
+    if (saved) {
+      setPromotions((current) => {
+        const next = current.filter((item) => item.id !== saved.id)
+        return [saved, ...next].slice(0, 20)
+      })
+    }
     setNotice({ type: 'success', message: id ? 'Đã cập nhật khuyến mãi.' : 'Đã tạo khuyến mãi mới.' })
   }
 
@@ -180,7 +197,7 @@ export function PromotionsPanel() {
             <div className="h-12 w-full rounded bg-beige" />
           </div>
         </Card>
-      ) : filteredPromotions.length === 0 ? (
+      ) : promotions.length === 0 ? (
         <Card className="p-6">
            <div className="grid place-items-center rounded-[18px] border border-dashed border-latte bg-cream px-6 py-10 text-center">
             <p className="text-base font-semibold text-coffee">Chưa có khuyến mãi</p>
@@ -188,46 +205,57 @@ export function PromotionsPanel() {
           </div>
         </Card>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
-          {filteredPromotions.map((promo) => (
-            <article key={promo.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft transition hover:border-coffee cursor-pointer">
-              <div className="space-y-4 p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[20px] font-semibold">{promo.name}</h3>
-                      <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', promo.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')}>
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-cream text-muted">
+                <tr>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Chiến dịch</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Mức giảm</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Thời gian</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line bg-white">
+                {promotions.map((promo) => (
+                  <tr key={promo.id} className="transition-colors hover:bg-beige/50">
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-coffee">{promo.name}</div>
+                      {promo.description && <div className="mt-1 text-xs text-muted max-w-[200px] truncate">{promo.description}</div>}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', promo.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800')}>
                         {promo.isActive ? 'Active' : 'Inactive'}
                       </span>
-                    </div>
-                    <p className="mt-2 text-sm text-muted">{promo.description}</p>
-                    <p className="mt-2 text-sm font-semibold text-gold">Giảm: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString()}đ`}</p>
-                  </div>
-                </div>
-                <div className="grid gap-3 text-sm text-muted lg:grid-cols-2">
-                  <div className="rounded-[14px] bg-cream px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Bắt đầu</p>
-                    <p className="mt-1 text-sm font-medium text-coffee">{promo.startDate ? formatVnDate(promo.startDate) : ''}</p>
-                  </div>
-                  <div className="rounded-[14px] bg-cream px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Kết thúc</p>
-                    <p className="mt-1 text-sm font-medium text-coffee">{promo.endDate ? formatVnDate(promo.endDate) : ''}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => startEdit(promo)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee hover:bg-cream">
-                    <Edit3 className="h-4 w-4" />
-                    Sửa
-                  </button>
-                  <button type="button" onClick={() => handleDelete(promo.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50">
-                    <Trash2 className="h-4 w-4" />
-                    Xóa
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gold">
+                      {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString()}đ`}
+                    </td>
+                    <td className="px-6 py-4 text-muted">
+                      <div>Từ {promo.startDate ? formatVnDate(promo.startDate) : ''}</div>
+                      <div>Đến {promo.endDate ? formatVnDate(promo.endDate) : ''}</div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => startEdit(promo)} className="p-2 text-coffee hover:bg-cream rounded-full transition-colors" title="Sửa">
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                        <button type="button" onClick={() => handleDelete(promo.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Xóa">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {!loading && (
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       )}
 
       {editorOpen && (

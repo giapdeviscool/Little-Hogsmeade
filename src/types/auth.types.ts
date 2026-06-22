@@ -23,7 +23,18 @@ export type AuthResponse = {
 }
 
 export type ApiResponse<T> = {
-  data: T
+  data?: T
+  error?: string
+}
+
+export type PaginatedData<T> = {
+  items: T[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 export type LoginPayload = {
