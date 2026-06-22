@@ -7,7 +7,7 @@ import { Link, useLocation } from 'react-router-dom'
 export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { t } = useLocale()
   const location = useLocation()
-  const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition hover:bg-white/65'
+  const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
 
   return (
     <aside className="sticky top-0 flex h-screen flex-col border-r border-line bg-beige px-[18px] py-7 text-coffee">
@@ -28,7 +28,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
         {navItems.map((item) => {
           const isActive = location.pathname.includes(`/admin/${item.key}`)
           return (
-            <Link key={item.key} to={`/admin/${item.key}`} className={cn(navButton, isActive ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee')}>
+            <Link key={item.key} to={`/admin/${item.key}`} className={cn(navButton, isActive ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}>
               <Icon name={item.icon} />
               <span>{t.navigation[item.key]}</span>
             </Link>
@@ -37,11 +37,11 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
-        <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee')}>
+        <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
           <Icon name="settings" />
           {t.common.settings}
         </Link>
-        <button type="button" onClick={onLogout} className={`${navButton} text-coffee`}>
+        <button type="button" onClick={onLogout} className={`${navButton} text-coffee hover:bg-white/65`}>
           <Icon name="logout" />
           {t.common.logout}
         </button>

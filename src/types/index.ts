@@ -1,4 +1,4 @@
-export type { AccountType, ApiResponse, AuthMode, AuthResponse, AuthRole, AuthUser, LoginPayload, RegisterPayload } from './auth.types'
+export type { AccountType, ApiResponse, PaginatedData, AuthMode, AuthResponse, AuthRole, AuthUser, LoginPayload, RegisterPayload } from './auth.types'
 export type { Branch, BranchListResponse, BranchPayload, BranchStatus, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from './chain.types'
 export type { Banner, BannerPayload, CmsPage, CmsPagePayload, Event, EventPayload, LandingBlockKey, Post, PostPayload, UploadImageResponse } from './cms.types'
 export type { BranchPerformanceMock, KpiMock } from './dashboard.types'

@@ -101,7 +101,7 @@ export function CustomerLayout() {
   const openingHoursBlock = getOpeningHoursBlock(pages)
 
   return (
-    <div className="relative min-h-screen bg-white text-coffee">
+    <div className="relative flex min-h-screen flex-col bg-white text-coffee">
       <header className="sticky top-0 z-50 border-b border-line/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-[80px] max-w-[1440px] items-center gap-4 px-4 md:px-8 lg:px-14">
           <Link to={ROUTES.customerHome} className="mr-auto text-[22px] font-bold tracking-[-0.04em] md:text-[24px]">
@@ -110,7 +110,7 @@ export function CustomerLayout() {
           <nav className="hidden items-center gap-5 text-sm font-semibold xl:flex">
             <Link to={ROUTES.customerHome}>Trang chủ</Link>
             <Link to={ROUTES.customerMenu}>Thực đơn</Link>
-            <Link to={ROUTES.customerPromotions}>Sự kiện</Link>
+            <Link to={ROUTES.customerEvents}>Sự kiện</Link>
             <Link to={ROUTES.customerBlog}>Tin tức</Link>
             <Link to={ROUTES.customerStores}>Cửa hàng</Link>
             <Link to={ROUTES.customerMembership}>Thành viên</Link>
@@ -137,7 +137,7 @@ export function CustomerLayout() {
         </div>
       </header>
 
-      <main className="min-h-[calc(100vh-80px-400px)]">
+      <main className="flex-1">
         <Outlet />
       </main>
 

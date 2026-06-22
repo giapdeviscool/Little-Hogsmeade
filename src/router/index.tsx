@@ -9,6 +9,7 @@ import {
   CustomerBookingPage,
   CustomerMembershipPage,
   CustomerMenuPage,
+  CustomerEventsPage,
   CustomerPromotionsPage,
   CustomerStoresPage,
 } from '../pages/customer/CustomerPages'
@@ -32,6 +33,7 @@ export function AppRouter() {
         <Route path={ROUTES.landing} element={<LandingPage embedded />} />
         <Route path={ROUTES.customerAbout} element={<CustomerAboutPage />} />
         <Route path={ROUTES.customerMenu} element={<CustomerMenuPage />} />
+        <Route path={ROUTES.customerEvents} element={<CustomerEventsPage />} />
         <Route path={ROUTES.customerPromotions} element={<CustomerPromotionsPage />} />
         <Route path={ROUTES.customerBooking} element={<CustomerBookingPage />} />
         <Route path={ROUTES.customerBlog} element={<CustomerBlogPage />} />

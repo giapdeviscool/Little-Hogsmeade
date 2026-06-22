@@ -54,6 +54,26 @@ export function CustomerMenuPage() {
   return <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={query} setQuery={setQuery} />
 }
 
+export function CustomerEventsPage() {
+  const [events, setEvents] = useState<Event[]>([])
+
+  useEffect(() => {
+    let alive = true
+    listEvents().then((res) => {
+      if (alive && res.data) {
+        setEvents(normalizeList<Event>(res.data))
+      }
+    })
+    return () => { alive = false }
+  }, [])
+
+  return (
+    <>
+      <EventSection events={events} className="border-b border-line bg-white py-20 md:py-24" />
+    </>
+  )
+}
+
 export function CustomerPromotionsPage() {
   const [campaigns, setCampaigns] = useState<Promotion[]>([])
   const [loading, setLoading] = useState(true)

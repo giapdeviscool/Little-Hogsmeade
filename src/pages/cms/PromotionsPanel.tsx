@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Edit3, Plus, Search, Trash2, Loader2 } from 'lucide-react'
-import { Card } from '../../components/ui/Card'
+import { useEffect, useState, type FormEvent } from 'react'
+import { ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2 } from 'lucide-react'
+import { cn } from '../../utils/cn'
 import { CmsEditorModal } from './CmsEditorModal'
 import {
   createPromotion,
@@ -10,7 +10,7 @@ import { getBranches } from '../../api/chain.api'
 import { httpClient } from '../../api/httpClient'
 import type { Promotion, PromotionPayload, Branch, ApiResponse } from '../../types'
 import { formatVnDate } from '../../utils/date'
-import { cn } from '../../utils/cn'
+import { Card } from '../../components/ui/Card'
 import { getAuthToken } from '../../store/auth.store'
 
 type NoticeState = { type: 'success' | 'error'; message: string }
@@ -54,10 +54,26 @@ export function PromotionsPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<NoticeState | null>(null)
+  
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter])
 
   useEffect(() => {
     let alive = true
@@ -66,11 +82,23 @@ export function PromotionsPanel() {
       setError(null)
       try {
         const [promoRes, branchRes] = await Promise.all([
-          getPromotions(),
+          getPromotions({
+            page,
+            limit: 20,
+            search: debouncedSearch,
+            status: statusFilter
+          }),
           getBranches()
         ])
         if (!alive) return
-        setPromotions(promoRes.data || [])
+        if (promoRes.data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setPromotions((promoRes.data as any).items || promoRes.data)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pag = (promoRes.data as any).pagination
+          setTotalPages(pag?.totalPages || 1)
+          setTotal(pag?.total || 0)
+        }
         setBranches(branchRes.data?.items || [])
       } catch (loadError) {
         if (!alive) return
@@ -81,7 +109,7 @@ export function PromotionsPanel() {
     }
     void load()
     return () => { alive = false }
-  }, [])
+  }, [page, debouncedSearch, statusFilter])
 
   useEffect(() => {
     if (notice) {
@@ -89,17 +117,6 @@ export function PromotionsPanel() {
       return () => clearTimeout(timer)
     }
   }, [notice])
-
-  const filteredPromotions = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return promotions
-      .filter((promo) => {
-        const matchesKeyword = !keyword || [promo.name, promo.description].some((value) => value?.toLowerCase().includes(keyword))
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? promo.isActive : !promo.isActive)
-        return matchesKeyword && matchesStatus
-      })
-      .sort((a, b) => (b.startDate).localeCompare(a.startDate))
-  }, [promotions, search, statusFilter])
 
   function startCreate() {
     setEditingPromotion(null)
@@ -125,10 +142,12 @@ export function PromotionsPanel() {
   async function handleSave(payload: PromotionPayload, id?: string) {
     const response = id ? await updatePromotion(id, payload) : await createPromotion(payload)
     const saved = response.data
-    setPromotions((current) => {
-      const next = current.filter((item) => item.id !== saved.id)
-      return [saved, ...next]
-    })
+    if (saved) {
+      setPromotions((current) => {
+        const next = current.filter((item) => item.id !== saved.id)
+        return [saved, ...next].slice(0, 20)
+      })
+    }
     setNotice({ type: 'success', message: id ? 'Đã cập nhật khuyến mãi.' : 'Đã tạo khuyến mãi mới.' })
   }
 
@@ -180,7 +199,7 @@ export function PromotionsPanel() {
             <div className="h-12 w-full rounded bg-beige" />
           </div>
         </Card>
-      ) : filteredPromotions.length === 0 ? (
+      ) : promotions.length === 0 ? (
         <Card className="p-6">
            <div className="grid place-items-center rounded-[18px] border border-dashed border-latte bg-cream px-6 py-10 text-center">
             <p className="text-base font-semibold text-coffee">Chưa có khuyến mãi</p>
@@ -188,46 +207,57 @@ export function PromotionsPanel() {
           </div>
         </Card>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
-          {filteredPromotions.map((promo) => (
-            <article key={promo.id} className="overflow-hidden rounded-[22px] border border-line bg-white shadow-soft transition hover:border-coffee cursor-pointer">
-              <div className="space-y-4 p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[20px] font-semibold">{promo.name}</h3>
-                      <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', promo.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')}>
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-cream text-muted">
+                <tr>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Chiến dịch</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Mức giảm</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Thời gian</th>
+                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line bg-white">
+                {promotions.map((promo) => (
+                  <tr key={promo.id} className="transition-colors hover:bg-beige/50">
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-coffee">{promo.name}</div>
+                      {promo.description && <div className="mt-1 text-xs text-muted max-w-[200px] truncate">{promo.description}</div>}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', promo.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800')}>
                         {promo.isActive ? 'Active' : 'Inactive'}
                       </span>
-                    </div>
-                    <p className="mt-2 text-sm text-muted">{promo.description}</p>
-                    <p className="mt-2 text-sm font-semibold text-gold">Giảm: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString()}đ`}</p>
-                  </div>
-                </div>
-                <div className="grid gap-3 text-sm text-muted lg:grid-cols-2">
-                  <div className="rounded-[14px] bg-cream px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Bắt đầu</p>
-                    <p className="mt-1 text-sm font-medium text-coffee">{promo.startDate ? formatVnDate(promo.startDate) : ''}</p>
-                  </div>
-                  <div className="rounded-[14px] bg-cream px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Kết thúc</p>
-                    <p className="mt-1 text-sm font-medium text-coffee">{promo.endDate ? formatVnDate(promo.endDate) : ''}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => startEdit(promo)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee hover:bg-cream">
-                    <Edit3 className="h-4 w-4" />
-                    Sửa
-                  </button>
-                  <button type="button" onClick={() => handleDelete(promo.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50">
-                    <Trash2 className="h-4 w-4" />
-                    Xóa
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gold">
+                      {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString()}đ`}
+                    </td>
+                    <td className="px-6 py-4 text-muted">
+                      <div>Từ {promo.startDate ? formatVnDate(promo.startDate) : ''}</div>
+                      <div>Đến {promo.endDate ? formatVnDate(promo.endDate) : ''}</div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => startEdit(promo)} className="p-2 text-coffee hover:bg-cream rounded-full transition-colors" title="Sửa">
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                        <button type="button" onClick={() => handleDelete(promo.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Xóa">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {!loading && (
+        <PromotionPaginationBar page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       )}
 
       {editorOpen && (
@@ -392,5 +422,77 @@ function PromotionEditorDialog({
         </div>
       </form>
     </CmsEditorModal>
+  )
+}
+
+function PromotionPaginationBar({
+  page,
+  totalPages,
+  total,
+  onPageChange,
+}: {
+  page: number
+  totalPages: number
+  total: number
+  onPageChange: (page: number) => void
+}) {
+  // Build page number array with ellipsis
+  const pages: (number | '...')[] = []
+  const maxVisible = 5
+  if (totalPages <= maxVisible + 2) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    const start = Math.max(2, page - 1)
+    const end = Math.min(totalPages - 1, page + 1)
+    if (start > 2) pages.push('...')
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (end < totalPages - 1) pages.push('...')
+    pages.push(totalPages)
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+      <p className="text-sm text-muted">
+        Tổng <span className="font-semibold text-coffee">{total}</span> khuyến mãi · Trang <span className="font-semibold text-coffee">{page}</span>/{totalPages}
+      </p>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          disabled={page <= 1}
+          onClick={() => onPageChange(page - 1)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-white text-coffee transition hover:bg-cream disabled:opacity-40 disabled:hover:bg-white"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        {pages.map((p, i) =>
+          p === '...' ? (
+            <span key={`dots-${i}`} className="px-1 text-sm text-muted">…</span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onPageChange(p)}
+              className={cn(
+                'inline-flex h-9 min-w-[36px] items-center justify-center rounded-full border text-sm font-semibold transition',
+                p === page
+                  ? 'border-coffee bg-coffee text-white shadow-soft'
+                  : 'border-line bg-white text-coffee hover:bg-cream',
+              )}
+            >
+              {p}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(page + 1)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-white text-coffee transition hover:bg-cream disabled:opacity-40 disabled:hover:bg-white"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   )
 }
