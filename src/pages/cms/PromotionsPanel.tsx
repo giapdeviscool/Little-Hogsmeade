@@ -157,8 +157,7 @@ export function PromotionsPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Promotions</p>
-            <h2 className="mt-1 text-[24px] font-bold">Quản lý Khuyến mãi (Chiến dịch)</h2>
-            <p className="mt-2 text-sm text-muted">Tạo các chiến dịch giảm giá. Mã giảm giá (Voucher) sẽ được sinh tự động.</p>
+            <h2 className="mt-1 text-[24px] font-bold">Quản lý Promotions</h2>
           </div>
           <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft hover:bg-opacity-90">
             <Plus className="h-4 w-4" />
