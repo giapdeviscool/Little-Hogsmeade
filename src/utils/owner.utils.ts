@@ -25,3 +25,17 @@ export function isoToTime(value: string) {
 export function getErrorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Không thể kết nối. Vui lòng thử lại.'
 }
+
+export function getPromotionProgress(startDate: string | Date, endDate: string | Date): number {
+  const start = new Date(startDate).getTime()
+  const end = new Date(endDate).getTime()
+  const now = new Date().getTime()
+
+  if (now <= start) return 0
+  if (now >= end) return 100
+
+  const total = end - start
+  const elapsed = now - start
+
+  return Math.min(100, Math.max(0, (elapsed / total) * 100))
+}

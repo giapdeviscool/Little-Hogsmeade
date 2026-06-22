@@ -37,7 +37,7 @@ Status palette:
 
 ## Typography
 
-- Font: `Inter, sans-serif`.
+- Font: `Manrope, sans-serif`.
 - Không dùng nhiều font family trong cùng màn hình.
 - Heading landing page có thể lớn và editorial:
   - Hero H1 khoảng `text-[68px]`, line-height `1.05`, tracking tight.

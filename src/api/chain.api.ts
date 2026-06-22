@@ -1,6 +1,6 @@
 import { httpClient } from './httpClient'
 import { getAuthToken } from '../store/auth.store'
-import type { ApiResponse, Branch, BranchListResponse, BranchPayload, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from '../types'
+import type { ApiResponse, PaginatedData, Branch, BranchListResponse, BranchPayload, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from '../types'
 
 function authHeaders(): Record<string, string> {
   const token = getAuthToken()
@@ -42,8 +42,8 @@ export function updateBranch(id: string, payload: BranchPayload) {
   })
 }
 
-export function deactivateBranch(id: string) {
-  return httpClient<ApiResponse<Branch>>(`/branches/${id}/deactivate`, {
+export function toggleBranchStatus(id: string) {
+  return httpClient<ApiResponse<Branch>>(`/branches/${id}/toggle-status`, {
     method: 'PATCH',
     headers: authHeaders(),
   })
@@ -84,8 +84,9 @@ export function updatePricing(payload: { menuItemId: string; basePrice: number; 
   })
 }
 
-export function getPromotions() {
-  return httpClient<ApiResponse<Promotion[]>>('/promotions', {
+export function getPromotions(params?: Record<string, string | number>) {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  return httpClient<ApiResponse<PaginatedData<Promotion>>>(`/promotions${query}`, {
     headers: authHeaders(),
   })
 }
@@ -95,5 +96,20 @@ export function createPromotion(payload: PromotionPayload) {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(payload),
+  })
+}
+
+export function updatePromotion(id: string, payload: PromotionPayload) {
+  return httpClient<ApiResponse<Promotion>>(`/promotions/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+}
+
+export function togglePromotionStatus(id: string) {
+  return httpClient<ApiResponse<Promotion>>(`/promotions/${id}/toggle-status`, {
+    method: 'PATCH',
+    headers: authHeaders(),
   })
 }

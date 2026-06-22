@@ -3,12 +3,13 @@ import { getAuthToken } from '../store/auth.store'
 
 export async function httpClient<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAuthToken()
-  const headers: HeadersInit = { 'Content-Type': 'application/json', ...init?.headers }
+  const isFormData = init?.body instanceof FormData
+  const headers: HeadersInit = { ...(isFormData ? {} : { 'Content-Type': 'application/json' }), ...init?.headers }
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
+  const response = await fetch(`http://localhost:3000${env.apiBaseUrl}${path}`, {
     ...init,
     headers,
   })
@@ -19,5 +20,14 @@ export async function httpClient<T>(path: string, init?: RequestInit): Promise<T
     throw new Error(validationMessage || errorPayload?.message || `Request failed: ${response.status}`)
   }
 
-  return response.json() as Promise<T>
+  if (response.status === 204) {
+    return {} as T
+  }
+
+  const text = await response.text()
+  if (!text) {
+    return {} as T
+  }
+
+  return JSON.parse(text) as T
 }

@@ -1,5 +1,6 @@
 import { Card } from "../../ui/Card";
 import type { OwnerActiveTab } from "../../../types";
+import { X } from "lucide-react";
 
 const ownerTabs: Array<[OwnerActiveTab, string]> = [
   ["dashboard", "Dashboard"],
@@ -31,9 +32,11 @@ export function OwnerHeader({ onRefresh }: { onRefresh: () => void }) {
 export function OwnerAlert({
   error,
   notice,
+  onClose,
 }: {
   error: string;
   notice: string;
+  onClose: () => void;
 }) {
   if (!error && !notice) {
     return null;
@@ -41,14 +44,34 @@ export function OwnerAlert({
 
   return (
     <div
-      className={`rounded-lg border px-4 py-3 text-sm ${error ? "border-red-100 bg-red-50 text-red-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"}`}
+      className={`relative flex items-center justify-between rounded-lg border px-4 py-3 text-sm pr-10 ${
+        error
+          ? "border-red-100 bg-red-50 text-red-700"
+          : "border-emerald-100 bg-emerald-50 text-emerald-700"
+      }`}
     >
-      {error || notice}
+      <span>{error || notice}</span>
+      <button
+        onClick={onClose}
+        className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors ${
+          error
+            ? "hover:bg-red-100 text-red-500 hover:text-red-900"
+            : "hover:bg-emerald-100 text-emerald-500 hover:text-emerald-900"
+        }`}
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }
 
-export function OwnerTabs({ activeTab, onChange }: { activeTab: OwnerActiveTab; onChange: (tab: OwnerActiveTab) => void }) {
+export function OwnerTabs({
+  activeTab,
+  onChange,
+}: {
+  activeTab: OwnerActiveTab;
+  onChange: (tab: OwnerActiveTab) => void;
+}) {
   return (
     <div className="flex border-b-2 border-line">
       {ownerTabs.map(([key, label]) => (
@@ -56,9 +79,10 @@ export function OwnerTabs({ activeTab, onChange }: { activeTab: OwnerActiveTab; 
           key={key}
           className={`relative h-[38px] px-4 text-sm font-semibold whitespace-nowrap transition-colors
             after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-0.5 after:transition-all
-            ${activeTab === key
-              ? 'text-coffee after:bg-coffee'
-              : 'text-muted after:bg-transparent hover:text-coffee'
+            ${
+              activeTab === key
+                ? "text-coffee after:bg-coffee"
+                : "text-muted after:bg-transparent hover:text-coffee"
             }`}
           onClick={() => onChange(key)}
         >
@@ -66,7 +90,7 @@ export function OwnerTabs({ activeTab, onChange }: { activeTab: OwnerActiveTab; 
         </button>
       ))}
     </div>
-  )
+  );
 }
 
 export function OwnerLoading() {
