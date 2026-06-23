@@ -15,13 +15,10 @@ export async function httpClient<T>(
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(
-    `http://localhost:3000${env.apiBaseUrl}${path}`,
-    {
-      ...init,
-      headers,
-    },
-  );
+  const response = await fetch(`${env.apiBaseUrl}${path}`, {
+    ...init,
+    headers,
+  })
 
   if (!response.ok) {
     const errorPayload = (await response.json().catch(() => null)) as {

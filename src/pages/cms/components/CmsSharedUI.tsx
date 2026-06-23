@@ -3,6 +3,7 @@ import { ImagePlus } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
 import { cn } from '../../../utils/cn'
 import { formatVnDateTime } from '../../../utils/date'
+import { useLocale } from '../../../hooks/useLocale'
 import type { CmsPage } from '../../../types'
 import type { NoticeState } from './cms.types'
 
@@ -21,6 +22,7 @@ export function StateShell({
   description: string
   onRetry?: () => void
 }) {
+  const { t } = useLocale()
   if (loading) {
     return (
       <Card className="p-6">
@@ -36,11 +38,11 @@ export function StateShell({
   if (error) {
     return (
       <Card className="border-red-200 bg-red-50 p-6 text-red-800">
-        <p className="text-sm font-semibold">Không tải được dữ liệu</p>
+        <p className="text-sm font-semibold">{t.cms.shared.errorTitle}</p>
         <p className="mt-2 text-sm leading-6">{error}</p>
         {onRetry && (
           <button type="button" onClick={onRetry} className="mt-4 rounded-full bg-coffee px-4 py-2 text-sm font-semibold text-white">
-            Tải lại
+            {t.cms.shared.retryButton}
           </button>
         )}
       </Card>
@@ -123,6 +125,7 @@ export function SelectField({
   options: string[]
   className?: string
 }) {
+  const { t } = useLocale()
   return (
     <label className={cn('flex flex-col gap-2 text-sm font-semibold text-coffee', className)}>
       <span>{label}</span>
@@ -132,7 +135,7 @@ export function SelectField({
         className="h-12 w-full appearance-none rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte"
         style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
       >
-        <option value="" disabled>Chọn danh mục</option>
+        <option value="" disabled>{t.common.selectCategory}</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>{opt}</option>
         ))}
@@ -223,13 +226,14 @@ export function ImageField({
   onUpload: (file: File) => Promise<void>
   fileRef: RefObject<HTMLInputElement | null>
 }) {
+  const { t } = useLocale()
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-sm font-semibold text-coffee">{label}</label>
         <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold text-coffee">
           <ImagePlus className="h-4 w-4" />
-          Tải ảnh
+          {t.common.uploadImage}
         </button>
       </div>
       <input
@@ -246,7 +250,7 @@ export function ImageField({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="https://..."
+        placeholder={t.common.imageUrlPlaceholder}
         className="h-12 w-full rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-latte"
       />
       {value ? (
@@ -259,7 +263,8 @@ export function ImageField({
 }
 
 export function StatusPill({ active }: { active: boolean }) {
-  return <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', active ? 'bg-emerald-100 text-emerald-700' : 'bg-beige text-muted')}>{active ? 'Published' : 'Draft'}</span>
+  const { t } = useLocale()
+  return <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', active ? 'bg-emerald-100 text-emerald-700' : 'bg-beige text-muted')}>{active ? t.common.published : t.common.draft}</span>
 }
 
 export function InlineNotice({ notice }: { notice: NoticeState }) {
@@ -280,9 +285,10 @@ export function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export function PageSyncMeta({ page }: { page: CmsPage }) {
+  const { t } = useLocale()
   return (
     <p className="mt-4 text-xs text-muted">
-      Slug: {page.slug} · Cập nhật: {formatVnDateTime(page.updatedAt ?? page.createdAt)}
+      Slug: {page.slug} · {t.common.updatedAt}: {formatVnDateTime(page.updatedAt ?? page.createdAt)}
     </p>
   )
 }

@@ -9,6 +9,7 @@ export function ToppingGroups() {
   const [groups, setGroups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editData, setEditData] = useState<any>(null)
   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean; id: string | null}>({ isOpen: false, id: null })
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({ isOpen: false, title: '', message: '', type: 'info' })
 
@@ -54,7 +55,10 @@ export function ToppingGroups() {
         </div>
         <div className="flex gap-2">
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setEditData(null)
+              setIsModalOpen(true)
+            }}
             className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
           >
             + Thêm nhóm Topping
@@ -86,7 +90,16 @@ export function ToppingGroups() {
                     <td className="border-b border-line px-4 py-4">
                       {g.toppings.length} tuỳ chọn
                     </td>
-                    <td className="border-b border-line px-4 py-4">
+                    <td className="border-b border-line px-4 py-4 flex gap-3">
+                      <button 
+                        onClick={() => {
+                          setEditData(g)
+                          setIsModalOpen(true)
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Sửa
+                      </button>
                       <button 
                         onClick={() => handleDeleteClick(g.id)}
                         className="text-red-600 hover:text-red-800 font-medium"
@@ -109,6 +122,7 @@ export function ToppingGroups() {
 
       <ToppingGroupModal
         isOpen={isModalOpen}
+        editData={editData}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false)

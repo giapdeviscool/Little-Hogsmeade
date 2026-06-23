@@ -17,7 +17,7 @@ import { getBranches } from '../../api/chain.api'
 import type { Banner, Branch, CmsPage, Event, Post, Promotion } from '../../types'
 import type { Customer, CustomerMembership, PointTransaction } from '../../types/customer.types'
 import { formatVnDate, formatVnDateTime } from '../../utils/date'
-import { Eye, Search, Gift, Award, History, X } from 'lucide-react'
+import { Eye, Gift, Award, History } from 'lucide-react'
 import { PostDetailModal } from '../../components/customer/DetailModals'
 import { cn } from '../../utils/cn'
 
@@ -545,7 +545,7 @@ export function CustomerMembershipPage() {
         setCustomer(null)
         setMembership(null)
       }
-    } catch (err) {
+    } catch {
       setError('Đã xảy ra lỗi khi tra cứu.')
     } finally {
       setLoading(false)

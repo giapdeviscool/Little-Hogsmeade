@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { Navigation, Star } from 'lucide-react'
+import { Navigation } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
 import { LandingInput } from './LandingSharedUI'
 import type { BookingDraft } from '../landing.types'
@@ -27,17 +27,15 @@ export function BookingSection({
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Đặt bàn / Order</p>
           <h2 className="mt-4 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[46px]">
-            Giữ chỗ cho buổi tối
-            <br />
-            không thể quên của bạn
+            Giữ chỗ cho buổi hẹn không thể quên của bạn
           </h2>
           <p className="mt-6 text-[15px] leading-7 text-coffee/85">
-            Form này ghi nhận yêu cầu phía frontend. Khi backend booking/order có endpoint chính thức, chỉ cần thay `onSubmit` sang gọi API.
+            Nâng tầm trải nghiệm ẩm thực của bạn với dịch vụ đặt bàn trước, giúp mọi khoảnh khắc trở nên trọn vẹn hơn.
           </p>
-          <p className="mt-7 flex items-center gap-2 text-sm font-bold text-gold">
+          {/* <p className="mt-7 flex items-center gap-2 text-sm font-bold text-gold">
             <Star className="h-4 w-4" />
             4.9 / 5 · 1,284 đánh giá
-          </p>
+          </p> */}
         </div>
         <Card className="rounded-[18px] border border-line bg-cream p-7 shadow-soft">
           <h3 className="text-xl font-bold">Thông tin đặt bàn</h3>

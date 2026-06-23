@@ -6,6 +6,7 @@ import type { Event, EventPayload, Branch } from '../../../types'
 import { Card } from '../../../components/ui/Card'
 import { Pagination } from '../../../components/ui/Pagination'
 import { formatVnDate, formatVnTime, formatVnDateTime } from '../../../utils/date'
+import { useLocale } from '../../../hooks/useLocale'
 import type { NoticeState } from './cms.types'
 import { normalizeList } from './cms.utils'
 import { StateShell, InlineNotice, StatusPill, InfoRow } from './CmsSharedUI'
@@ -13,6 +14,7 @@ import { EventEditorDialog } from './EventEditorDialog'
 import { EventDetailDialog } from './EventDetailDialog'
 
 export function EventsPanel() {
+  const { t } = useLocale()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +59,7 @@ export function EventsPanel() {
         setTotal(0)
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách sự kiện.')
+      setError(loadError instanceof Error ? loadError.message : t.cms.events.loadError)
     } finally {
       setLoading(false)
     }
@@ -82,24 +84,26 @@ export function EventsPanel() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Xóa sự kiện này?')) return
+    if (!window.confirm(t.cms.events.deleteConfirm)) return
     try {
       await deleteEvent(id)
-      setNotice({ type: 'success', message: 'Đã xóa sự kiện.' })
+      setNotice({ type: 'success', message: t.cms.events.deleteSuccess })
       void fetchEvents(page, debouncedSearch, statusFilter)
     } catch (deleteError) {
-      setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : 'Không xóa được sự kiện.' })
+      setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : t.cms.events.deleteError })
     }
   }
 
   async function handleSave(payload: EventPayload, id?: string) {
     const response = id ? await updateEvent(id, payload) : await createEvent(payload)
     const saved = response.data
-    setEvents((current) => {
-      const next = current.filter((item) => item.id !== saved.id)
-      return [saved, ...next]
-    })
-    setNotice({ type: 'success', message: id ? 'Đã cập nhật sự kiện.' : 'Đã tạo sự kiện mới.' })
+    if (saved) {
+      setEvents((current) => {
+        const next = current.filter((item) => item.id !== saved.id)
+        return [saved, ...next]
+      })
+    }
+    setNotice({ type: 'success', message: id ? t.cms.events.updateSuccess : t.cms.events.createSuccess })
     void fetchEvents(page, debouncedSearch, statusFilter)
   }
 
@@ -109,29 +113,29 @@ export function EventsPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Events</p>
-            <h2 className="mt-1 text-[24px] font-bold">Quản lý Events</h2>
+            <h2 className="mt-1 text-[24px] font-bold">{t.cms.events.pageTitle}</h2>
           </div>
           <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft">
             <Plus className="h-4 w-4" />
-            New Event
+            {t.cms.events.newEvent}
           </button>
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_220px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo title, mô tả, địa điểm..." className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-latte" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t.cms.events.searchPlaceholder} className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-latte" />
           </div>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
+            <option value="all">{t.common.allStatus}</option>
+            <option value="published">{t.common.published}</option>
+            <option value="draft">{t.common.draft}</option>
           </select>
         </div>
       </Card>
 
       {notice && <InlineNotice notice={notice} />}
-      <StateShell loading={loading} error={error} empty={events.length === 0 && !loading} title="Chưa có sự kiện" description="Tạo sự kiện đầu tiên cho chiến dịch, voucher hoặc combo." />
+      <StateShell loading={loading} error={error} empty={events.length === 0 && !loading} title={t.cms.events.noEvents} description={t.cms.events.noEventsDesc} />
 
       <div className="grid gap-6 md:grid-cols-2">
         {events.map((event) => (
@@ -157,16 +161,16 @@ export function EventsPanel() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setViewingEvent(event)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
-                  <Eye className="h-4 w-4" />
-                  Xem
+                   <Eye className="h-4 w-4" />
+                   {t.cms.events.view}
                 </button>
                 <button type="button" onClick={() => startEdit(event)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
-                  <Edit3 className="h-4 w-4" />
-                  Sửa
+                   <Edit3 className="h-4 w-4" />
+                   {t.common.edit}
                 </button>
                 <button type="button" onClick={() => handleDelete(event.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700">
-                  <Trash2 className="h-4 w-4" />
-                  Xóa
+                   <Trash2 className="h-4 w-4" />
+                   {t.common.delete}
                 </button>
               </div>
             </div>
@@ -174,9 +178,9 @@ export function EventsPanel() {
         ))}
       </div>
 
-      {!loading && totalPages > 0 && (
-        <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label="sự kiện" />
-      )}
+        {!loading && totalPages > 0 && (
+          <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label={t.common.events} />
+        )}
 
       {viewingEvent && (
         <EventDetailDialog

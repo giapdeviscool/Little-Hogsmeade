@@ -1,6 +1,6 @@
 import { httpClient } from './httpClient'
 import type { ApiResponse } from '../types'
-import type { Customer, CustomerMembership, MembershipTier, PointTransaction } from '../types/customer.types'
+import type { Customer, CustomerMembership, PointTransaction } from '../types/customer.types'
 import type { Promotion } from '../types/chain.types'
 
 // Note: customers API doesn't need authHeaders for public lookup

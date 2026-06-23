@@ -11,8 +11,8 @@ import {
   CustomerMenuPage,
   CustomerEventsPage,
   CustomerPromotionsPage,
-  CustomerStoresPage,
 } from '../pages/customer/CustomerPages'
+import { StoresPage } from '../pages/stores/StoresPage'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { RegisterPage } from '../pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
@@ -20,6 +20,7 @@ import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
 import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { POSPage } from '../pages/pos/POSPage'
 import { OperationsPage } from '../pages/operations/OperationsPage'
+import { TableLayoutPage } from '../pages/operations/TableLayoutPage'
 import { InternalPage } from '../pages/internal/InternalPage'
 import { OwnerPage } from '../pages/owner/OwnerPage'
 import { CMSPage } from '../pages/cms/CMSPage'
@@ -39,7 +40,7 @@ export function AppRouter() {
         <Route path={ROUTES.customerPromotions} element={<CustomerPromotionsPage />} />
         <Route path={ROUTES.customerBooking} element={<CustomerBookingPage />} />
         <Route path={ROUTES.customerBlog} element={<CustomerBlogPage />} />
-        <Route path={ROUTES.customerStores} element={<CustomerStoresPage />} />
+        <Route path={ROUTES.customerStores} element={<StoresPage />} />
         <Route path={ROUTES.customerMembership} element={<CustomerMembershipPage />} />
       </Route>
 
@@ -48,6 +49,7 @@ export function AppRouter() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="pos" element={<POSPage />} />
         <Route path="operations" element={<OperationsPage />} />
+        <Route path="table-layout" element={<TableLayoutPage />} />
         <Route path="internal" element={<InternalPage />} />
         <Route path="owner" element={<OwnerPage />} />
         <Route path="cms" element={<CMSPage />} />
