@@ -8,7 +8,7 @@ export * from './hr.types'
 export type { NavIconKey, NavItem, SidebarNavKey, TabKey } from './navigation.types'
 export type { OwnerActiveTab } from './owner.types'
 export type { ProductMock, ProductStatus } from './product.types'
-export type { TableMapMock, TableShape, TableStatus } from './table.types'
+export type { BranchTable, BranchTableArea, BranchTableFilters, BranchTableLayout, BranchTableLayoutResponse, BranchTableStatus, TableMapMock, TableShape, TableStatus, TableStatusUpdatedEvent, UpdateTableStatus, UpdateTableStatusPayload } from './table.types'
 export type { Reservation, ReservationPayload, ReservationStatus } from './reservation.types'
 export * from './customer.types'  
  

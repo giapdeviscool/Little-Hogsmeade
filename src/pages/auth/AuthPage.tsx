@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { AuthInput } from '../../components/ui/AuthInput'
 import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
 import { useLocale } from '../../hooks/useLocale'
-import { cn } from '../../utils/cn'
 import type { AuthMode } from '../../types'
 import { login, register } from '../../api/auth.api'
 import { saveAuthSession } from '../../store/auth.store'
@@ -18,6 +17,23 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const isLogin = mode === 'login'
   const isRegister = mode === 'register'
   const isForgot = mode === 'forgot'
+
+  const handleLogin = (form: FormData, password: string) => {
+    return login({
+      identifier: String(form.get('identifier') || '').trim(),
+      password,
+    })
+  }
+
+  const handleRegister = (form: FormData, password: string) => {
+    return register({
+      accountType: 'customer',
+      fullName: String(form.get('fullName') || '').trim(),
+      phone: String(form.get('phone') || '').trim(),
+      email: String(form.get('email') || '').trim() || undefined,
+      password,
+    })
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -40,18 +56,17 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     setIsSubmitting(true)
 
     try {
-      const response = isRegister
-        ? await register({
-            accountType: 'customer',
-            fullName: String(form.get('fullName') || '').trim(),
-            phone: String(form.get('phone') || '').trim(),
-            email: String(form.get('email') || '').trim() || undefined,
-            password,
-          })
-        : await login({
-            identifier: String(form.get('identifier') || '').trim(),
-            password,
-          })
+      let response
+
+      if (isRegister) {
+        response = await handleRegister(form, password)
+      } else {
+        response = await handleLogin(form, password)
+      }
+
+      if (!response.data) {
+        throw new Error(response.error || 'Unable to authenticate')
+      }
 
       saveAuthSession(response.data)
 
@@ -99,11 +114,6 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
       </section>
 
       <section className="mx-auto flex w-full max-w-[520px] flex-col justify-center px-8">
-        <div className="mb-9 grid grid-cols-2 rounded-[16px] bg-cream p-1">
-          <button type="button" onClick={() => navigate('/login')} className={cn('rounded-[13px] px-4 py-3 text-sm font-bold transition', isLogin ? 'bg-white text-coffee shadow-soft' : 'text-muted')}>{t.auth.login}</button>
-          <button type="button" onClick={() => navigate('/register')} className={cn('rounded-[13px] px-4 py-3 text-sm font-bold transition', isRegister ? 'bg-white text-coffee shadow-soft' : 'text-muted')}>{t.auth.register}</button>
-        </div>
-
         <div className="mb-8">
           <p className="mb-2 text-sm font-bold uppercase tracking-[0.12em] text-muted">{isForgot ? t.auth.recoverAccess : isRegister ? t.auth.createAccount : t.auth.welcomeBack}</p>
           <h1 className="text-[40px] font-bold tracking-[-0.04em]">{isForgot ? t.auth.forgotTitle : isRegister ? t.auth.registerTitle : t.auth.loginTitle}</h1>

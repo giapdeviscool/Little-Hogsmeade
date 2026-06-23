@@ -12,6 +12,7 @@ export const ROUTES = {
   adminDashboard: '/admin/dashboard',
   adminPos: '/admin/pos',
   adminOperations: '/admin/operations',
+  adminTableLayout: '/admin/table-layout',
   adminInternal: '/admin/internal',
   adminOwner: '/admin/owner',
   adminCms: '/admin/cms',

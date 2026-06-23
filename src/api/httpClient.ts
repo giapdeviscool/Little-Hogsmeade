@@ -9,7 +9,7 @@ export async function httpClient<T>(path: string, init?: RequestInit): Promise<T
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(`http://localhost:3000${env.apiBaseUrl}${path}`, {
+  const response = await fetch(`${env.apiBaseUrl}${path}`, {
     ...init,
     headers,
   })
