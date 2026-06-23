@@ -1,3 +1,12 @@
+import {
+  Bar,
+  BarChart as RechartsBarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { Card } from '../../ui/Card'
 import type { ChainDashboard } from '../../../types'
 import { formatCurrency } from '../../../utils/owner.utils'
@@ -11,18 +20,50 @@ export function MetricCard({ label, value }: { label: string; value: string }) {
   )
 }
 
+function RevenueTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null
+  const item = payload[0].payload as { date: string; revenue: number }
+  return (
+    <div className="rounded-lg border border-line bg-white px-3 py-2 text-xs shadow-sm">
+      <p className="font-semibold">{item.date}</p>
+      <p className="mt-1 text-muted">{formatCurrency(item.revenue)}</p>
+    </div>
+  )
+}
+
 export function BarChart({ data }: { data: ChainDashboard['revenueSeries'] }) {
-  const max = Math.max(...data.map((item) => item.revenue), 1)
+  if (data.length === 0) {
+    return (
+      <div className="mt-5 grid h-64 w-full place-items-center text-sm text-muted">
+        Chưa có dữ liệu doanh thu.
+      </div>
+    )
+  }
+
+  const chartData = data.map((item) => ({ ...item, label: item.date.slice(5) }))
 
   return (
-    <div className="mt-5 flex h-64 items-end gap-2 border-b border-line">
-      {data.length === 0 ? <div className="grid h-full w-full place-items-center text-sm text-muted">Chưa có dữ liệu doanh thu.</div> : null}
-      {data.map((item) => (
-        <div key={item.date} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-          <div className="w-full rounded-t-lg bg-latte" style={{ height: `${Math.max((item.revenue / max) * 220, 8)}px` }} title={formatCurrency(item.revenue)} />
-          <span className="max-w-full truncate text-[11px] text-muted">{item.date.slice(5)}</span>
-        </div>
-      ))}
+    <div className="h-80 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <RechartsBarChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }} barCategoryGap="30%">
+          <CartesianGrid vertical={false} stroke="var(--color-line, #e5e0d8)" />
+          <XAxis
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#8a8478' }}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#8a8478' }}
+            tickFormatter={(value) => formatCurrency(value)}
+            width={70}
+          />
+          <Tooltip content={<RevenueTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+          <Bar dataKey="revenue" fill="#A47551" radius={[6, 6, 0, 0]} maxBarSize={56} />
+        </RechartsBarChart>
+      </ResponsiveContainer>
     </div>
   )
 }
