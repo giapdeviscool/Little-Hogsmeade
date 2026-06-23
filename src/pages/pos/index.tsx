@@ -30,6 +30,32 @@ export function PosPage() {
 
   const activeOrder = orders.find(o => o.id === activeOrderId) || orders[0];
 
+  // Update quantity of a cart item (delta can be +1 or -1)
+  const handleUpdateItem = (itemId: string, delta: number) => {
+    setOrders(prev =>
+      prev.map(order => {
+        if (order.id !== activeOrderId) return order;
+        const updatedItems = order.cartItems.map(item =>
+          item.id === itemId
+            ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+            : item
+        );
+        return { ...order, cartItems: updatedItems };
+      })
+    );
+  };
+
+  // Remove an item from the current order
+  const handleRemoveItem = (itemId: string) => {
+    setOrders(prev =>
+      prev.map(order => {
+        if (order.id !== activeOrderId) return order;
+        const filtered = order.cartItems.filter(item => item.id !== itemId);
+        return { ...order, cartItems: filtered };
+      })
+    );
+  };
+
   const handleProductClick = (product: MenuItem) => {
     if (!isOrderOpen) setIsOrderOpen(true);
     
@@ -85,6 +111,10 @@ export function PosPage() {
     });
   };
 
+  const handleClearOrder = () => {
+    setOrders(prev => prev.map(o => o.id === activeOrderId ? { ...o, cartItems: [] } : o));
+  };
+
   const handleSetCustomer = (customer: Customer | null) => {
     setOrders(prev => prev.map(o => 
       o.id === activeOrderId ? { ...o, customer } : o
@@ -93,15 +123,16 @@ export function PosPage() {
 
   return (
     <PosLayout>
-      <div className="flex w-full h-full relative overflow-hidden bg-beige">
+      <div className="flex w-full h-full overflow-hidden bg-beige">
         <ProductSection 
           isOrderOpen={isOrderOpen} 
           onProductClick={handleProductClick} 
         />
         
+        {/* Order panel as a flex sibling — auto-resizes the menu */}
         <div 
-          className={`absolute top-0 right-0 h-full bg-white flex flex-col transition-transform duration-300 z-10 ${
-            isOrderOpen ? 'w-[35%] translate-x-0 shadow-2xl border-l border-line' : 'w-[80px] translate-x-0 border-l border-line items-center py-6'
+          className={`h-full bg-white flex flex-col border-l border-line transition-all duration-300 overflow-hidden ${
+            isOrderOpen ? 'w-[42%] shadow-xl' : 'w-[72px] items-center py-6'
           }`}
         >
           {isOrderOpen ? (
@@ -114,12 +145,15 @@ export function PosPage() {
               onDeleteOrder={handleDeleteOrder}
               onChangeOrder={setActiveOrderId}
               onSetCustomer={handleSetCustomer}
+              onClearOrder={handleClearOrder}
+              onUpdateItem={handleUpdateItem}
+              onRemoveItem={handleRemoveItem}
             />
           ) : (
-            <div className="flex flex-col gap-3 mt-4">
+            <div className="flex flex-col gap-3 mt-4 items-center">
               <button 
                 onClick={() => setIsOrderOpen(true)}
-                className="w-12 h-12 bg-white text-coffee border border-line rounded-full flex items-center justify-center hover:bg-beige transition-colors shadow-sm relative"
+                className="w-11 h-11 bg-white text-coffee border border-line rounded-full flex items-center justify-center hover:bg-beige transition-colors shadow-sm relative"
                 title="Mở đơn hiện tại"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -131,10 +165,10 @@ export function PosPage() {
               </button>
               <button 
                 onClick={handleAddOrder}
-                className="w-12 h-12 bg-coffee text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+                className="w-11 h-11 bg-coffee text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
                 title="Tạo đơn mới"
               >
-                <Plus className="w-6 h-6" />
+                <Plus className="w-5 h-5" />
               </button>
             </div>
           )}

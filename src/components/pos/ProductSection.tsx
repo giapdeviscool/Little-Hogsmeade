@@ -7,9 +7,9 @@ interface ProductSectionProps {
   onProductClick: (product: MenuItem) => void;
 }
 
-export function ProductSection({ isOrderOpen, onProductClick }: ProductSectionProps) {
+export function ProductSection({ isOrderOpen: _isOrderOpen, onProductClick }: ProductSectionProps) {
   return (
-    <section className={`flex flex-col h-full overflow-hidden border-r border-line transition-all duration-300 ${isOrderOpen ? 'w-[65%]' : 'w-[calc(100%-80px)]'}`}>
+    <section className="flex-1 flex flex-col h-full overflow-hidden border-r border-line transition-all duration-300 min-w-0">
       <SearchFilter />
       <ProductGrid onProductClick={onProductClick} />
     </section>

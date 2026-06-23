@@ -63,8 +63,8 @@ export function OrderTabs({
         </button>
       </div>
 
-      <div className="px-6 py-6 border-b border-line bg-white">
-        <div className="flex justify-between items-start mb-6">
+      <div className="px-6 py-3 border-b border-line bg-white">
+        <div className="flex justify-between items-start mb-3">
           <div>
             <h2 className="text-2xl font-bold text-coffee">{activeOrder.title}</h2>
           </div>
