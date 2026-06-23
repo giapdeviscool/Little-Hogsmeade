@@ -1,4 +1,3 @@
-import { Save, FileText, Ban } from 'lucide-react';
 import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
 import { useState } from 'react';
