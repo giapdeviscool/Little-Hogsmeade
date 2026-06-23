@@ -57,9 +57,12 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
       const role = response.data.user.role || response.data.user.roleName || ''
       const isCustomer = role.toLowerCase() === 'customer'
+      const isCashier = role.toLowerCase().includes('cashier')
       
       if (isCustomer) {
         navigate(ROUTES.customerHome)
+      } else if (isCashier) {
+        navigate(ROUTES.pos)
       } else {
         navigate(ROUTES.adminDashboard)
       }

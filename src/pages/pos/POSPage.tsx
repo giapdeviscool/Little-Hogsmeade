@@ -34,7 +34,7 @@ export function POSPage() {
               <b>{['72.000đ', '248.000đ', '68.000đ'][i]}</b>
             </div>
           ))}
-          <div className="mt-5 rounded-[16px] bg-cream p-4">{['Tạm tính 456.000đ', 'Giảm giá -22.800đ', 'VAT 43.320đ', 'Tổng cộng 476.520đ'].map((x) => <p key={x} className="flex justify-between py-2 text-sm text-muted"><span>{x.split(' ').slice(0, -1).join(' ')}</span><b>{x.split(' ').at(-1)}</b></p>)}</div>
+          <div className="mt-5 rounded-[16px] bg-cream p-4">{['Tạm tính 456.000đ', 'Giảm giá -22.800đ', 'Tổng cộng 433.200đ'].map((x) => <p key={x} className="flex justify-between py-2 text-sm text-muted"><span>{x.split(' ').slice(0, -1).join(' ')}</span><b>{x.split(' ').at(-1)}</b></p>)}</div>
           <div className="mt-4 grid grid-cols-2 gap-3">{['Tiền mặt', 'Ví điện tử', 'Thẻ ngân hàng', 'Quét VietQR'].map((x) => <button key={x} className="rounded-[14px] border border-line bg-white px-4 py-2.5 text-sm font-semibold">{x}</button>)}</div>
         </Card>
       </section>
