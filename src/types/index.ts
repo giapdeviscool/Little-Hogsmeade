@@ -45,9 +45,20 @@ export type {
 } from "./navigation.types";
 export type { OwnerActiveTab } from "./owner.types";
 export type { ProductMock, ProductStatus } from "./product.types";
-export type { TableMapMock, TableShape, TableStatus } from "./table.types";
-export * from "./menu.types";
-export * from "./recipe.types";
+export type {
+  BranchTable,
+  BranchTableArea,
+  BranchTableFilters,
+  BranchTableLayout,
+  BranchTableLayoutResponse,
+  BranchTableStatus,
+  TableMapMock,
+  TableShape,
+  TableStatus,
+  TableStatusUpdatedEvent,
+  UpdateTableStatus,
+  UpdateTableStatusPayload,
+} from "./table.types";
 export type {
   Reservation,
   ReservationPayload,
