@@ -11,8 +11,8 @@ import {
   CustomerMenuPage,
   CustomerEventsPage,
   CustomerPromotionsPage,
-  CustomerStoresPage,
 } from '../pages/customer/CustomerPages'
+import { StoresPage } from '../pages/stores/StoresPage'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { RegisterPage } from '../pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
@@ -37,7 +37,7 @@ export function AppRouter() {
         <Route path={ROUTES.customerPromotions} element={<CustomerPromotionsPage />} />
         <Route path={ROUTES.customerBooking} element={<CustomerBookingPage />} />
         <Route path={ROUTES.customerBlog} element={<CustomerBlogPage />} />
-        <Route path={ROUTES.customerStores} element={<CustomerStoresPage />} />
+        <Route path={ROUTES.customerStores} element={<StoresPage />} />
         <Route path={ROUTES.customerMembership} element={<CustomerMembershipPage />} />
       </Route>
       

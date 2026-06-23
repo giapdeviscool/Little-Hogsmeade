@@ -49,7 +49,7 @@ export function LandingPage({
   const [error, setError] = useState<string | null>(null)
   const [bookingDraft, setBookingDraft] = useState<BookingDraft>(fallbackBooking)
   const [bookingNotice, setBookingNotice] = useState<string | null>(null)
-  const [activeMenuQuery, setActiveMenuQuery] = useState('')
+  // const [activeMenuQuery, setActiveMenuQuery] = useState('')
   const [storeQuery, setStoreQuery] = useState('')
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationNotice, setLocationNotice] = useState<string | null>(null)

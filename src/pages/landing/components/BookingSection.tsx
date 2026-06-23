@@ -32,12 +32,12 @@ export function BookingSection({
             không thể quên của bạn
           </h2>
           <p className="mt-6 text-[15px] leading-7 text-coffee/85">
-            Form này ghi nhận yêu cầu phía frontend. Khi backend booking/order có endpoint chính thức, chỉ cần thay `onSubmit` sang gọi API.
+            Nâng tầm trải nghiệm ẩm thực của bạn với dịch vụ đặt bàn trước, giúp mọi khoảnh khắc trở nên trọn vẹn hơn.
           </p>
-          <p className="mt-7 flex items-center gap-2 text-sm font-bold text-gold">
+          {/* <p className="mt-7 flex items-center gap-2 text-sm font-bold text-gold">
             <Star className="h-4 w-4" />
             4.9 / 5 · 1,284 đánh giá
-          </p>
+          </p> */}
         </div>
         <Card className="rounded-[18px] border border-line bg-cream p-7 shadow-soft">
           <h3 className="text-xl font-bold">Thông tin đặt bàn</h3>
