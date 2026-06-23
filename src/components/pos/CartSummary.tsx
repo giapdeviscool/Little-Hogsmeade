@@ -2,15 +2,18 @@ import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
 import { useState } from 'react';
 import { CheckoutSuccessModal } from './CheckoutSuccessModal';
+import { PaymentModal } from './PaymentModal';
 
 interface CartSummaryProps {
   cartItems?: CartItemType[];
   orderType?: 'dine-in' | 'takeaway' | 'delivery';
+  customerId?: string | null;
   onClear?: () => void;
 }
 
-export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: CartSummaryProps) {
+export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId = null, onClear }: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{isOpen: boolean, orderId: string, total: string} | null>(null);
 
   const parsePrice = (priceStr: string) => {
@@ -18,17 +21,21 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + (parsePrice(item.price) * item.quantity), 0);
-  const vat = subtotal * 0.1;
   const discount = 0;
-  const total = subtotal + vat - discount;
+  const total = subtotal - discount;
 
   const formatPrice = (val: number) => `₫${Math.round(val).toLocaleString('vi-VN')}`;
 
-  const handleCheckout = async () => {
+  const handleCheckoutClick = () => {
     if (cartItems.length === 0) {
       alert('Giỏ hàng trống, không thể thanh toán');
       return;
     }
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentConfirm = async (method: 'cash' | 'qr', cashGiven?: number) => {
+    setIsPaymentModalOpen(false);
     setLoading(true);
     const items = cartItems.map((ci) => ({
       menuItemId: ci.id,
@@ -38,16 +45,18 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
     }));
     const payload = {
       branchId: 'default-branch-id',
-      customerId: null,
-      paymentMethod: 'cash',
+      customerId: customerId || null,
+      paymentMethod: method,
       discountAmount: 0,
       taxAmount: 0,
       orderType,
       items,
+      // We could optionally send cashGiven to backend if needed
+      // cashGiven: method === 'cash' ? cashGiven : undefined
     };
     try {
       const res = await createOrder(payload);
-      if (res?.data || res?.status === 'success' || true) { // allow success to show if data structure is different
+      if (res && !res.error) {
         const orderId = res?.data?.id || `LH-${Math.floor(1000 + Math.random() * 9000)}`;
         setSuccessModalData({
           isOpen: true,
@@ -55,13 +64,11 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
           total: formatPrice(total)
         });
       } else {
-        // Attempt to extract error message from response
         const errMsg = (res?.error && (res.error.message || res.error)) || 'Tạo Đơn hàng thất bại';
         alert(`Tạo Đơn hàng thất bại: ${errMsg}`);
       }
     } catch (e) {
       console.error(e);
-      // Show error reason if available
       const msg = e instanceof Error ? e.message : String(e);
       alert(`Có lỗi xảy ra khi tạo đơn: ${msg}`);
     } finally {
@@ -76,10 +83,7 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
           <span>Tạm tính</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
-        <div className="flex justify-between text-sm text-muted font-medium">
-          <span>VAT (10%)</span>
-          <span>{formatPrice(vat)}</span>
-        </div>
+
         {discount > 0 && (
           <div className="flex justify-between text-sm text-red-600 font-bold">
             <span>Giảm giá</span>
@@ -104,7 +108,7 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
       </div> */}
       <button
         className="w-full bg-gold hover:opacity-90 text-coffee h-13 rounded-xl font-bold text-base shadow-lg active:scale-[0.98] transition-all flex items-center justify-between px-5 border border-coffee/5"
-        onClick={handleCheckout}
+        onClick={handleCheckoutClick}
         disabled={loading}
       >
         <span className="uppercase tracking-widest text-xs">Thanh toán</span>
@@ -123,6 +127,14 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
           // Just an example action
           alert('Đang in hóa đơn...');
         }}
+      />
+
+      <PaymentModal 
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        orderId="MỚI"
+        totalAmount={total}
+        onConfirm={handlePaymentConfirm}
       />
     </div>
   );
