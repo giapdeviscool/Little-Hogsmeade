@@ -77,6 +77,7 @@ export function OrderSidebar({
       <CartSummary 
         cartItems={activeOrder.cartItems} 
         orderType={activeOrder.orderType} 
+        customerId={activeOrder.customer?.id || null}
         onClear={onClearOrder} 
       />
     </aside>

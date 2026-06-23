@@ -7,10 +7,11 @@ import { PaymentModal } from './PaymentModal';
 interface CartSummaryProps {
   cartItems?: CartItemType[];
   orderType?: 'dine-in' | 'takeaway' | 'delivery';
+  customerId?: string | null;
   onClear?: () => void;
 }
 
-export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: CartSummaryProps) {
+export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId = null, onClear }: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{isOpen: boolean, orderId: string, total: string} | null>(null);
@@ -44,7 +45,7 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: 
     }));
     const payload = {
       branchId: 'default-branch-id',
-      customerId: null,
+      customerId: customerId || null,
       paymentMethod: method,
       discountAmount: 0,
       taxAmount: 0,

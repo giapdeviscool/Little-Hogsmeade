@@ -25,3 +25,9 @@ export function createOrder(data: CreateOrderPayload) {
     body: JSON.stringify(data),
   });
 }
+
+export function getOrder(id: string) {
+  return httpClient<any>(`/orders/${id}`, {
+    method: 'GET',
+  });
+}
