@@ -6,6 +6,7 @@ import type { Post, PostPayload } from '../../../types'
 import { Card } from '../../../components/ui/Card'
 import { Pagination } from '../../../components/ui/Pagination'
 import { formatVnDate } from '../../../utils/date'
+import { useLocale } from '../../../hooks/useLocale'
 import type { NoticeState } from './cms.types'
 import { normalizeList } from './cms.utils'
 import { StateShell, InlineNotice, StatusPill } from './CmsSharedUI'
@@ -13,6 +14,7 @@ import { PostEditorDialog } from './PostEditorDialog'
 import { PostDetailDialog } from './PostDetailDialog'
 
 export function PostsPanel() {
+  const { t } = useLocale()
   const session = getAuthSession()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,7 +55,7 @@ export function PostsPanel() {
         setTotal(0)
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách bài viết.')
+      setError(loadError instanceof Error ? loadError.message : t.cms.posts.loadError)
     } finally {
       setLoading(false)
     }
@@ -78,13 +80,13 @@ export function PostsPanel() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Xóa bài viết này?')) return
+    if (!window.confirm(t.cms.posts.deleteConfirm)) return
     try {
       await deletePost(id)
-      setNotice({ type: 'success', message: 'Đã xóa bài viết.' })
+      setNotice({ type: 'success', message: t.cms.posts.deleteSuccess })
       void fetchPosts(page, debouncedSearch, statusFilter)
     } catch (deleteError) {
-      setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : 'Không xóa được bài viết.' })
+      setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : t.cms.posts.deleteError })
     }
   }
 
@@ -94,11 +96,13 @@ export function PostsPanel() {
     }
     const response = id ? await updatePost(id, payload) : await createPost(payload)
     const saved = response.data
-    setPosts((current) => {
-      const next = current.filter((item) => item.id !== saved.id)
-      return [saved, ...next]
-    })
-    setNotice({ type: 'success', message: id ? 'Đã cập nhật bài viết.' : 'Đã tạo bài viết mới.' })
+    if (saved) {
+      setPosts((current) => {
+        const next = current.filter((item) => item.id !== saved.id)
+        return [saved, ...next]
+      })
+    }
+    setNotice({ type: 'success', message: id ? t.cms.posts.updateSuccess : t.cms.posts.createSuccess })
     void fetchPosts(page, debouncedSearch, statusFilter)
   }
 
@@ -108,29 +112,29 @@ export function PostsPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Posts</p>
-            <h2 className="mt-1 text-[24px] font-bold">Quản lý Posts</h2>
+            <h2 className="mt-1 text-[24px] font-bold">{t.cms.posts.pageTitle}</h2>
           </div>
           <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft">
             <Plus className="h-4 w-4" />
-            New Post
+            {t.cms.posts.newPost}
           </button>
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_220px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo title, slug, category..." className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-latte" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t.cms.posts.searchPlaceholder} className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-latte" />
           </div>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
+            <option value="all">{t.common.allStatus}</option>
+            <option value="published">{t.common.published}</option>
+            <option value="draft">{t.common.draft}</option>
           </select>
         </div>
       </Card>
 
       {notice && <InlineNotice notice={notice} />}
-      <StateShell loading={loading} error={error} empty={posts.length === 0 && !loading} title="Chưa có bài viết" description="Tạo bài viết đầu tiên cho blog / tin tức." />
+      <StateShell loading={loading} error={error} empty={posts.length === 0 && !loading} title={t.cms.posts.noPosts} description={t.cms.posts.noPostsDesc} />
 
       <div className="grid gap-4">
         {posts.map((post) => (
@@ -148,34 +152,34 @@ export function PostsPanel() {
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button type="button" onClick={() => setViewingPost(post)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
-                    <Eye className="h-4 w-4" />
-                    Xem
+                     <Eye className="h-4 w-4" />
+                     {t.cms.posts.view}
                   </button>
                   <button type="button" onClick={() => startEdit(post)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
-                    <Edit3 className="h-4 w-4" />
-                    Sửa
+                     <Edit3 className="h-4 w-4" />
+                     {t.common.edit}
                   </button>
                   <button type="button" onClick={() => handleDelete(post.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700">
-                    <Trash2 className="h-4 w-4" />
-                    Xóa
+                     <Trash2 className="h-4 w-4" />
+                     {t.common.delete}
                   </button>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
                 <span className="inline-flex items-center gap-1 rounded-full bg-cream px-3 py-1">
                   <Clock3 className="h-3.5 w-3.5" />
-                  {formatVnDate(post.publishedAt ?? post.createdAt)}
-                </span>
-                <span className="rounded-full bg-cream px-3 py-1">Tags: {post.tags || 'Không có'}</span>
+                   {formatVnDate(post.publishedAt ?? post.createdAt)}
+                 </span>
+                 <span className="rounded-full bg-cream px-3 py-1">Tags: {post.tags || t.common.noMatch}</span>
               </div>
             </div>
           </article>
         ))}
       </div>
 
-      {!loading && totalPages > 0 && (
-        <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label="bài viết" />
-      )}
+        {!loading && totalPages > 0 && (
+          <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label={t.common.posts} />
+        )}
 
       {viewingPost && (
         <PostDetailDialog

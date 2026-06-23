@@ -17,7 +17,9 @@ export function ReservationManager() {
     try {
       const res = await listReservations()
       // Sort by newest first
-      setReservations(res.data.sort((a, b) => new Date(b.reservedDate).getTime() - new Date(a.reservedDate).getTime()))
+      if (res.data) {
+        setReservations(res.data.sort((a, b) => new Date(b.reservedDate).getTime() - new Date(a.reservedDate).getTime()))
+      }
     } catch (err) {
       console.error(err)
     } finally {

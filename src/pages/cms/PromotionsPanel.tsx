@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, Loader2 } from 'lucide-react'
 import { cn } from '../../utils/cn'
+import { useLocale } from '../../hooks/useLocale'
 import { CmsEditorModal } from './CmsEditorModal'
 import {
   createPromotion,
@@ -49,6 +50,7 @@ function deletePromotion(id: string) {
 }
 
 export function PromotionsPanel() {
+  const { t } = useLocale()
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
@@ -102,7 +104,7 @@ export function PromotionsPanel() {
         setBranches(branchRes.data?.items || [])
       } catch (loadError) {
         if (!alive) return
-        setError(loadError instanceof Error ? loadError.message : 'Không tải được danh sách khuyến mãi.')
+        setError(loadError instanceof Error ? loadError.message : t.cms.promotions.loadError)
       } finally {
         if (alive) setLoading(false)
       }
@@ -129,13 +131,13 @@ export function PromotionsPanel() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Xóa khuyến mãi này?')) return
+    if (!window.confirm(t.cms.promotions.deleteConfirm)) return
     try {
       await deletePromotion(id)
       setPromotions((current) => current.filter((item) => item.id !== id))
-      setNotice({ type: 'success', message: 'Đã xóa khuyến mãi.' })
+      setNotice({ type: 'success', message: t.cms.promotions.deleteSuccess })
     } catch (deleteError) {
-      setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : 'Không xóa được khuyến mãi.' })
+      setNotice({ type: 'error', message: deleteError instanceof Error ? deleteError.message : t.cms.promotions.deleteError })
     }
   }
 
@@ -148,7 +150,7 @@ export function PromotionsPanel() {
         return [saved, ...next].slice(0, 20)
       })
     }
-    setNotice({ type: 'success', message: id ? 'Đã cập nhật khuyến mãi.' : 'Đã tạo khuyến mãi mới.' })
+    setNotice({ type: 'success', message: id ? t.cms.promotions.updateSuccess : t.cms.promotions.createSuccess })
   }
 
   return (
@@ -157,23 +159,23 @@ export function PromotionsPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Promotions</p>
-            <h2 className="mt-1 text-[24px] font-bold">Quản lý Promotions</h2>
+            <h2 className="mt-1 text-[24px] font-bold">{t.cms.promotions.pageTitle}</h2>
           </div>
           <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft hover:bg-opacity-90">
             <Plus className="h-4 w-4" />
-            Tạo Campaign
+            {t.cms.promotions.createCampaign}
           </button>
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_220px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên, mô tả..." className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-coffee" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t.cms.promotions.searchPlaceholder} className="h-12 w-full rounded-[14px] border border-line bg-white pl-10 pr-4 text-sm outline-none focus:border-coffee" />
           </div>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="inactive">Đã tạm dừng</option>
+            <option value="all">{t.common.allStatus}</option>
+            <option value="active">{t.common.active}</option>
+            <option value="inactive">{t.common.inactive}</option>
           </select>
         </div>
       </Card>
@@ -201,8 +203,8 @@ export function PromotionsPanel() {
       ) : promotions.length === 0 ? (
         <Card className="p-6">
            <div className="grid place-items-center rounded-[18px] border border-dashed border-latte bg-cream px-6 py-10 text-center">
-            <p className="text-base font-semibold text-coffee">Chưa có khuyến mãi</p>
-            <p className="mt-2 text-sm leading-6 text-muted">Tạo khuyến mãi đầu tiên cho khách hàng.</p>
+            <p className="text-base font-semibold text-coffee">{t.cms.promotions.noPromotions}</p>
+            <p className="mt-2 text-sm leading-6 text-muted">{t.cms.promotions.noPromotionsDesc}</p>
           </div>
         </Card>
       ) : (
@@ -211,11 +213,11 @@ export function PromotionsPanel() {
             <table className="w-full text-left text-sm">
               <thead className="bg-cream text-muted">
                 <tr>
-                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Chiến dịch</th>
-                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Mức giảm</th>
-                  <th className="px-6 py-4 font-semibold uppercase tracking-wider">Thời gian</th>
-                  <th className="px-6 py-4 font-semibold uppercase tracking-wider text-right">Thao tác</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider">{t.cms.promotions.tableHeaders.campaign}</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider">{t.cms.promotions.tableHeaders.status}</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider">{t.cms.promotions.tableHeaders.discount}</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider">{t.cms.promotions.tableHeaders.period}</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-right">{t.cms.promotions.tableHeaders.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line bg-white">
@@ -227,22 +229,22 @@ export function PromotionsPanel() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', promo.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800')}>
-                        {promo.isActive ? 'Active' : 'Inactive'}
+                        {promo.isActive ? t.cms.promotions.statusActive : t.cms.promotions.statusInactive}
                       </span>
                     </td>
                     <td className="px-6 py-4 font-medium text-gold">
                       {promo.discountType === 'percent' ? `${promo.discountValue}%` : `${promo.discountValue.toLocaleString()}đ`}
                     </td>
                     <td className="px-6 py-4 text-muted">
-                      <div>Từ {promo.startDate ? formatVnDate(promo.startDate) : ''}</div>
-                      <div>Đến {promo.endDate ? formatVnDate(promo.endDate) : ''}</div>
+                      <div>{t.cms.promotions.periodFrom} {promo.startDate ? formatVnDate(promo.startDate) : ''}</div>
+                      <div>{t.cms.promotions.periodTo} {promo.endDate ? formatVnDate(promo.endDate) : ''}</div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => startEdit(promo)} className="p-2 text-coffee hover:bg-cream rounded-full transition-colors" title="Sửa">
+                         <button type="button" onClick={() => startEdit(promo)} className="p-2 text-coffee hover:bg-cream rounded-full transition-colors" title={t.cms.promotions.editTitle}>
                           <Edit3 className="h-4 w-4" />
                         </button>
-                        <button type="button" onClick={() => handleDelete(promo.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Xóa">
+                         <button type="button" onClick={() => handleDelete(promo.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors" title={t.cms.promotions.deleteTitle}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -256,7 +258,7 @@ export function PromotionsPanel() {
       )}
 
       {!loading && (
-        <PromotionPaginationBar page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+        <PromotionPaginationBar page={page} totalPages={totalPages} total={total} onPageChange={setPage} t={t} />
       )}
 
       {editorOpen && (
@@ -285,6 +287,7 @@ function PromotionEditorDialog({
   onClose: () => void
   onSave: (payload: PromotionPayload) => Promise<void>
 }) {
+  const { t } = useLocale()
   const [draft, setDraft] = useState<PromotionPayload>(
     promotion
       ? {
@@ -334,8 +337,8 @@ function PromotionEditorDialog({
   return (
     <CmsEditorModal
       open
-      title={promotion ? 'Sửa Chiến dịch Khuyến mãi' : 'Tạo Chiến dịch Khuyến mãi mới'}
-      description="Chiến dịch (Campaign) giúp tự động sinh mã Voucher cho khách hàng đổi điểm."
+      title={promotion ? t.cms.promotions.editorTitleEdit : t.cms.promotions.editorTitleCreate}
+      description={t.cms.promotions.editorDescription}
       onOpenChange={(open) => {
         if (!open) handleClose()
       }}
@@ -347,54 +350,54 @@ function PromotionEditorDialog({
       )}
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Tên chiến dịch</span>
+          <span>{t.cms.promotions.labelName}</span>
           <input value={draft.name} onChange={(e) => updateDraft('name', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
         </label>
         
         <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-          <span>Mô tả (Điều kiện / thông báo)</span>
+          <span>{t.cms.promotions.labelDescription}</span>
           <textarea value={draft.description || ''} onChange={(e) => updateDraft('description', e.target.value)} rows={2} className="rounded-[14px] border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-coffee" />
         </label>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-            <span>Ngày bắt đầu</span>
+            <span>{t.cms.promotions.labelStartDate}</span>
             <input type="date" value={draft.startDate} onChange={(e) => updateDraft('startDate', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-            <span>Ngày kết thúc</span>
+            <span>{t.cms.promotions.labelEndDate}</span>
             <input type="date" value={draft.endDate} onChange={(e) => updateDraft('endDate', e.target.value)} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
           </label>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-            <span>Mức giảm giá</span>
+            <span>{t.cms.promotions.labelDiscountValue}</span>
             <input type="number" min={0} value={draft.discountValue} onChange={(e) => updateDraft('discountValue', Number(e.target.value))} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee" />
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-            <span>Loại giảm giá</span>
+            <span>{t.cms.promotions.labelDiscountType}</span>
             <select value={draft.discountType} onChange={(e) => updateDraft('discountType', e.target.value as any)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee">
-              <option value="percent">Phần trăm (%)</option>
-              <option value="fixed">Số tiền mặt (VND)</option>
+              <option value="percent">{t.cms.promotions.discountTypePercent}</option>
+              <option value="fixed">{t.cms.promotions.discountTypeFixed}</option>
             </select>
           </label>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-            <span>Phạm vi áp dụng</span>
+            <span>{t.cms.promotions.labelScope}</span>
             <select value={draft.scope} onChange={(e) => updateDraft('scope', e.target.value as any)} className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee">
-              <option value="global">Toàn chuỗi</option>
-              <option value="specific">Chi nhánh cụ thể</option>
+              <option value="global">{t.cms.promotions.scopeGlobal}</option>
+              <option value="specific">{t.cms.promotions.scopeSpecific}</option>
             </select>
           </label>
           
           {draft.scope === 'specific' && (
             <label className="flex flex-col gap-2 text-sm font-semibold text-coffee">
-              <span>Chi nhánh</span>
+              <span>{t.cms.promotions.labelBranch}</span>
               <select value={draft.appliedBranches[0] || ''} onChange={(e) => updateDraft('appliedBranches', e.target.value ? [e.target.value] : [])} required className="h-12 rounded-[14px] border border-line bg-white px-4 text-sm outline-none transition focus:border-coffee">
-                <option value="">Chọn chi nhánh...</option>
+                <option value="">{t.cms.promotions.labelBranchSelect}</option>
                 {branches.map(b => (
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
@@ -406,17 +409,17 @@ function PromotionEditorDialog({
         <label className="flex flex-col gap-2 text-sm font-semibold text-coffee mt-2">
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={draft.isActive} onChange={(e) => updateDraft('isActive', e.target.checked)} className="h-4 w-4 rounded border-line text-coffee focus:ring-coffee" />
-            <span>Kích hoạt Campaign (Khách hàng có thể đổi Voucher)</span>
+            <span>{t.cms.promotions.labelActive}</span>
           </div>
         </label>
 
         <div className="flex flex-wrap gap-3 pt-4 border-t border-line mt-2">
           <button type="button" onClick={handleClose} className="rounded-full border border-line bg-white px-5 py-3 text-sm font-semibold text-coffee hover:bg-cream">
-            Hủy
+            {t.common.cancel}
           </button>
           <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-coffee px-5 py-3 text-sm font-semibold text-white shadow-soft hover:bg-opacity-90 disabled:opacity-70">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {promotion ? 'Lưu thay đổi' : 'Tạo Campaign'}
+            {promotion ? t.common.saveChanges : t.cms.promotions.createCampaign}
           </button>
         </div>
       </form>
@@ -429,11 +432,13 @@ function PromotionPaginationBar({
   totalPages,
   total,
   onPageChange,
+  t,
 }: {
   page: number
   totalPages: number
   total: number
   onPageChange: (page: number) => void
+  t: ReturnType<typeof useLocale>['t']
 }) {
   // Build page number array with ellipsis
   const pages: (number | '...')[] = []
@@ -453,7 +458,7 @@ function PromotionPaginationBar({
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
       <p className="text-sm text-muted">
-        Tổng <span className="font-semibold text-coffee">{total}</span> khuyến mãi · Trang <span className="font-semibold text-coffee">{page}</span>/{totalPages}
+        {t.cms.promotions.paginationTotal} <span className="font-semibold text-coffee">{total}</span> {t.common.promotions} · {t.cms.promotions.paginationOf} <span className="font-semibold text-coffee">{page}</span>/{totalPages}
       </p>
       <div className="flex items-center gap-1">
         <button

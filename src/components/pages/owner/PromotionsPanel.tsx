@@ -1,5 +1,5 @@
 import type { Branch, Promotion, PromotionPayload } from '../../../types'
-import { dateToInput, formatCurrency, getPromotionProgress } from '../../../utils/owner.utils'
+import { dateToInput, formatCurrency } from '../../../utils/owner.utils'
 import { StatusBadge, ScopeBadge } from './OwnerFields'
 import { DataTable } from './DataTable'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -79,8 +79,6 @@ export function PromotionsPanel({
             </tr>
           )}
           renderRow={(promotion) => {
-            const progress = getPromotionProgress(promotion.startDate, promotion.endDate);
-
             return (
               <tr
                 key={promotion.id}

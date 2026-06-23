@@ -22,12 +22,10 @@ import {
 import { LandingLoading, LandingError, MiniBlock } from './components/LandingSharedUI'
 import { HeroSection } from './components/HeroSection'
 import { StorySection } from './components/StorySection'
-import { FeaturedMenuSection } from './components/FeaturedMenuSection'
 import { EventSection } from './components/EventSection'
 import { PostSection } from './components/PostSection'
 import { BookingSection } from './components/BookingSection'
 import { StoreAndMemberSection } from './components/StoreAndMemberSection'
-import { cn } from '../../utils/cn'
 
 export function LandingPage({
   onClose,
@@ -184,7 +182,7 @@ export function LandingPage({
 
       setBookingNotice('Đã gửi yêu cầu đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn sớm nhất.')
       setBookingDraft(fallbackBooking)
-    } catch (err) {
+    } catch {
       setBookingNotice('Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại sau.')
     }
   }

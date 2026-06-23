@@ -53,9 +53,15 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
             password,
           })
 
-      saveAuthSession(response.data)
+      const data = response.data
+      if (!data) {
+        setError('No data returned from server')
+        return
+      }
 
-      const role = response.data.user.role || response.data.user.roleName || ''
+      saveAuthSession(data)
+
+      const role = data.user.role || data.user.roleName || ''
       const isCustomer = role.toLowerCase() === 'customer'
       
       if (isCustomer) {

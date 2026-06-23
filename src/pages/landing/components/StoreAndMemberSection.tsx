@@ -104,8 +104,7 @@ export function StoreAndMemberSection({
           </p>
           <h2 className="mt-3 text-[24px] font-bold">Tra cứu hạng và điểm</h2>
           <p className="mt-3 text-sm leading-6 text-coffee/80">
-            Giao diện tra cứu thành viên sẵn khung để nối API khi backend mở
-            endpoint membership/loyalty.
+            Tra cứu thông tin thành viên để khám phá quyền lợi, điểm thưởng và ưu đãi hiện có.
           </p>
 
           <div className="mt-5 rounded-[16px] bg-beige p-4">

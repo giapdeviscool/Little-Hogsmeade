@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { Navigation, Star } from 'lucide-react'
+import { Navigation } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
 import { LandingInput } from './LandingSharedUI'
 import type { BookingDraft } from '../landing.types'
@@ -27,9 +27,7 @@ export function BookingSection({
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Đặt bàn / Order</p>
           <h2 className="mt-4 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[46px]">
-            Giữ chỗ cho buổi tối
-            <br />
-            không thể quên của bạn
+            Giữ chỗ cho buổi hẹn không thể quên của bạn
           </h2>
           <p className="mt-6 text-[15px] leading-7 text-coffee/85">
             Nâng tầm trải nghiệm ẩm thực của bạn với dịch vụ đặt bàn trước, giúp mọi khoảnh khắc trở nên trọn vẹn hơn.
