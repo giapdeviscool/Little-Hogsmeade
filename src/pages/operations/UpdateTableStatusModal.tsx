@@ -15,6 +15,7 @@ type UpdateTableStatusModalProps = {
   onClose: () => void
   tableData: BranchTable | null
   branchId: string | null
+  initialStatus?: UpdateTableStatus
   onUpdateSuccess: (table: BranchTable) => void
 }
 
@@ -26,7 +27,6 @@ type CreateReservationResponse = {
 
 const statusOptions: Array<{ value: UpdateTableStatus; label: string; description: string }> = [
   { value: 'available', label: 'Trống', description: 'Bàn đã sẵn sàng đón khách' },
-  { value: 'occupied', label: 'Đang phục vụ', description: 'Khách đã vào bàn' },
   { value: 'reserved', label: 'Đã đặt trước', description: 'Tạo đặt chỗ cho khách' },
 ]
 
@@ -47,7 +47,7 @@ function getApiErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, onUpdateSuccess }: UpdateTableStatusModalProps) {
+export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, initialStatus, onUpdateSuccess }: UpdateTableStatusModalProps) {
   const [status, setStatus] = useState<UpdateTableStatus>('available')
   const [guestCount, setGuestCount] = useState('')
   const [note, setNote] = useState('')
@@ -61,7 +61,7 @@ export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, o
   useEffect(() => {
     if (!isOpen || !tableData) return
     const syncForm = async () => {
-      setStatus(getInitialStatus(tableData.status))
+      setStatus(initialStatus ?? getInitialStatus(tableData.status))
       setGuestCount(tableData.guest_count ? String(tableData.guest_count) : '')
       setNote(tableData.note || '')
       setGuestName('')
@@ -71,7 +71,7 @@ export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, o
       setError('')
     }
     void syncForm()
-  }, [isOpen, tableData])
+  }, [initialStatus, isOpen, tableData])
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

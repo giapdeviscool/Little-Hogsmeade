@@ -12,6 +12,7 @@ import { cn } from '../../utils/cn'
 import { UpdateTableStatusModal } from './UpdateTableStatusModal'
 import { OccupiedTableModal } from './OccupiedTableModal'
 import { ReservedTableModal } from './ReservedTableModal'
+import { StartTableOrderModal } from './StartTableOrderModal'
 
 const UPDATED_AT = '2026-06-22T10:00:00Z'
 
@@ -90,6 +91,7 @@ function TableLayoutContent({ branchId }: { branchId: string | null }) {
   const [selectedStatus, setSelectedStatus] = useState<BranchTableStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [selectedTable, setSelectedTable] = useState<BranchTable | null>(null)
+  const [availableTableAction, setAvailableTableAction] = useState<'choose' | 'reserve'>('choose')
   const [statusOverrides, setStatusOverrides] = useState<Record<string, BranchTableStatus>>({})
   const [successMessage, setSuccessMessage] = useState('')
   const allLayoutQuery = useBranchTableLayout(branchId)
@@ -149,13 +151,14 @@ function TableLayoutContent({ branchId }: { branchId: string | null }) {
 
         <section className="mt-6 rounded-2xl border border-line bg-[#fcfbf9] p-6">
           {allLayoutQuery.isError && <p className="mb-4 rounded-xl bg-beige px-4 py-3 text-xs text-muted">Backend chưa phản hồi, đang hiển thị dữ liệu mẫu.</p>}
-          {tables.length === 0 ? <div className="py-20 text-center"><p className="font-bold">Không tìm thấy bàn phù hợp</p><p className="mt-1 text-sm text-muted">Thử đổi khu vực, trạng thái hoặc từ khoá.</p></div> : <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">{tables.map((table, index) => <TableShape key={table.id} table={table} index={index} onSelect={setSelectedTable} />)}</div>}
+          {tables.length === 0 ? <div className="py-20 text-center"><p className="font-bold">Không tìm thấy bàn phù hợp</p><p className="mt-1 text-sm text-muted">Thử đổi khu vực, trạng thái hoặc từ khoá.</p></div> : <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">{tables.map((table, index) => <TableShape key={table.id} table={table} index={index} onSelect={(selected) => { setSelectedTable(selected); setAvailableTableAction('choose') }} />)}</div>}
         </section>
       </main>
       <UpdateTableStatusModal
-        isOpen={selectedTable !== null && selectedTable.status !== 'occupied' && selectedTable.status !== 'reserved'}
+        isOpen={selectedTable?.status === 'cleaning' || (selectedTable?.status === 'available' && availableTableAction === 'reserve')}
         tableData={selectedTable}
         branchId={branchId}
+        initialStatus={selectedTable?.status === 'available' && availableTableAction === 'reserve' ? 'reserved' : undefined}
         onClose={() => setSelectedTable(null)}
         onUpdateSuccess={(updatedTable) => {
           setStatusOverrides((current) => ({ ...current, [String(updatedTable.id)]: updatedTable.status }))
@@ -166,11 +169,26 @@ function TableLayoutContent({ branchId }: { branchId: string | null }) {
       <OccupiedTableModal
         isOpen={selectedTable?.status === 'occupied'}
         tableId={selectedTable?.status === 'occupied' ? selectedTable.id : null}
-        availableTables={allTables.filter((table) => table.status === 'available').map((table) => ({ id: table.id, name: table.name, status: table.status }))}
+        tableName={selectedTable?.status === 'occupied' ? selectedTable.name : undefined}
+        orderId={selectedTable?.status === 'occupied' ? selectedTable.current_order_id : null}
+        branchId={branchId}
         onClose={() => setSelectedTable(null)}
         onSuccess={() => {
           setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: 'available' } : {}) }))
           setSuccessMessage('Cập nhật sơ đồ bàn thành công')
+          window.setTimeout(() => setSuccessMessage(''), 2500)
+        }}
+      />
+      <StartTableOrderModal
+        key={selectedTable?.id}
+        isOpen={selectedTable?.status === 'available' && availableTableAction === 'choose'}
+        tableId={selectedTable?.status === 'available' ? selectedTable.id : null}
+        tableName={selectedTable?.status === 'available' ? selectedTable.name : undefined}
+        onClose={() => setSelectedTable(null)}
+        onReserve={() => setAvailableTableAction('reserve')}
+        onSuccess={() => {
+          setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: 'occupied' } : {}) }))
+          setSuccessMessage('Tạo hóa đơn và gọi món thành công')
           window.setTimeout(() => setSuccessMessage(''), 2500)
         }}
       />
