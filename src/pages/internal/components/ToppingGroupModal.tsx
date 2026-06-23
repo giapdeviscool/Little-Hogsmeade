@@ -1,14 +1,15 @@
-import { useState } from 'react'
-import { createToppingGroup } from '../../../api/topping-group.api'
+import { useState, useEffect } from 'react'
+import { createToppingGroup, updateToppingGroup } from '../../../api/topping-group.api'
 import { AlertModal } from '../../../components/ui/AlertModal'
 
 interface ToppingGroupModalProps {
   isOpen: boolean
+  editData?: any
   onClose: () => void
   onSuccess: () => void
 }
 
-export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupModalProps) {
+export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: ToppingGroupModalProps) {
   const [name, setName] = useState('')
   const [minSelect, setMinSelect] = useState(0)
   const [maxSelect, setMaxSelect] = useState(1)
@@ -17,6 +18,23 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({ isOpen: false, title: '', message: '', type: 'info' })
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setName(editData.name)
+        setMinSelect(editData.minSelect)
+        setMaxSelect(editData.maxSelect)
+        setToppings(editData.toppings.map((t: any) => ({ name: t.name, extraPrice: t.extraPrice })))
+      } else {
+        setName('')
+        setMinSelect(0)
+        setMaxSelect(1)
+        setToppings([])
+      }
+      setError('')
+    }
+  }, [isOpen, editData])
 
   if (!isOpen) return null
 
@@ -44,12 +62,21 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
     setLoading(true)
 
     try {
-      await createToppingGroup({
-        name,
-        minSelect,
-        maxSelect,
-        toppings
-      })
+      if (editData) {
+        await updateToppingGroup(editData.id, {
+          name,
+          minSelect,
+          maxSelect,
+          toppings
+        })
+      } else {
+        await createToppingGroup({
+          name,
+          minSelect,
+          maxSelect,
+          toppings
+        })
+      }
       setAlertConfig({ isOpen: true, title: 'Thành công', message: 'Lưu nhóm Topping thành công!', type: 'success' })
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi tạo nhóm Topping')
@@ -61,7 +88,7 @@ export function ToppingGroupModal({ isOpen, onClose, onSuccess }: ToppingGroupMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-2xl rounded-[24px] bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-        <h2 className="mb-6 text-2xl font-bold text-coffee">Thêm nhóm Topping mới</h2>
+        <h2 className="mb-6 text-2xl font-bold text-coffee">{editData ? 'Sửa nhóm Topping' : 'Thêm nhóm Topping mới'}</h2>
         
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
