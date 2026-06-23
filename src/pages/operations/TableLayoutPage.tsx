@@ -10,6 +10,8 @@ import { getAuthSession } from '../../store/auth.store'
 import type { BranchTable, BranchTableLayout, BranchTableStatus } from '../../types'
 import { cn } from '../../utils/cn'
 import { UpdateTableStatusModal } from './UpdateTableStatusModal'
+import { OccupiedTableModal } from './OccupiedTableModal'
+import { ReservedTableModal } from './ReservedTableModal'
 
 const UPDATED_AT = '2026-06-22T10:00:00Z'
 
@@ -151,12 +153,34 @@ function TableLayoutContent({ branchId }: { branchId: string | null }) {
         </section>
       </main>
       <UpdateTableStatusModal
-        isOpen={selectedTable !== null}
+        isOpen={selectedTable !== null && selectedTable.status !== 'occupied' && selectedTable.status !== 'reserved'}
         tableData={selectedTable}
+        branchId={branchId}
         onClose={() => setSelectedTable(null)}
         onUpdateSuccess={(updatedTable) => {
           setStatusOverrides((current) => ({ ...current, [String(updatedTable.id)]: updatedTable.status }))
           setSuccessMessage('Cập nhật trạng thái bàn thành công')
+          window.setTimeout(() => setSuccessMessage(''), 2500)
+        }}
+      />
+      <OccupiedTableModal
+        isOpen={selectedTable?.status === 'occupied'}
+        tableId={selectedTable?.status === 'occupied' ? selectedTable.id : null}
+        availableTables={allTables.filter((table) => table.status === 'available').map((table) => ({ id: table.id, name: table.name, status: table.status }))}
+        onClose={() => setSelectedTable(null)}
+        onSuccess={() => {
+          setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: 'available' } : {}) }))
+          setSuccessMessage('Cập nhật sơ đồ bàn thành công')
+          window.setTimeout(() => setSuccessMessage(''), 2500)
+        }}
+      />
+      <ReservedTableModal
+        isOpen={selectedTable?.status === 'reserved'}
+        tableId={selectedTable?.status === 'reserved' ? selectedTable.id : null}
+        onClose={() => setSelectedTable(null)}
+        onSuccess={(nextTableStatus) => {
+          setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: nextTableStatus } : {}) }))
+          setSuccessMessage('Cập nhật sơ đồ bàn thành công')
           window.setTimeout(() => setSuccessMessage(''), 2500)
         }}
       />
