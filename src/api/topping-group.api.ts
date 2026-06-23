@@ -11,6 +11,13 @@ export async function createToppingGroup(data: any) {
   })
 }
 
+export function updateToppingGroup(id: string, data: any) {
+  return httpClient<any>(`/topping-groups/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
+}
+
 export async function softDeleteToppingGroup(id: string) {
   return httpClient<any>(`/topping-groups/${id}`, {
     method: 'DELETE'
