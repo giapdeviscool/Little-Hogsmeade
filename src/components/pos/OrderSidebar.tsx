@@ -14,6 +14,7 @@ interface OrderSidebarProps {
   onDeleteOrder: (id: string) => void;
   onChangeOrder: (id: string) => void;
   onSetCustomer: (customer: Customer | null) => void;
+  onSetOrderType: (type: 'dine-in' | 'takeaway' | 'delivery') => void;
   onClearOrder: () => void;
   onUpdateItem: (itemId: string, delta: number) => void;
   onRemoveItem: (itemId: string) => void;
@@ -28,6 +29,7 @@ export function OrderSidebar({
   onDeleteOrder,
   onChangeOrder,
   onSetCustomer,
+  onSetOrderType,
   onClearOrder,
   onUpdateItem,
   onRemoveItem
@@ -49,6 +51,7 @@ export function OrderSidebar({
         onDeleteOrder={onDeleteOrder}
         onChangeOrder={onChangeOrder}
         onSetCustomer={onSetCustomer}
+        onSetOrderType={onSetOrderType}
       />
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-3">
         {activeOrder.cartItems.map((item) => (
@@ -71,7 +74,11 @@ export function OrderSidebar({
         </div>
       )}
       </div>
-      <CartSummary cartItems={activeOrder.cartItems} onClear={onClearOrder} />
+      <CartSummary 
+        cartItems={activeOrder.cartItems} 
+        orderType={activeOrder.orderType} 
+        onClear={onClearOrder} 
+      />
     </aside>
   );
 }

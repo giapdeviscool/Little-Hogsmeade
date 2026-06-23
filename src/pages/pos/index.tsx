@@ -19,12 +19,13 @@ export interface OrderType {
   title: string;
   customer: Customer | null;
   cartItems: CartItemType[];
+  orderType: 'dine-in' | 'takeaway' | 'delivery';
 }
 
 export function PosPage() {
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [orders, setOrders] = useState<OrderType[]>([
-    { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [] }
+    { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }
   ]);
   const [activeOrderId, setActiveOrderId] = useState<string>('1');
 
@@ -89,7 +90,8 @@ export function PosPage() {
       id: newId,
       title: `Đơn mới #${orders.length + 1}`,
       customer: null,
-      cartItems: []
+      cartItems: [],
+      orderType: 'dine-in'
     };
     setOrders(prev => [...prev, newOrder]);
     setActiveOrderId(newId);
@@ -102,7 +104,7 @@ export function PosPage() {
       if (filtered.length === 0) {
         const newId = Date.now().toString();
         setActiveOrderId(newId);
-        return [{ id: newId, title: 'Đơn mới #1', customer: null, cartItems: [] }];
+        return [{ id: newId, title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }];
       }
       if (activeOrderId === id) {
         setActiveOrderId(filtered[filtered.length - 1].id);
@@ -118,6 +120,12 @@ export function PosPage() {
   const handleSetCustomer = (customer: Customer | null) => {
     setOrders(prev => prev.map(o => 
       o.id === activeOrderId ? { ...o, customer } : o
+    ));
+  };
+
+  const handleSetOrderType = (orderType: 'dine-in' | 'takeaway' | 'delivery') => {
+    setOrders(prev => prev.map(o => 
+      o.id === activeOrderId ? { ...o, orderType } : o
     ));
   };
 
@@ -145,6 +153,7 @@ export function PosPage() {
               onDeleteOrder={handleDeleteOrder}
               onChangeOrder={setActiveOrderId}
               onSetCustomer={handleSetCustomer}
+              onSetOrderType={handleSetOrderType}
               onClearOrder={handleClearOrder}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}

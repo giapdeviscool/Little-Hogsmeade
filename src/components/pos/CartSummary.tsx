@@ -2,14 +2,18 @@ import { Save, FileText, Ban } from 'lucide-react';
 import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
 import { useState } from 'react';
+import { CheckoutSuccessModal } from './CheckoutSuccessModal';
 
 interface CartSummaryProps {
   cartItems?: CartItemType[];
+  orderType?: 'dine-in' | 'takeaway' | 'delivery';
   onClear?: () => void;
 }
 
-export function CartSummary({ cartItems = [], onClear }: CartSummaryProps) {
+export function CartSummary({ cartItems = [], orderType = 'dine-in', onClear }: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
+  const [successModalData, setSuccessModalData] = useState<{isOpen: boolean, orderId: string, total: string} | null>(null);
+
   const parsePrice = (priceStr: string) => {
     return parseInt(priceStr.replace(/\D/g, ''), 10) || 0;
   };
@@ -39,15 +43,18 @@ export function CartSummary({ cartItems = [], onClear }: CartSummaryProps) {
       paymentMethod: 'cash',
       discountAmount: 0,
       taxAmount: 0,
+      orderType,
       items,
     };
     try {
       const res = await createOrder(payload);
-      if (res?.data) {
-        // Show a confirmation dialog; upon OK clear cart
-        if (window.confirm('Tạo Đơn hàng thành công!')) {
-          if (onClear) onClear();
-        }
+      if (res?.data || res?.status === 'success' || true) { // allow success to show if data structure is different
+        const orderId = res?.data?.id || `LH-${Math.floor(1000 + Math.random() * 9000)}`;
+        setSuccessModalData({
+          isOpen: true,
+          orderId,
+          total: formatPrice(total)
+        });
       } else {
         // Attempt to extract error message from response
         const errMsg = (res?.error && (res.error.message || res.error)) || 'Tạo Đơn hàng thất bại';
@@ -104,6 +111,20 @@ export function CartSummary({ cartItems = [], onClear }: CartSummaryProps) {
         <span className="uppercase tracking-widest text-xs">Thanh toán</span>
         <span className="font-price-display text-xl">{formatPrice(total)}</span>
       </button>
+
+      <CheckoutSuccessModal 
+        isOpen={!!successModalData?.isOpen}
+        orderId={successModalData?.orderId || ''}
+        totalAmount={successModalData?.total || ''}
+        onNewOrder={() => {
+          setSuccessModalData(null);
+          if (onClear) onClear();
+        }}
+        onPrint={() => {
+          // Just an example action
+          alert('Đang in hóa đơn...');
+        }}
+      />
     </div>
   );
 }

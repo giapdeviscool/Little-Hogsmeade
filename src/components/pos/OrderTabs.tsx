@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, X, Plus } from 'lucide-react';
+import { Trash2, X, Plus, Store, ShoppingBag, Truck } from 'lucide-react';
 import type { OrderType } from '@/pages/pos/index';
 import type { Customer } from '@/types/customer.types';
 import { CustomerSearch } from '@/components/pos/CustomerSearch';
@@ -13,6 +13,7 @@ interface OrderTabsProps {
   onDeleteOrder: (id: string) => void;
   onChangeOrder: (id: string) => void;
   onSetCustomer: (customer: Customer | null) => void;
+  onSetOrderType: (type: 'dine-in' | 'takeaway' | 'delivery') => void;
 }
 
 export function OrderTabs({
@@ -22,7 +23,8 @@ export function OrderTabs({
   onAddOrder,
   onDeleteOrder,
   onChangeOrder,
-  onSetCustomer
+  onSetCustomer,
+  onSetOrderType
 }: OrderTabsProps) {
   const [tabToDelete, setTabToDelete] = useState<string | null>(null);
 
@@ -82,6 +84,42 @@ export function OrderTabs({
           onSelect={onSetCustomer}
           onClear={() => onSetCustomer(null)}
         />
+
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => onSetOrderType('dine-in')}
+            className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+              activeOrder.orderType === 'dine-in'
+                ? 'bg-coffee text-white shadow-md'
+                : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            Tại bàn
+          </button>
+          <button
+            onClick={() => onSetOrderType('takeaway')}
+            className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+              activeOrder.orderType === 'takeaway'
+                ? 'bg-coffee text-white shadow-md'
+                : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
+            }`}
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Mang đi
+          </button>
+          <button
+            onClick={() => onSetOrderType('delivery')}
+            className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+              activeOrder.orderType === 'delivery'
+                ? 'bg-coffee text-white shadow-md'
+                : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
+            }`}
+          >
+            <Truck className="w-4 h-4" />
+            Giao hàng
+          </button>
+        </div>
       </div>
 
       <ConfirmModal
