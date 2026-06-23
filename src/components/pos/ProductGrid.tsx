@@ -8,9 +8,11 @@ const PAGE_SIZE = 12;
 
 interface ProductGridProps {
   onProductClick: (product: MenuItem) => void;
+  searchQuery: string;
+  selectedCategory: string;
 }
 
-export function ProductGrid({ onProductClick }: ProductGridProps) {
+export function ProductGrid({ onProductClick, searchQuery, selectedCategory }: ProductGridProps) {
   const [products, setProducts] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,11 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
     try {
       setLoading(true);
       setError(null);
-      const response = await getMenuItems({ page, limit: PAGE_SIZE });
+      const params: any = { page, limit: PAGE_SIZE };
+      if (searchQuery) params.search = searchQuery;
+      if (selectedCategory) params.categoryId = selectedCategory;
+
+      const response = await getMenuItems(params);
       const items = response?.data?.items;
       const pagination = response?.data?.pagination;
 
@@ -34,7 +40,11 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, searchQuery, selectedCategory]);
+
+  useEffect(() => {
+    setPage(1); // Reset to page 1 when search or category changes
+  }, [searchQuery, selectedCategory]);
 
   useEffect(() => {
     fetchProducts();
