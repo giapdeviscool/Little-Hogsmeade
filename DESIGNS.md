@@ -1,6 +1,6 @@
 # DESIGNS.md
 
-Design rules cơ bản cho Bistro Cafe Management System.
+Design rules cơ bản cho Little Hogsmeade - Bistro Cafe Management System.
 
 ## Design Direction
 

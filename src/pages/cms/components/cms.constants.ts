@@ -1,12 +1,7 @@
 import type { CmsPagePayload, EventPayload } from '../../../types'
 import type { BannerDraft, ContactBlock, OpeningHoursBlock, FeaturedMenuBlock, CmsTab } from './cms.types'
 
-export const cmsTabs: Array<{ key: CmsTab; label: string; description: string }> = [
-  { key: 'landing', label: 'Landing Page Editor', description: 'Banner, liên hệ, giờ mở cửa, món nổi bật' },
-  { key: 'posts', label: 'Posts List', description: 'Bài viết, ảnh đại diện, trạng thái hiển thị' },
-  { key: 'events', label: 'Events List', description: 'Sự kiện, chiến dịch, voucher, combo' },
-  { key: 'promotions', label: 'Promotions List', description: 'Quản lý khuyến mãi, giảm giá' },
-]
+export const cmsTabKeys: CmsTab[] = ['landing', 'posts', 'events'] //promotions 
 
 export const landingPageSlugs = {
   landingPage: 'landing-page',

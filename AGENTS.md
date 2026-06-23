@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Quy tắc làm việc cho AI/coding agent trong dự án Bistro Cafe Management System.
+Quy tắc làm việc cho AI/coding agent trong dự án Little Hogsmeade - Bistro Cafe Management System.
 
 ## Mục tiêu dự án
 
