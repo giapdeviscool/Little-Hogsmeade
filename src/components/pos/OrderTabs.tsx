@@ -30,16 +30,16 @@ export function OrderTabs({
 
   return (
     <>
-      <div className="flex items-end px-4 pt-4 gap-1 bg-beige/50 border-b border-line overflow-x-auto custom-scrollbar">
+      <div className="flex items-end px-3 pt-3 gap-0.5 bg-beige/50 border-b border-line overflow-x-auto custom-scrollbar">
         {orders.map(order => {
           const isActive = order.id === activeOrderId;
           return (
             <div 
               key={order.id}
               onClick={() => onChangeOrder(order.id)}
-              className={`px-6 py-2.5 font-bold text-sm rounded-t-xl flex items-center gap-2 cursor-pointer transition-all whitespace-nowrap border-t border-x ${
+              className={`px-4 py-2 font-bold text-xs rounded-t-lg flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap border-t border-x ${
                 isActive 
-                  ? 'bg-white text-coffee border-line active-tab-shadow -mb-[1px] py-3.5' 
+                  ? 'bg-white text-coffee border-line active-tab-shadow -mb-[1px] py-2.5' 
                   : 'bg-beige text-muted border-transparent hover:bg-white/80'
               }`}
             >
@@ -49,9 +49,9 @@ export function OrderTabs({
                   e.stopPropagation();
                   setTabToDelete(order.id);
                 }}
-                className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-red-500 transition-colors"
+                className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-red-500 transition-colors"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </button>
             </div>
           );
@@ -59,23 +59,23 @@ export function OrderTabs({
         
         <button 
           onClick={onAddOrder}
-          className="p-2.5 mb-2 ml-1 rounded-full hover:bg-white text-coffee transition-colors flex items-center justify-center shrink-0"
+          className="p-2 mb-1.5 ml-1 rounded-full hover:bg-white text-coffee transition-colors flex items-center justify-center shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="px-6 py-3 border-b border-line bg-white">
-        <div className="flex justify-between items-start mb-3">
+      <div className="px-4 py-2 border-b border-line bg-white">
+        <div className="flex justify-between items-start mb-2">
           <div>
-            <h2 className="text-2xl font-bold text-coffee">{activeOrder.title}</h2>
+            <h2 className="text-lg font-bold text-coffee">{activeOrder.title}</h2>
           </div>
           <button 
             onClick={() => setTabToDelete(activeOrder.id)}
-            className="text-muted hover:text-red-500 w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 transition-all"
+            className="text-muted hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-all"
             title="Xóa đơn hàng"
           >
-            <Trash2 className="w-6 h-6" />
+            <Trash2 className="w-4.5 h-4.5" />
           </button>
         </div>
         
@@ -85,38 +85,38 @@ export function OrderTabs({
           onClear={() => onSetCustomer(null)}
         />
 
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-1.5 mt-3">
           <button
             onClick={() => onSetOrderType('dine-in')}
-            className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+            className={`flex-1 py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
               activeOrder.orderType === 'dine-in'
                 ? 'bg-coffee text-white shadow-md'
                 : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
             }`}
           >
-            <Store className="w-4 h-4" />
+            <Store className="w-3.5 h-3.5" />
             Tại bàn
           </button>
           <button
             onClick={() => onSetOrderType('takeaway')}
-            className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+            className={`flex-1 py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
               activeOrder.orderType === 'takeaway'
                 ? 'bg-coffee text-white shadow-md'
                 : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="w-3.5 h-3.5" />
             Mang đi
           </button>
           <button
             onClick={() => onSetOrderType('delivery')}
-            className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+            className={`flex-1 py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
               activeOrder.orderType === 'delivery'
                 ? 'bg-coffee text-white shadow-md'
                 : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
             }`}
           >
-            <Truck className="w-4 h-4" />
+            <Truck className="w-3.5 h-3.5" />
             Giao hàng
           </button>
         </div>

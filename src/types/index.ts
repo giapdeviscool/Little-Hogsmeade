@@ -65,3 +65,5 @@ export type {
   ReservationStatus,
 } from "./reservation.types";
 export * from "./customer.types";
+export * from "./menu.types";
+export * from "./recipe.types";

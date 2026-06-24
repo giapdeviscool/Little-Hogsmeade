@@ -13,7 +13,7 @@ interface CartSummaryProps {
 
 export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId = null, onClear }: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState<{isOpen: boolean, orderId: string, invoiceId: string, total: number} | null>(null);
   const [successModalData, setSuccessModalData] = useState<{isOpen: boolean, orderId: string, total: string} | null>(null);
 
   const parsePrice = (priceStr: string) => {
@@ -26,16 +26,12 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
 
   const formatPrice = (val: number) => `₫${Math.round(val).toLocaleString('vi-VN')}`;
 
-  const handleCheckoutClick = () => {
+  const handleCheckoutClick = async () => {
     if (cartItems.length === 0) {
       alert('Giỏ hàng trống, không thể thanh toán');
       return;
     }
-    setIsPaymentModalOpen(true);
-  };
-
-  const handlePaymentConfirm = async (method: 'cash' | 'qr', cashGiven?: number) => {
-    setIsPaymentModalOpen(false);
+    
     setLoading(true);
     const items = cartItems.map((ci) => ({
       menuItemId: ci.id,
@@ -43,25 +39,24 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
       quantity: ci.quantity,
       toppings: [] as any[],
     }));
+    
     const payload = {
       branchId: 'default-branch-id',
       customerId: customerId || null,
-      paymentMethod: method,
       discountAmount: 0,
       taxAmount: 0,
       orderType,
       items,
-      // We could optionally send cashGiven to backend if needed
-      // cashGiven: method === 'cash' ? cashGiven : undefined
     };
+    
     try {
-      const res = await createOrder(payload);
-      if (res && !res.error) {
-        const orderId = res?.data?.id || `LH-${Math.floor(1000 + Math.random() * 9000)}`;
-        setSuccessModalData({
+      const res = await createOrder(payload) as any;
+      if (res && res.success) {
+        setPaymentModalData({
           isOpen: true,
-          orderId,
-          total: formatPrice(total)
+          orderId: res.order_id,
+          invoiceId: res.invoice_id,
+          total: res.total_amount || total
         });
       } else {
         const errMsg = (res?.error && (res.error.message || res.error)) || 'Tạo Đơn hàng thất bại';
@@ -76,43 +71,42 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
     }
   };
 
+  const handlePaymentSuccess = (_method: 'cash' | 'qr') => {
+    const pData = paymentModalData;
+    setPaymentModalData(null);
+    setSuccessModalData({
+      isOpen: true,
+      orderId: pData?.orderId || '',
+      total: formatPrice(pData?.total || total)
+    });
+  };
+
   return (
-    <div className="p-4 bg-cream border-t border-line mt-auto">
-      <div className="flex flex-col gap-1.5 mb-3">
-        <div className="flex justify-between text-sm text-muted font-medium">
+    <div className="p-3 bg-cream border-t border-line mt-auto">
+      <div className="flex flex-col gap-1 mb-2">
+        <div className="flex justify-between text-xs text-muted font-medium">
           <span>Tạm tính</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
 
         {discount > 0 && (
-          <div className="flex justify-between text-sm text-red-600 font-bold">
+          <div className="flex justify-between text-xs text-red-600 font-bold">
             <span>Giảm giá</span>
             <span>-{formatPrice(discount)}</span>
           </div>
         )}
-        <div className="flex justify-between items-end mt-2 pt-2 border-t border-dashed border-coffee/10">
-          <span className="font-bold text-lg text-coffee">Tổng cộng</span>
-          <span className="text-2xl font-bold text-coffee font-price-display">{formatPrice(total)}</span>
+        <div className="flex justify-between items-end mt-1.5 pt-1.5 border-t border-dashed border-coffee/10">
+          <span className="font-bold text-sm text-coffee">Tổng cộng</span>
+          <span className="text-lg font-bold text-coffee font-price-display">{formatPrice(total)}</span>
         </div>
       </div>
-      {/* <div className="grid grid-cols-3 gap-2 mb-3">
-        <button className="h-11 bg-white border border-line rounded-xl font-bold text-xs text-coffee hover:bg-beige transition-all flex flex-col items-center justify-center gap-1 shadow-sm">
-          <Save className="w-4 h-4" /> Lưu nháp
-        </button>
-        <button className="h-11 bg-white border border-line rounded-xl font-bold text-xs text-coffee hover:bg-beige transition-all flex flex-col items-center justify-center gap-1 shadow-sm">
-          <FileText className="w-4 h-4" /> Ghi chú
-        </button>
-        <button className="h-11 bg-red-50 text-red-600 rounded-xl font-bold text-xs hover:opacity-80 transition-all flex flex-col items-center justify-center gap-1 shadow-sm">
-          <Ban className="w-4 h-4" /> Hủy đơn
-        </button>
-      </div> */}
       <button
-        className="w-full bg-gold hover:opacity-90 text-coffee h-13 rounded-xl font-bold text-base shadow-lg active:scale-[0.98] transition-all flex items-center justify-between px-5 border border-coffee/5"
+        className="w-full bg-gold hover:opacity-90 text-coffee h-10 rounded-lg font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-between px-4 border border-coffee/5"
         onClick={handleCheckoutClick}
         disabled={loading}
       >
-        <span className="uppercase tracking-widest text-xs">Thanh toán</span>
-        <span className="font-price-display text-xl">{formatPrice(total)}</span>
+        <span className="uppercase tracking-widest text-[10px]">{loading ? 'Đang tạo đơn...' : 'Thanh toán'}</span>
+        <span className="font-price-display text-sm">{formatPrice(total)}</span>
       </button>
 
       <CheckoutSuccessModal 
@@ -124,17 +118,17 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
           if (onClear) onClear();
         }}
         onPrint={() => {
-          // Just an example action
           alert('Đang in hóa đơn...');
         }}
       />
 
       <PaymentModal 
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        orderId="MỚI"
-        totalAmount={total}
-        onConfirm={handlePaymentConfirm}
+        isOpen={!!paymentModalData?.isOpen}
+        onClose={() => setPaymentModalData(null)}
+        orderId={paymentModalData?.orderId || ''}
+        invoiceId={paymentModalData?.invoiceId || ''}
+        totalAmount={paymentModalData?.total || total}
+        onSuccess={handlePaymentSuccess}
       />
     </div>
   );

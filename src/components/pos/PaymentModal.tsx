@@ -1,30 +1,77 @@
 import { useState, useEffect } from 'react';
-import { X, Banknote, QrCode, CreditCard, Delete, Printer, RefreshCw, Loader2 } from 'lucide-react';
+import { X, Banknote, QrCode, CreditCard, Delete, Printer, RefreshCw, Loader2, CheckCircle2 } from 'lucide-react';
+import { getQrIntent, settleCashPayment } from '@/api/payment.api';
+import { io } from 'socket.io-client';
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   orderId: string;
+  invoiceId?: string;
   totalAmount: number;
-  onConfirm: (method: 'cash' | 'qr', cashGiven?: number) => void;
+  onSuccess: (method: 'cash' | 'qr') => void;
 }
 
 export function PaymentModal({
   isOpen,
   onClose,
   orderId,
+  invoiceId,
   totalAmount,
-  onConfirm
+  onSuccess
 }: PaymentModalProps) {
   const [method, setMethod] = useState<'cash' | 'qr' | 'card'>('cash');
   const [cashGivenStr, setCashGivenStr] = useState<string>('');
+  
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [transactionRef, setTransactionRef] = useState<string>('');
+  const [qrLoading, setQrLoading] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success'>('pending');
+  const [cashSettling, setCashSettling] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setMethod('cash');
       setCashGivenStr(totalAmount.toString());
+      setQrCodeUrl('');
+      setTransactionRef('');
+      setPaymentStatus('pending');
     }
   }, [isOpen, totalAmount]);
+
+  useEffect(() => {
+    if (method === 'qr' && isOpen && invoiceId && !qrCodeUrl) {
+      setQrLoading(true);
+      getQrIntent({ invoice_id: invoiceId, amount: totalAmount })
+        .then(res => {
+          if (res?.data?.qrCodeUrl) {
+            setQrCodeUrl(res.data.qrCodeUrl);
+            setTransactionRef(res.data.transactionRef);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch QR intent:", err);
+        })
+        .finally(() => setQrLoading(false));
+    }
+  }, [method, isOpen, invoiceId, totalAmount, qrCodeUrl]);
+
+  useEffect(() => {
+    if (!isOpen || !invoiceId || method !== 'qr') return;
+
+    const socket = io(); // Connect to default host which is proxied by Vite
+
+    socket.on(`payment_success_${invoiceId}`, () => {
+      setPaymentStatus('success');
+      setTimeout(() => {
+        onSuccess('qr');
+      }, 1500);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isOpen, invoiceId, method, onSuccess]);
 
   if (!isOpen) return null;
 
@@ -47,30 +94,52 @@ export function PaymentModal({
     setCashGivenStr(amount.toString());
   };
 
-  const handleConfirm = () => {
-    if (method === 'cash') {
-      if (cashGiven < totalAmount) {
-        alert('Tiền khách đưa chưa đủ!');
-        return;
-      }
-      onConfirm('cash', cashGiven);
-    } else if (method === 'qr') {
-      onConfirm('qr');
+  const handleConfirmCash = async () => {
+    if (cashGiven < totalAmount) {
+      alert('Tiền khách đưa chưa đủ!');
+      return;
+    }
+    
+    if (!invoiceId) return;
+
+    setCashSettling(true);
+    try {
+      await settleCashPayment({ invoice_id: invoiceId, cash_received: cashGiven });
+      // Proceed on 200 OK (no thrown error from httpClient)
+      setPaymentStatus('success');
+      setTimeout(() => {
+        onSuccess('cash');
+      }, 1500);
+    } catch (e) {
+      console.error('Failed to settle cash payment:', e);
+      alert('Lỗi kết nối khi xác nhận tiền mặt!');
+    } finally {
+      setCashSettling(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-coffee/40 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
-      <div className="bg-white w-full max-w-[1000px] h-[720px] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-line animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-coffee/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-[800px] h-[550px] rounded-xl shadow-2xl flex flex-col overflow-hidden border border-line animate-in fade-in zoom-in-95 duration-200 relative">
         
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-line flex justify-between items-center bg-cream">
-          <div className="flex flex-col">
-            <span className="text-[10px] tracking-widest text-gold uppercase font-bold">HÓA ĐƠN {orderId.startsWith('#') ? orderId : `#${orderId}`}</span>
-            <h2 className="text-2xl font-bold text-coffee">Tiến hành Thanh toán</h2>
+        {paymentStatus === 'success' && (
+          <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-[70] flex flex-col items-center justify-center animate-in fade-in duration-300">
+            <CheckCircle2 className="w-20 h-20 text-green-500 mb-4" />
+            <h2 className="text-2xl font-bold text-coffee mb-2">Thanh toán thành công!</h2>
+            <p className="text-muted">Hệ thống đang hoàn tất giao dịch...</p>
           </div>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center hover:bg-line/50 rounded-full transition-colors">
-            <X className="w-6 h-6 text-coffee" />
+        )}
+
+        {/* Modal Header */}
+        <div className="px-5 py-3 border-b border-line flex justify-between items-center bg-cream">
+          <div className="flex flex-col">
+            <span className="text-[9px] tracking-widest text-gold uppercase font-bold">
+              {invoiceId ? `INVOICE #${invoiceId.slice(-6)}` : `HÓA ĐƠN ${orderId.startsWith('#') ? orderId : `#${orderId}`}`}
+            </span>
+            <h2 className="text-lg font-bold text-coffee">Tiến hành Thanh toán</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center hover:bg-line/50 rounded-full transition-colors">
+            <X className="w-5 h-5 text-coffee" />
           </button>
         </div>
 
@@ -78,51 +147,51 @@ export function PaymentModal({
         <div className="flex flex-1 overflow-hidden">
           
           {/* Left Section */}
-          <div className="w-1/3 border-r border-line bg-beige/50 p-6 flex flex-col gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-line/80 text-center">
-              <span className="text-xs tracking-widest text-muted uppercase font-bold block mb-2">Tổng tiền cần thu</span>
-              <div className="font-price-display text-4xl font-bold text-coffee">{formatPrice(totalAmount)}</div>
+          <div className="w-1/3 border-r border-line bg-beige/50 p-4.5 flex flex-col gap-4">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-line/80 text-center">
+              <span className="text-[10px] tracking-widest text-muted uppercase font-bold block mb-1">Tổng tiền cần thu</span>
+              <div className="font-price-display text-2xl font-bold text-coffee">{formatPrice(totalAmount)}</div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <span className="text-xs tracking-widest text-muted uppercase font-bold">Phương thức</span>
-              <div className="grid grid-cols-1 gap-3">
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] tracking-widest text-muted uppercase font-bold">Phương thức</span>
+              <div className="grid grid-cols-1 gap-2.5">
                 <button 
                   onClick={() => setMethod('cash')}
-                  className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${method === 'cash' ? 'bg-cream border-coffee shadow-[0_0_0_1px_#4A3525]' : 'bg-white/50 border-line hover:bg-white'}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${method === 'cash' ? 'bg-cream border-coffee shadow-[0_0_0_1px_#4A3525]' : 'bg-white/50 border-line hover:bg-white'}`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-beige flex items-center justify-center text-coffee">
-                    <Banknote className="w-6 h-6" />
+                  <div className="w-9 h-9 rounded-lg bg-beige flex items-center justify-center text-coffee">
+                    <Banknote className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-lg font-bold text-coffee">Tiền mặt</div>
-                    <div className="text-[10px] font-bold text-muted uppercase tracking-wider">Cash Payment</div>
+                    <div className="text-sm font-bold text-coffee">Tiền mặt</div>
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-wider">Cash Payment</div>
                   </div>
                 </button>
 
                 <button 
                   onClick={() => setMethod('qr')}
-                  className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${method === 'qr' ? 'bg-cream border-coffee shadow-[0_0_0_1px_#4A3525]' : 'bg-white/50 border-line hover:bg-white'}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${method === 'qr' ? 'bg-cream border-coffee shadow-[0_0_0_1px_#4A3525]' : 'bg-white/50 border-line hover:bg-white'}`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-beige flex items-center justify-center text-coffee">
-                    <QrCode className="w-6 h-6" />
+                  <div className="w-9 h-9 rounded-lg bg-beige flex items-center justify-center text-coffee">
+                    <QrCode className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-lg font-bold text-coffee">Chuyển khoản / QR</div>
-                    <div className="text-[10px] font-bold text-muted uppercase tracking-wider">Digital Transfer</div>
+                    <div className="text-sm font-bold text-coffee">Chuyển khoản / QR</div>
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-wider">Digital Transfer</div>
                   </div>
                 </button>
 
                 <button 
                   disabled
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-line bg-white/50 opacity-60 cursor-not-allowed"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-line bg-white/50 opacity-60 cursor-not-allowed"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-beige flex items-center justify-center text-coffee">
-                    <CreditCard className="w-6 h-6" />
+                  <div className="w-9 h-9 rounded-lg bg-beige flex items-center justify-center text-coffee">
+                    <CreditCard className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-lg font-bold text-coffee">Thẻ (Card)</div>
-                    <div className="text-[10px] font-bold text-muted uppercase tracking-wider">Terminal Payment</div>
+                    <div className="text-sm font-bold text-coffee">Thẻ (Card)</div>
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-wider">Terminal Payment</div>
                   </div>
                 </button>
               </div>
@@ -130,57 +199,57 @@ export function PaymentModal({
           </div>
 
           {/* Right Section */}
-          <div className="flex-1 p-6 bg-white relative overflow-y-auto">
+          <div className="flex-1 p-4.5 bg-white relative overflow-y-auto">
             
             {/* Cash UI */}
             {method === 'cash' && (
-              <div className="h-full flex flex-col gap-6 animate-in fade-in">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold tracking-widest text-muted uppercase">Tiền khách đưa</label>
-                    <div className="bg-cream p-4 rounded-2xl border-2 border-coffee flex items-center justify-between shadow-sm">
+              <div className="h-full flex flex-col gap-4 animate-in fade-in">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold tracking-widest text-muted uppercase">Tiền khách đưa</label>
+                    <div className="bg-cream p-3 rounded-xl border border-coffee flex items-center justify-between shadow-sm">
                       <input 
-                        className="bg-transparent border-none focus:ring-0 font-price-display text-2xl font-bold text-coffee w-full text-right p-0" 
+                        className="bg-transparent border-none focus:ring-0 font-price-display text-lg font-bold text-coffee w-full text-right p-0 outline-none" 
                         readOnly 
                         value={cashGiven.toLocaleString('vi-VN')}
                       />
-                      <span className="text-xl ml-2 font-bold text-muted">₫</span>
+                      <span className="text-base ml-1.5 font-bold text-muted">₫</span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold tracking-widest text-muted uppercase">Tiền thối (Change due)</label>
-                    <div className="bg-beige/30 p-4 rounded-2xl border-2 border-dashed border-latte/40 flex items-center justify-between">
-                      <div className="font-price-display text-2xl font-bold text-latte">{changeDue.toLocaleString('vi-VN')}</div>
-                      <span className="text-xl font-bold ml-2 text-latte">₫</span>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold tracking-widest text-muted uppercase">Tiền thối (Change due)</label>
+                    <div className="bg-beige/30 p-3 rounded-xl border border-dashed border-latte/40 flex items-center justify-between">
+                      <div className="font-price-display text-lg font-bold text-latte">{changeDue.toLocaleString('vi-VN')}</div>
+                      <span className="text-base font-bold ml-1.5 text-latte">₫</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex-1 mt-4">
-                  <span className="text-xs tracking-widest font-bold text-muted uppercase block mb-3">Gợi ý nhanh</span>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="flex-1 mt-3">
+                  <span className="text-[10px] tracking-widest font-bold text-muted uppercase block mb-2">Gợi ý nhanh</span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[50000, 100000, 200000, 500000].map(amount => (
                       <button 
                         key={amount}
                         onClick={() => handleQuickAdd(amount)}
-                        className="bg-cream min-h-[64px] rounded-2xl border border-line flex flex-col items-center justify-center hover:bg-latte hover:text-white transition-colors active:scale-95"
+                        className="bg-cream min-h-[50px] rounded-xl border border-line flex flex-col items-center justify-center hover:bg-latte hover:text-white transition-colors active:scale-95"
                       >
-                        <span className="text-lg font-bold">{amount.toLocaleString('vi-VN')}</span>
-                        <span className="text-[10px] font-bold opacity-70">VNĐ</span>
+                        <span className="text-sm font-bold">{amount.toLocaleString('vi-VN')}</span>
+                        <span className="text-[9px] font-bold opacity-70">VNĐ</span>
                       </button>
                     ))}
                   </div>
 
-                  <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="mt-4 grid grid-cols-2 gap-2">
                     <button 
                       onClick={() => handleNumpad('backspace')}
-                      className="bg-cream border border-line/80 h-14 rounded-2xl font-bold text-coffee flex items-center justify-center gap-2 hover:bg-line/50 transition-colors active:scale-95"
+                      className="bg-cream border border-line/80 h-11 rounded-xl font-bold text-sm text-coffee flex items-center justify-center gap-1.5 hover:bg-line/50 transition-colors active:scale-95"
                     >
-                      <Delete className="w-5 h-5" /> Xóa
+                      <Delete className="w-4 h-4" /> Xóa
                     </button>
                     <button 
                       onClick={() => handleNumpad('exact')}
-                      className="bg-latte text-white h-14 rounded-2xl font-bold hover:brightness-95 shadow-sm active:scale-95 transition-all"
+                      className="bg-latte text-white h-11 rounded-xl font-bold text-sm hover:brightness-95 shadow-sm active:scale-95 transition-all"
                     >
                       Tiền vừa đủ
                     </button>
@@ -191,29 +260,41 @@ export function PaymentModal({
 
             {/* QR UI */}
             {method === 'qr' && (
-              <div className="h-full flex flex-col items-center justify-center gap-6 animate-in fade-in">
-                <div className="bg-white p-8 rounded-3xl border border-line/80 shadow-lg relative group overflow-hidden">
-                  <div className="absolute inset-0 bg-white/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 cursor-pointer">
-                    <RefreshCw className="text-coffee w-10 h-10" />
+              <div className="h-full flex flex-col items-center justify-center gap-4 animate-in fade-in">
+                {qrLoading ? (
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="w-8 h-8 text-latte animate-spin" />
+                    <p className="text-sm text-muted">Đang tạo mã VietQR...</p>
                   </div>
-                  <div className="w-64 h-64 bg-cream rounded-2xl flex items-center justify-center relative border border-line p-4">
-                    {/* Placeholder for actual VietQR image. In a real app we'd construct the URL */}
-                    <img 
-                      className="w-full h-full object-contain" 
-                      alt="VietQR code for transaction" 
-                      src={`https://img.vietqr.io/image/970436-0123456789-compact2.jpg?amount=${totalAmount}&addInfo=Little%20Hogsmeade%20${orderId}&accountName=LITTLE%20HOGSMEADE`} 
-                    />
-                    <div className="absolute inset-0 border-2 border-gold/30 rounded-2xl animate-pulse pointer-events-none"></div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-bold text-coffee">Quét mã để thanh toán</p>
-                  <p className="text-sm text-muted mt-2">Vui lòng chờ khách xác nhận giao dịch trên ứng dụng</p>
-                </div>
-                <div className="flex items-center gap-3 bg-beige border border-line px-6 py-3 rounded-full">
-                  <Loader2 className="text-latte animate-spin w-4 h-4" />
-                  <span className="text-xs font-bold text-muted uppercase tracking-wider">Đang chờ tín hiệu từ ngân hàng...</span>
-                </div>
+                ) : (
+                  <>
+                    <div className="bg-white p-5 rounded-2xl border border-line/80 shadow-lg relative group overflow-hidden">
+                      <div className="absolute inset-0 bg-white/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 cursor-pointer">
+                        <RefreshCw className="text-coffee w-8 h-8" />
+                      </div>
+                      <div className="w-48 h-48 bg-cream rounded-xl flex items-center justify-center relative border border-line p-3">
+                        {qrCodeUrl ? (
+                           <img 
+                            className="w-full h-full object-contain mix-blend-multiply" 
+                            alt="VietQR code for transaction" 
+                            src={qrCodeUrl} 
+                          />
+                        ) : (
+                           <div className="text-sm text-muted text-center">Không thể tải QR</div>
+                        )}
+                        <div className="absolute inset-0 border-2 border-gold/30 rounded-xl animate-pulse pointer-events-none"></div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-base font-bold text-coffee">Quét mã để thanh toán</p>
+                      <p className="text-xs text-muted mt-1.5">Mã giao dịch: <strong className="text-coffee">{transactionRef || 'Đang chờ...'}</strong></p>
+                    </div>
+                    <div className="flex items-center gap-2 bg-beige border border-line px-4.5 py-2.5 rounded-full mt-2">
+                      <Loader2 className="text-latte animate-spin w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Đang chờ tín hiệu từ ngân hàng...</span>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -221,19 +302,35 @@ export function PaymentModal({
         </div>
 
         {/* Footer Action */}
-        <div className="px-6 py-4 border-t border-line bg-cream flex gap-6 mt-auto">
+        <div className="px-5 py-3 border-t border-line bg-cream flex gap-4 mt-auto z-10">
           <button 
             onClick={onClose}
-            className="flex-1 bg-white border border-line/80 text-muted font-bold text-lg h-16 rounded-2xl hover:bg-line/30 transition-colors active:scale-95"
+            className="flex-1 bg-white border border-line/80 text-muted font-bold text-sm h-11 rounded-xl hover:bg-line/30 transition-colors active:scale-95"
           >
             Hủy & Quay lại
           </button>
-          <button 
-            onClick={handleConfirm}
-            className="flex-[2] bg-coffee text-white font-bold text-lg h-16 rounded-2xl shadow-lg shadow-coffee/10 flex items-center justify-center gap-2 hover:brightness-110 transition-all active:scale-[0.98]"
-          >
-            XÁC NHẬN & IN HÓA ĐƠN <Printer className="w-5 h-5 ml-2" />
-          </button>
+          {method === 'cash' && (
+            <button 
+              onClick={handleConfirmCash}
+              disabled={cashGiven < totalAmount || cashSettling}
+              className={`flex-[2] text-white font-bold text-sm h-11 rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all ${
+                cashGiven < totalAmount || cashSettling 
+                  ? 'bg-line cursor-not-allowed text-muted opacity-70' 
+                  : 'bg-coffee shadow-coffee/10 hover:brightness-110 active:scale-[0.98]'
+              }`}
+            >
+              {cashSettling ? <Loader2 className="w-4 h-4 animate-spin" /> : 'XÁC NHẬN & IN HÓA ĐƠN'}
+              {!cashSettling && <Printer className="w-4 h-4 ml-1.5" />}
+            </button>
+          )}
+          {method === 'qr' && (
+            <button 
+              disabled
+              className="flex-[2] bg-line text-muted font-bold text-sm h-11 rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed"
+            >
+              CHỜ KHÁCH THANH TOÁN
+            </button>
+          )}
         </div>
 
       </div>

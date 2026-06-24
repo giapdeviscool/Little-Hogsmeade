@@ -140,7 +140,7 @@ export function PosPage() {
         {/* Order panel as a flex sibling — auto-resizes the menu */}
         <div 
           className={`h-full bg-white flex flex-col border-l border-line transition-all duration-300 overflow-hidden ${
-            isOrderOpen ? 'w-[42%] shadow-xl' : 'w-[72px] items-center py-6'
+            isOrderOpen ? 'w-[38%] shadow-xl' : 'w-[60px] items-center py-5'
           }`}
         >
           {isOrderOpen ? (
@@ -159,25 +159,25 @@ export function PosPage() {
               onRemoveItem={handleRemoveItem}
             />
           ) : (
-            <div className="flex flex-col gap-3 mt-4 items-center">
+            <div className="flex flex-col gap-2.5 mt-3 items-center">
               <button 
                 onClick={() => setIsOrderOpen(true)}
-                className="w-11 h-11 bg-white text-coffee border border-line rounded-full flex items-center justify-center hover:bg-beige transition-colors shadow-sm relative"
+                className="w-9 h-9 bg-white text-coffee border border-line rounded-full flex items-center justify-center hover:bg-beige transition-colors shadow-sm relative"
                 title="Mở đơn hiện tại"
               >
-                <ShoppingCart className="w-5 h-5" />
+                <ShoppingCart className="w-4 h-4" />
                 {activeOrder.cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                     {activeOrder.cartItems.length}
                   </span>
                 )}
               </button>
               <button 
                 onClick={handleAddOrder}
-                className="w-11 h-11 bg-coffee text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+                className="w-9 h-9 bg-coffee text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
                 title="Tạo đơn mới"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           )}
