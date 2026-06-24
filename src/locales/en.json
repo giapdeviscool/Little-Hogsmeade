@@ -98,7 +98,8 @@
     "operations": "Operations & Service",
     "internal": "Internal Management",
     "owner": "Chain Management (Owner)",
-    "cms": "CMS (Landing Page)"
+    "cms": "CMS (Landing Page)",
+    "loyalty": "Customers & Loyalty (CRM)"
   },
   "pages": {
     "dashboardTitle": "Little Hogsmeade Chain Overview",
@@ -320,6 +321,21 @@
       "retryButton": "Retry",
       "statusPublished": "Published",
       "statusDraft": "Draft"
+    }
+  },
+  "loyalty": {
+    "sectionLabel": "Customer & Loyalty Management (CRM)",
+    "pageTitle": "Loyalty Configuration",
+    "pageDescription": "Configure earning rules and manage the reward catalog customers can redeem with points.",
+    "tabs": {
+      "earning": {
+        "label": "Earning Rules",
+        "description": "Exchange rate from spend to reward points"
+      },
+      "rewards": {
+        "label": "Redemption & Rewards",
+        "description": "Vouchers, free products and active status"
+      }
     }
   },
   "landing": {
