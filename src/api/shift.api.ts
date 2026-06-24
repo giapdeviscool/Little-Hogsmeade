@@ -34,3 +34,19 @@ export function deleteShift(id: string) {
     method: 'DELETE',
   })
 }
+
+export type ShiftOpeningResponse = {
+  data: {
+    shift_id: string
+    status: string
+    starting_float: number
+    opened_at: string
+  }
+}
+
+export const openCashierShift = async (startingFloat: number): Promise<ShiftOpeningResponse> => {
+  return httpClient<ShiftOpeningResponse>('/cashier-shifts/open', {
+    method: 'POST',
+    body: JSON.stringify({ starting_float: startingFloat }),
+  })
+}

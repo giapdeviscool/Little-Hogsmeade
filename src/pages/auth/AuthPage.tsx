@@ -78,12 +78,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
       const role = data.user.role || data.user.roleName || ''
       const isCustomer = role.toLowerCase() === 'customer'
-      const isCashier = role.toLowerCase().includes('cashier')
       
       if (isCustomer) {
         navigate(ROUTES.customerHome)
-      } else if (isCashier) {
-        navigate(ROUTES.pos)
       } else {
         navigate(ROUTES.adminDashboard)
       }
@@ -140,9 +137,16 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           {!isForgot && <AuthInput name="password" label={t.auth.password} placeholder="••••••••" type="password" required />}
           {isRegister && <AuthInput name="confirmPassword" label={t.auth.confirmPassword} placeholder="••••••••" type="password" required />}
           {isLogin && (
-            <div className="flex items-center justify-between pt-1 text-sm">
-              <label className="flex items-center gap-2 font-semibold text-muted"><input type="checkbox" defaultChecked className="h-4 w-4 accent-coffee" />{t.auth.rememberMe}</label>
-              <button type="button" onClick={() => navigate('/forgot-password')} className="font-bold text-coffee hover:underline">{t.auth.forgotPassword}?</button>
+            <div className="flex flex-col gap-3 pt-1">
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 font-semibold text-muted"><input type="checkbox" defaultChecked className="h-4 w-4 accent-coffee" />{t.auth.rememberMe}</label>
+                <button type="button" onClick={() => navigate('/forgot-password')} className="font-bold text-coffee hover:underline">{t.auth.forgotPassword}?</button>
+              </div>
+              <div className="flex justify-center border-t border-coffee/10 pt-3 text-sm">
+                <button type="button" onClick={() => navigate(ROUTES.cashierLogin)} className="font-bold text-coffee hover:underline">
+                  Đăng nhập dành cho Thu ngân (Cashier Login)
+                </button>
+              </div>
             </div>
           )}
           <button type="submit" disabled={isSubmitting} className="mt-2 h-12 rounded-[14px] bg-coffee px-5 text-[15px] font-bold text-white shadow-[0_16px_32px_rgba(74,53,37,0.18)] hover:bg-[#3f2d20] disabled:cursor-wait disabled:opacity-65">{isSubmitting ? t.auth.processing : isForgot ? t.auth.submitRecovery : isRegister ? t.auth.submitRegister : t.auth.login}</button>

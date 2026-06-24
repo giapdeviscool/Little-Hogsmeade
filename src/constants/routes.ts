@@ -20,6 +20,8 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   forgotPassword: '/forgot-password',
+  cashierLogin: '/cashier-login',
+  shiftOpening: '/shift-opening',
   pos: '/pos',
   invoices: '/invoices',
 } as const
