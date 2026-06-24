@@ -8,4 +8,5 @@ export type NavItem = {
   key: SidebarNavKey
   icon: NavIconKey
   href?: string
+  subItems?: { key: string; label: string }[]
 }

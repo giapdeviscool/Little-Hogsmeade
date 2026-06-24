@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { navItems } from '../constants/navigation'
 import { Icon } from '../components/icons/Icon'
 import { cn } from '../utils/cn'
@@ -8,6 +9,21 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { t } = useLocale()
   const location = useLocation()
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
+
+  const [collapsedKeys, setCollapsedKeys] = useState<string[]>([])
+
+  const handleParentClick = (e: React.MouseEvent, key: string, isActive: boolean, hasSubItems: boolean) => {
+    if (hasSubItems) {
+      if (isActive) {
+        e.preventDefault()
+        setCollapsedKeys(prev =>
+          prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+        )
+      } else {
+        setCollapsedKeys(prev => prev.filter(k => k !== key))
+      }
+    }
+  }
 
   return (
     <aside className="sticky top-0 flex h-screen flex-col border-r border-line bg-beige px-[18px] py-7 text-coffee">
