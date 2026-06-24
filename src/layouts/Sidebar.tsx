@@ -26,9 +26,10 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
 
       <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
-          const isActive = location.pathname.includes(`/admin/${item.key}`)
+          const href = item.href ?? `/admin/${item.key}`
+          const isActive = location.pathname.includes(href)
           return (
-            <Link key={item.key} to={`/admin/${item.key}`} className={cn(navButton, isActive ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}>
+            <Link key={item.key} to={href} className={cn(navButton, isActive ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}>
               <Icon name={item.icon} />
               <span>{t.navigation[item.key]}</span>
             </Link>
