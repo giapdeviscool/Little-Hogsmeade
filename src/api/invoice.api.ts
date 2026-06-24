@@ -52,7 +52,7 @@ export function getAdminInvoices(params: {
   });
 
   const queryString = query.toString();
-  const endpoint = queryString ? `/invoices/admin?${queryString}` : '/invoices/admin';
+  const endpoint = queryString ? `/admin/invoices?${queryString}` : '/admin/invoices';
 
   return httpClient<any>(endpoint, {
     method: 'GET',
