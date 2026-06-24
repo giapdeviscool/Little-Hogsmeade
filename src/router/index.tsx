@@ -16,6 +16,7 @@ import { StoresPage } from '../pages/stores/StoresPage'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { RegisterPage } from '../pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
+import { CashierLoginPage } from '../pages/auth/CashierLoginPage'
 
 import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { POSPage } from '../pages/pos/POSPage'
@@ -27,6 +28,7 @@ import { CMSPage } from '../pages/cms/CMSPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
 import { PosPage } from '@/pages/pos/index'
 import { InvoicePage } from '@/pages/invoices/index'
+import { ShiftOpeningPage } from '../pages/pos/ShiftOpeningPage'
 
 export function AppRouter() {
   return (
@@ -61,11 +63,14 @@ export function AppRouter() {
       <Route path={ROUTES.login} element={<LoginPage />} />
       <Route path={ROUTES.register} element={<RegisterPage />} />
       <Route path={ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
-      <Route path="*" element={<Navigate to={ROUTES.customerHome} replace />} />
-
+      <Route path={ROUTES.cashierLogin} element={<CashierLoginPage />} />
+      
+      <Route path={ROUTES.shiftOpening} element={<ShiftOpeningPage />} />
       <Route path={ROUTES.pos} element={<PosPage />} />
       <Route path={ROUTES.invoices} element={<InvoicePage />} />
-      {/* <Route path="*" element={<Navigate to={ROUTES.home} replace />} /> */}
+      
+      <Route path="*" element={<Navigate to={ROUTES.customerHome} replace />} />
     </Routes>
   )
 }
+
