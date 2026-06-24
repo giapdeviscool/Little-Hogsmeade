@@ -7,4 +7,5 @@ export type NavIconKey = 'grid' | 'cart' | 'service' | 'users' | 'building' | 'g
 export type NavItem = {
   key: SidebarNavKey
   icon: NavIconKey
+  subItems?: { key: string; label: string }[]
 }
