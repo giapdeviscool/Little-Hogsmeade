@@ -41,21 +41,20 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
 
   if (customer) {
     return (
-      <div className="flex items-center justify-between p-3 bg-cream rounded-xl border border-line">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-coffee">
-            <User className="w-5 h-5" />
+      <div className="flex items-center justify-between p-2 bg-cream rounded-lg border border-line">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-coffee">
+            <User className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-coffee text-sm">{customer.fullName}</h3>
-            {/* <p className="text-xs text-muted font-medium">{customer.phone} • {customer.totalPoints || 0} điểm</p> */}
+            <h3 className="font-bold text-coffee text-xs">{customer.fullName}</h3>
           </div>
         </div>
         <button 
           onClick={onClear}
-          className="w-8 h-8 flex items-center justify-center text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+          className="w-6 h-6 flex items-center justify-center text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
     );
@@ -64,15 +63,15 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
         <input 
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Tìm SĐT khách hàng (từ 3 số)..."
-          className="w-full h-11 pl-9 pr-4 bg-white border border-line rounded-xl text-sm outline-none focus:border-coffee transition-colors"
+          className="w-full h-9 pl-8 pr-3 bg-white border border-line rounded-lg text-xs outline-none focus:border-coffee transition-colors"
         />
-        {loading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-coffee border-t-transparent rounded-full animate-spin" />}
+        {loading && <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-coffee border-t-transparent rounded-full animate-spin" />}
       </div>
       
       {isOpen && results.length > 0 && (
