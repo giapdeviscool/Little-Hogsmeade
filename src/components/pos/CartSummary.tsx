@@ -2,7 +2,6 @@ import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
 import { createDeliveryOrder } from '@/api/delivery.api';
 import { useState } from 'react';
-import { CheckoutSuccessModal } from './CheckoutSuccessModal';
 import { PaymentModal } from './PaymentModal';
 
 interface CartSummaryProps {
@@ -29,7 +28,6 @@ export function CartSummary({
 }: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState<{isOpen: boolean, orderId: string, invoiceId: string, total: number} | null>(null);
-  const [successModalData, setSuccessModalData] = useState<{isOpen: boolean, orderId: string, total: string} | null>(null);
 
   const parsePrice = (priceStr: string) => {
     return parseInt(priceStr.replace(/\D/g, ''), 10) || 0;
@@ -88,13 +86,8 @@ export function CartSummary({
   };
 
   const handlePaymentSuccess = (_method: 'cash' | 'qr') => {
-    const pData = paymentModalData;
     setPaymentModalData(null);
-    setSuccessModalData({
-      isOpen: true,
-      orderId: pData?.orderId || '',
-      total: formatPrice(pData?.total || total)
-    });
+    if (onClear) onClear();
   };
 
   return (
@@ -125,18 +118,6 @@ export function CartSummary({
         <span className="font-price-display text-sm">{formatPrice(total)}</span>
       </button>
 
-      <CheckoutSuccessModal 
-        isOpen={!!successModalData?.isOpen}
-        orderId={successModalData?.orderId || ''}
-        totalAmount={successModalData?.total || ''}
-        onNewOrder={() => {
-          setSuccessModalData(null);
-          if (onClear) onClear();
-        }}
-        onPrint={() => {
-          alert('Đang in hóa đơn...');
-        }}
-      />
 
       <PaymentModal 
         isOpen={!!paymentModalData?.isOpen}
