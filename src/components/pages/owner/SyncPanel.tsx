@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card } from "../../ui/Card";
-import type { ChainConfig, MenuSyncPreview } from "../../../types";
+import type { ChainConfig } from "../../../types";
 import type { LoyaltyEarnConfig } from "../../../types/loyalty.types";
-import { SimpleList } from "./OwnerCharts";
-import { formatCurrency } from "../../../utils/owner.utils";
-import { TriangleAlert } from "lucide-react";
-import { ConfirmDialog } from "./ConfirmDialog";
 import { getLoyaltyConfig, saveLoyaltyConfig } from "../../../api/loyalty.api";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { TriangleAlert } from "lucide-react";
+import { GlobalMenuPanel } from "./GlobalMenuPanel";
 
 function EditableLoyaltyEarnField({ saving }: { saving: boolean }) {
   const [loading, setLoading] = useState(true);
@@ -126,22 +125,18 @@ function EditableLoyaltyEarnField({ saving }: { saving: boolean }) {
 
 export function SyncPanel({
   config,
-  preview,
   saving,
   overrideBranchesCount = 0,
   onSaveConfig,
   onSync,
 }: {
   config: ChainConfig | null;
-  preview: MenuSyncPreview;
   saving: boolean;
   overrideBranchesCount?: number;
   onSaveConfig: (config: Partial<ChainConfig>) => void;
   onSync: () => void;
 }) {
   const [confirmGlobalPricing, setConfirmGlobalPricing] = useState(false);
-  const isMenuEmpty =
-    preview.categories.length === 0 || preview.menuItems.length === 0;
 
   const globalPricingEnabled = config?.globalPricingEnabled ?? true;
 
@@ -246,61 +241,18 @@ export function SyncPanel({
         />
       </section>
 
+      {/* Section 3: Global Menu Builder */}
       <section>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Đồng bộ dữ liệu
+          Global Menu
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-coffee">Menu chuẩn</h2>
-        <p className="mt-1 text-sm text-muted">
-          Đẩy danh mục và món chuẩn xuống tất cả chi nhánh đang hoạt động. Hành
-          động này sẽ ghi đè dữ liệu hiện tại.
-        </p>
+        <h2 className="mt-1 text-lg font-semibold text-coffee">Global Menu</h2>
         <Card className="mt-4 p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-3 flex-1 max-w-[600px]">
-              <p className="font-medium text-coffee">
-                {preview.categories.length} danh mục chuẩn ·{" "}
-                {preview.menuItems.length} món chuẩn
-              </p>
-              {overrideBranchesCount > 0 && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                  <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-                  <p>
-                    {overrideBranchesCount} chi nhánh đang tự set giá riêng.
-                    Đồng bộ có thể ảnh hưởng đến giá hiện tại của các chi nhánh
-                    này.
-                  </p>
-                </div>
-              )}
-            </div>
-            <button
-              className="h-9 whitespace-nowrap rounded-lg bg-coffee px-4 text-sm font-semibold text-white disabled:opacity-50"
-              disabled={saving || isMenuEmpty}
-              onClick={onSync}
-            >
-              Đồng bộ menu
-            </button>
-          </div>
-
-          {isMenuEmpty ? (
-            <div className="mt-5 rounded-lg border border-dashed border-line py-10 text-center text-sm text-muted">
-              Chưa có menu chuẩn nào được thiết lập. Vào module Quản lý Món ăn
-              để thêm danh mục và món trước khi đồng bộ.
-            </div>
-          ) : (
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SimpleList
-                title="Danh mục chuẩn"
-                items={preview.categories.map((c) => c.name)}
-              />
-              <SimpleList
-                title="Món chuẩn"
-                items={preview.menuItems.map(
-                  (i) => `${i.name} · ${formatCurrency(i.basePrice)}`,
-                )}
-              />
-            </div>
-          )}
+          <GlobalMenuPanel
+            overrideBranchesCount={overrideBranchesCount}
+            saving={saving}
+            onSync={onSync}
+          />
         </Card>
       </section>
     </div>

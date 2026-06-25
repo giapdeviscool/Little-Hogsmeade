@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card } from '../../../components/ui/Card'
 import { createMenuItem } from '../../../api/menu-item.api'
-import type { Category } from '../../../types'
+import { getBranches } from '../../../api/chain.api'
+import type { Category, Branch } from '../../../types'
 
 interface AddMenuItemModalProps {
   isOpen: boolean
@@ -14,13 +15,27 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [branches, setBranches] = useState<Branch[]>([])
 
   const [formData, setFormData] = useState({
     name: '',
     categoryId: '',
     basePrice: '',
-    description: ''
+    description: '',
+    scope: 'global' as 'global' | 'specific',
+    branchId: '',
   })
+
+  useEffect(() => {
+    if (isOpen) {
+      getBranches()
+        .then((res) => {
+          const data = res.data
+          setBranches(Array.isArray(data) ? data : (data as any)?.items || [])
+        })
+        .catch(console.error)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -37,7 +52,9 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
       if (formData.description) {
         formPayload.append('description', formData.description)
       }
-      
+      if (formData.scope === 'specific' && formData.branchId) {
+        formPayload.append('branchId', formData.branchId)
+      }
       if (fileInputRef.current?.files?.[0]) {
         formPayload.append('image', fileInputRef.current.files[0])
       }
@@ -116,6 +133,47 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Mô tả về món ăn..."
               ></textarea>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium">Phạm vi <span className="text-red-500">*</span></label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="global"
+                    checked={formData.scope === 'global'}
+                    onChange={() => setFormData({ ...formData, scope: 'global', branchId: '' })}
+                    className="h-4 w-4 accent-coffee"
+                  />
+                  <span className="text-sm text-gray-700">Toàn chuỗi</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="specific"
+                    checked={formData.scope === 'specific'}
+                    onChange={() => setFormData({ ...formData, scope: 'specific' })}
+                    className="h-4 w-4 accent-coffee"
+                  />
+                  <span className="text-sm text-gray-700">Riêng 1 chi nhánh</span>
+                </label>
+              </div>
+              {formData.scope === 'specific' && (
+                <select
+                  required
+                  className="mt-2 w-full rounded-lg border border-line px-3 py-2 bg-white"
+                  value={formData.branchId}
+                  onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+                >
+                  <option value="" disabled>Chọn chi nhánh</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

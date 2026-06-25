@@ -45,3 +45,10 @@ export function assignMenuItemToppingGroups(id: string, toppingGroupIds: string[
   })
 }
 
+export function moveItemsToCategory(menuItemIds: string[], categoryId: string) {
+  return httpClient<any>('/menu-items/move-category', {
+    method: 'PATCH',
+    body: JSON.stringify({ menuItemIds, categoryId }),
+  })
+}
+
