@@ -4,10 +4,15 @@ import { Icon } from '../components/icons/Icon'
 import { cn } from '../utils/cn'
 import { useLocale } from '../hooks/useLocale'
 import { Link, useLocation } from 'react-router-dom'
+import { getAuthSession } from '../store/auth.store'
 
 export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { t } = useLocale()
   const location = useLocation()
+  const session = getAuthSession()
+  const user = session?.user
+  const displayName = user?.fullName || user?.name || 'Admin'
+  const initial = displayName.charAt(0).toUpperCase()
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
 
   const [collapsedKeys, setCollapsedKeys] = useState<string[]>([])
@@ -32,10 +37,10 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <div className="mb-5 flex items-center gap-3 rounded-[14px] bg-white px-3 py-3.5 shadow-soft">
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-coffee font-bold text-white">A</div>
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-coffee font-bold text-white">{initial}</div>
         <div>
-          <span className="block text-xs text-muted">Hello,</span>
-          <strong className="block text-[15px]">Admin</strong>
+          <span className="block text-xs text-muted">Xin chào,</span>
+          <strong className="block text-[15px] truncate max-w-[120px]">{displayName}</strong>
         </div>
       </div>
 
@@ -88,6 +93,10 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
+        <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
+          <Icon name="settings" />
+          {t.common.settings}
+        </Link>
         <button type="button" onClick={onLogout} className={`${navButton} text-coffee hover:bg-white/65`}>
           <Icon name="logout" />
           {t.common.logout}
