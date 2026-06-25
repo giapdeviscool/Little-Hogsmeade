@@ -22,6 +22,7 @@ import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { POSPage } from '../pages/pos/POSPage'
 import { OperationsPage } from '../pages/operations/OperationsPage'
 import { TableLayoutPage } from '../pages/operations/TableLayoutPage'
+import { DeliveryManagementTab } from '../pages/operations/DeliveryManagementTab'
 import { InternalPage } from '../pages/internal/InternalPage'
 import { OwnerPage } from '../pages/owner/OwnerPage'
 import { CMSPage } from '../pages/cms/CMSPage'
@@ -52,7 +53,11 @@ export function AppRouter() {
         <Route index element={<Navigate to={ROUTES.adminDashboard} replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="pos" element={<POSPage />} />
-        <Route path="operations" element={<OperationsPage />} />
+        <Route path="operations" element={<OperationsPage />}>
+          <Route index element={<Navigate to="tables" replace />} />
+          <Route path="tables" element={<TableLayoutPage />} />
+          <Route path="delivery" element={<DeliveryManagementTab />} />
+        </Route>
         <Route path="table-layout" element={<TableLayoutPage />} />
         <Route path="internal" element={<InternalPage />} />
         <Route path="owner" element={<OwnerPage />} />

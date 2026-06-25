@@ -141,7 +141,36 @@ export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, i
     <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border-line bg-white p-6 text-coffee sm:max-w-[560px]">
       <DialogHeader><DialogTitle className="text-xl font-bold">Cập nhật trạng thái {tableData?.name}</DialogTitle><DialogDescription className="text-muted">Chọn trạng thái và bổ sung thông tin phục vụ.</DialogDescription></DialogHeader>
       <form onSubmit={submit} className="mt-2 space-y-5">
-        <fieldset className="space-y-2"><legend className="mb-2 text-sm font-bold">Trạng thái mới</legend>{statusOptions.map((option) => <label key={option.value} className={cn('flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition', status === option.value ? 'border-coffee bg-beige/70' : 'border-line bg-white hover:bg-cream')}><input type="radio" name="status" value={option.value} checked={status === option.value} onChange={() => { setStatus(option.value); setError('') }} className="size-4 accent-coffee" /><span><strong className="block text-sm">{option.label}</strong><small className="text-muted">{option.description}</small></span></label>)}</fieldset>
+        {initialStatus !== 'reserved' && (
+          <fieldset className="space-y-2">
+            <legend className="mb-2 text-sm font-bold">Trạng thái mới</legend>
+            {statusOptions.map((option) => (
+              <label
+                key={option.value}
+                className={cn(
+                  'flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition',
+                  status === option.value ? 'border-coffee bg-beige/70' : 'border-line bg-white hover:bg-cream'
+                )}
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value={option.value}
+                  checked={status === option.value}
+                  onChange={() => {
+                    setStatus(option.value)
+                    setError('')
+                  }}
+                  className="size-4 accent-coffee"
+                />
+                <span>
+                  <strong className="block text-sm">{option.label}</strong>
+                  <small className="text-muted">{option.description}</small>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        )}
         {showOccupiedFields && <div className="space-y-4 rounded-xl bg-cream p-4"><label className="block text-sm font-semibold">Số lượng khách<Input type="number" min={1} value={guestCount} onChange={(event) => setGuestCount(event.target.value)} placeholder="Ví dụ: 4" className="mt-2 h-10 border-line bg-white" /></label><label className="block text-sm font-semibold">Ghi chú<textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="Ghi chú phục vụ..." className="mt-2 w-full resize-none rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-latte/40" /></label></div>}
         {showReservationFields && <div className="space-y-4 rounded-2xl bg-cream p-4"><div className="flex items-center gap-2"><CalendarDays className="size-4 text-latte" /><p className="font-bold">Thông tin đặt bàn</p></div><div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold sm:col-span-2">Tên khách<div className="relative mt-2"><UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-latte" /><Input value={guestName} onChange={(event) => setGuestName(event.target.value)} placeholder="Nguyễn Văn A" className="h-10 border-line bg-white pl-10" /></div></label><label className="block text-sm font-semibold sm:col-span-2">Số điện thoại<div className="relative mt-2"><Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-latte" /><Input value={guestPhone} onChange={(event) => setGuestPhone(event.target.value)} inputMode="tel" placeholder="0901 112 233" className="h-10 border-line bg-white pl-10" /></div></label><label className="block text-sm font-semibold">Ngày hẹn<Input type="date" value={reservedDate} onChange={(event) => setReservedDate(event.target.value)} className="mt-2 h-10 border-line bg-white" /></label><label className="block text-sm font-semibold">Giờ hẹn<Input type="time" value={reservedTime} onChange={(event) => setReservedTime(event.target.value)} className="mt-2 h-10 border-line bg-white" /></label><label className="block text-sm font-semibold sm:col-span-2">Số lượng khách<Input type="number" min={1} value={guestCount} onChange={(event) => setGuestCount(event.target.value)} placeholder="Ví dụ: 4" className="mt-2 h-10 border-line bg-white" /></label></div><label className="block text-sm font-semibold">Ghi chú<textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="Ví dụ: Cần ghế trẻ em" className="mt-2 w-full resize-none rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-latte/40" /></label></div>}
         {error && <p role="alert" className="rounded-xl border border-[#c25a5a]/20 bg-red-50 px-4 py-3 text-sm font-semibold text-[#c25a5a]">{error}</p>}
