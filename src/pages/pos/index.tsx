@@ -134,7 +134,11 @@ export function PosPage() {
   };
 
   const handleClearOrder = () => {
-    setOrders(prev => prev.map(o => o.id === activeOrderId ? { ...o, cartItems: [] } : o));
+    setOrders(prev => prev.map(o => 
+      o.id === activeOrderId 
+        ? { ...o, cartItems: [], customer: o.customer?.isNew ? null : o.customer } 
+        : o
+    ));
   };
 
   const handleSetCustomer = (customer: Customer | null) => {
