@@ -19,12 +19,23 @@ export function TextField({ label, value, onChange }: { label: string; value: st
   )
 }
 
-export function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return (
-    <Field label={label}>
-      <input className="h-9 w-full rounded-lg border border-line bg-white px-3 text-sm" type="number" value={value} onChange={(event) => onChange(Number(event.target.value))} />
-    </Field>
+export function NumberField({ label, value, onChange, emphasized = false, }: { label: string; value: number; onChange: (value: number) => void; emphasized?: boolean }) {
+  const input = (
+    <input
+      className={
+        emphasized
+          ? 'h-9 w-full rounded-lg border-2 border-coffee bg-white px-3 text-base font-semibold text-coffee'
+          : 'h-9 w-full rounded-lg border border-line bg-white px-3 text-sm'
+      }
+      type="number"
+      value={value}
+      onChange={(event) => onChange(Number(event.target.value))}
+    />
   )
+
+  if (!label) return input
+
+  return <Field label={label}>{input}</Field>
 }
 
 export function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {

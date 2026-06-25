@@ -14,7 +14,6 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
   const [formData, setFormData] = useState({
     name: '',
     icon: '',
-    displayOrder: 0,
     isActive: true,
   })
   
@@ -26,7 +25,6 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
       setFormData({
         name: category.name,
         icon: category.icon || '',
-        displayOrder: category.displayOrder,
         isActive: category.isActive,
       })
     }
@@ -91,18 +89,6 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
               onChange={handleChange}
               className="w-full rounded-xl border border-line px-4 py-2"
               placeholder="VD: ☕, 🍰, 🍹..."
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Thứ tự hiển thị</label>
-            <input
-              type="number"
-              min="0"
-              name="displayOrder"
-              value={formData.displayOrder}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-line px-4 py-2"
             />
           </div>
 

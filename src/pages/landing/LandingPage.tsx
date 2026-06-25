@@ -23,6 +23,7 @@ import { LandingLoading, LandingError, MiniBlock } from './components/LandingSha
 import { HeroSection } from './components/HeroSection'
 import { StorySection } from './components/StorySection'
 import { EventSection } from './components/EventSection'
+import { FeaturedMenuSection } from './components/FeaturedMenuSection'
 import { PostSection } from './components/PostSection'
 import { BookingSection } from './components/BookingSection'
 import { StoreAndMemberSection } from './components/StoreAndMemberSection'
@@ -47,7 +48,7 @@ export function LandingPage({
   const [error, setError] = useState<string | null>(null)
   const [bookingDraft, setBookingDraft] = useState<BookingDraft>(fallbackBooking)
   const [bookingNotice, setBookingNotice] = useState<string | null>(null)
-  // const [activeMenuQuery, setActiveMenuQuery] = useState('')
+  const [activeMenuQuery, setActiveMenuQuery] = useState('')
   const [storeQuery, setStoreQuery] = useState('')
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationNotice, setLocationNotice] = useState<string | null>(null)
@@ -246,7 +247,7 @@ export function LandingPage({
           )}
 
           {!hideBrowserChrome && <StorySection landingPage={landingPageContent} />}
-          {/* {!hideBrowserChrome && <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={activeMenuQuery} setQuery={setActiveMenuQuery} />} */}
+          {!hideBrowserChrome && <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={activeMenuQuery} setQuery={setActiveMenuQuery} />}
           {!hideBrowserChrome && <EventSection events={publishedEvents} />}
           {!hideBrowserChrome && <PostSection posts={publishedPosts} />}
           {!hideBrowserChrome && <BookingSection draft={bookingDraft} setDraft={setBookingDraft} onSubmit={handleBookingSubmit} notice={bookingNotice} branches={branchCards} onDetectLocation={handleDetectLocation} locationNotice={locationNotice} />}

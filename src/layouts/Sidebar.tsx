@@ -26,8 +26,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen flex-col border-r border-line bg-beige px-[18px] py-7 text-coffee">
-      <div className="px-3 pb-6">
+    <aside className="sticky top-0 flex h-screen flex-col border-r border-line bg-beige px-[18px] py-7 text-coffee overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-coffee/20 [&::-webkit-scrollbar-thumb]:rounded-full">      <div className="px-3 pb-6">
         <div className="text-[27px] font-semibold leading-none tracking-[-0.02em]">{t.brand.name}</div>
         <div className="mt-3 text-xs font-semibold uppercase tracking-[0.34em] text-muted">{t.brand.tagline}</div>
       </div>
@@ -43,15 +42,12 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
           const href = item.href ?? `/admin/${item.key}`
-          const isActive =
-            item.key === 'loyalty'
-              ? location.pathname.includes('/admin/loyalty')
-              : location.pathname.includes(href)
+          const isActive = location.pathname.startsWith(href)
           const isExpanded = isActive && !collapsedKeys.includes(item.key)
           return (
             <div key={item.key} className="flex flex-col">
               <Link 
-                to={`/admin/${item.key}`} 
+                to={`/admin/${item.href || item.key}`}
                 onClick={(e) => handleParentClick(e, item.key, isActive, !!item.subItems)}
                 className={cn(navButton, isActive && !item.subItems ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}
               >
@@ -92,10 +88,6 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
-        <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
-          <Icon name="settings" />
-          {t.common.settings}
-        </Link>
         <button type="button" onClick={onLogout} className={`${navButton} text-coffee hover:bg-white/65`}>
           <Icon name="logout" />
           {t.common.logout}

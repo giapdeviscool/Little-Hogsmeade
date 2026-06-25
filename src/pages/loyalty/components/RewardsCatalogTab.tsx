@@ -130,18 +130,10 @@ export function RewardsCatalogTab() {
     setSaving(true)
     setActionError(null)
 
-    // Cập nhật local state trước để UI phản hồi ngay lập tức (Optimistic Update)
-    setRewards(prev =>
-      prev.map(item => (item.id === reward.id ? { ...item, isActive: !item.isActive } : item))
-    )
-
     try {
       await toggleLoyaltyRewardStatus(reward)
+      await fetchRewards()
     } catch (error: unknown) {
-      // Revert lại trạng thái cũ nếu API gọi thất bại
-      setRewards(prev =>
-        prev.map(item => (item.id === reward.id ? { ...item, isActive: reward.isActive } : item))
-      )
       setActionError(error instanceof Error ? error.message : 'Không đổi được trạng thái phần thưởng.')
     } finally {
       setSaving(false)

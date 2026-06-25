@@ -79,11 +79,6 @@ export function EarnRulesTab() {
     }
   }, [])
 
-  const previewLabel = useMemo(() => {
-    const spend = form.spendAmount > 0 ? formatVndAmount(form.spendAmount) : '...'
-    const points = form.pointsEarned > 0 ? form.pointsEarned : '...'
-    return `Khách hàng chi tiêu ${spend} sẽ nhận được ${points} điểm.`
-  }, [form.spendAmount, form.pointsEarned])
 
   const hasChanges = JSON.stringify(form) !== JSON.stringify(savedConfig)
 
@@ -158,47 +153,6 @@ export function EarnRulesTab() {
         </p>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-4 text-sm text-coffee">
-          <span className="font-medium">Khi khách hàng chi tiêu</span>
-          <div>
-            <input
-              type="number"
-              min={1000}
-              step={1000}
-              disabled={saving}
-              value={form.spendAmount}
-              onChange={(event) => setForm((prev) => ({ ...prev, spendAmount: Number(event.target.value) }))}
-              placeholder="10.000"
-              className={cn(
-                'h-10 w-36 rounded-lg border bg-white px-3 text-sm font-semibold',
-                errors.spendAmount ? 'border-[#c25a5a]' : 'border-line',
-              )}
-            />
-            {errors.spendAmount ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.spendAmount}</p> : null}
-          </div>
-          <span className="font-medium">VND, hệ thống sẽ tự động cộng</span>
-          <div>
-            <input
-              type="number"
-              min={1}
-              step={1}
-              disabled={saving}
-              value={form.pointsEarned}
-              onChange={(event) => setForm((prev) => ({ ...prev, pointsEarned: Number(event.target.value) }))}
-              placeholder="1"
-              className={cn(
-                'h-10 w-24 rounded-lg border bg-white px-3 text-sm font-semibold',
-                errors.pointsEarned ? 'border-[#c25a5a]' : 'border-line',
-              )}
-            />
-            {errors.pointsEarned ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.pointsEarned}</p> : null}
-          </div>
-          <span className="font-medium">điểm vào ví tích lũy.</span>
-        </div>
-
-        <p className="mt-4 rounded-xl bg-beige px-4 py-3 text-sm font-medium text-coffee">{previewLabel}</p>
-      </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
         <button

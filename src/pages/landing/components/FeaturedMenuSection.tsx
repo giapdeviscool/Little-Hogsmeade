@@ -19,7 +19,7 @@ export function FeaturedMenuSection({
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Menu & khuyến mãi</p>
+            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Menu nổi bật</p>
             <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">
               {featuredMenuBlock.title}
             </h2>
@@ -43,13 +43,7 @@ export function FeaturedMenuSection({
                     <h3 className="text-[18px] font-bold">{item.name}</h3>
                     <p className="mt-2 min-h-[44px] text-sm leading-6 text-muted">{item.description}</p>
                   </div>
-                  <span className="rounded-full bg-beige px-3 py-1 text-xs font-semibold text-coffee">{item.badge ?? 'Nổi bật'}</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
                   <b>{formatVND(item.price)}</b>
-                  <button type="button" className="rounded-full bg-coffee px-4 py-2 text-xs font-bold text-white">
-                    Order
-                  </button>
                 </div>
               </div>
             </article>

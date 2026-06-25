@@ -99,7 +99,8 @@
     "internal": "Quản trị Nội bộ",
     "owner": "Quản trị Chuỗi (Owner)",
     "cms": "CMS (Landing Page)",
-    "loyalty": "Khách hàng & Loyalty (CRM)"
+    "loyalty": "Cấu hình Loyalty",
+    "customers": "Khách hàng"
   },
   "pages": {
     "dashboardTitle": "Tổng quan chuỗi Little Hogsmeade",
@@ -117,6 +118,10 @@
       "landing": {
         "label": "Landing Page Editor",
         "description": "Banner, liên hệ, giờ mở cửa, món nổi bật"
+      },
+      "featured-menu": {
+        "label": "Menu nổi bật",
+        "description": "Quản lý món nổi bật hiển thị ở Landing Page"
       },
       "posts": {
         "label": "Posts List",
@@ -227,7 +232,14 @@
       "labelPublished": "Published",
       "labelContent": "Nội dung",
       "labelPublishedAt": "Published at",
-      "categoryOptions": ["Coffee", "Food", "Beverage", "Lifestyle", "Event", "Promotion"]
+      "categoryOptions": [
+        "Coffee",
+        "Food",
+        "Beverage",
+        "Lifestyle",
+        "Event",
+        "Promotion"
+      ]
     },
     "events": {
       "pageTitle": "Quản lý Events",
@@ -323,18 +335,15 @@
       "statusDraft": "Draft"
     }
   },
+  "customers": {
+    "sectionLabel": "Quản lý khách hàng",
+    "pageTitle": "Danh sách khách hàng",
+    "pageDescription": "Tra cứu thành viên, hạng thẻ, điểm tích lũy và tổng chi tiêu theo chi nhánh."
+  },
   "loyalty": {
     "sectionLabel": "Quản lý khách hàng & Loyalty (CRM)",
     "pageTitle": "Cấu hình Loyalty",
     "pageDescription": "Thiết lập quy tắc tích điểm và quản lý danh mục phần thưởng khách hàng có thể đổi.",
-    "crmNav": {
-      "customers": "Danh sách khách hàng",
-      "configuration": "Cấu hình Loyalty"
-    },
-    "customers": {
-      "pageTitle": "Danh sách khách hàng",
-      "pageDescription": "Tra cứu thành viên, hạng thẻ, điểm tích lũy và tổng chi tiêu theo chi nhánh."
-    },
     "tabs": {
       "earning": {
         "label": "Quy tắc Tích Điểm",

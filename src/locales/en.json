@@ -99,7 +99,7 @@
     "internal": "Internal Management",
     "owner": "Chain Management (Owner)",
     "cms": "CMS (Landing Page)",
-    "loyalty": "Customers & Loyalty (CRM)"
+    "customers": "Customers"
   },
   "pages": {
     "dashboardTitle": "Little Hogsmeade Chain Overview",
@@ -117,6 +117,10 @@
       "landing": {
         "label": "Landing Page Editor",
         "description": "Banner, contact, opening hours, featured menu"
+      },
+      "featured-menu": {
+        "label": "Featured Menu",
+        "description": "Manage featured menu items displayed on Landing Page"
       },
       "posts": {
         "label": "Posts List",
@@ -323,18 +327,15 @@
       "statusDraft": "Draft"
     }
   },
+  "customers": {
+    "sectionLabel": "Customer Management",
+    "pageTitle": "Customer List",
+    "pageDescription": "Look up members, tier level, accumulated points and total spend by branch."
+  },
   "loyalty": {
     "sectionLabel": "Customer & Loyalty Management (CRM)",
     "pageTitle": "Loyalty Configuration",
     "pageDescription": "Configure earning rules and manage the reward catalog customers can redeem with points.",
-    "crmNav": {
-      "customers": "Customer List",
-      "configuration": "Loyalty Configuration"
-    },
-    "customers": {
-      "pageTitle": "Customer List",
-      "pageDescription": "Look up members, tier level, accumulated points and total spend by branch."
-    },
     "tabs": {
       "earning": {
         "label": "Earning Rules",

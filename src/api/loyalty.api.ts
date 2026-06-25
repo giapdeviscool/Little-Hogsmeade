@@ -165,7 +165,7 @@ export async function updateLoyaltyReward(
     method: 'PUT',
     body: JSON.stringify(mapLoyaltyRewardToApi(payload)),
   })
-  
+
   if (!response.data) {
     throw new Error('Không cập nhật được phần thưởng.')
   }
