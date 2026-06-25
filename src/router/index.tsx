@@ -26,6 +26,7 @@ import { InternalPage } from '../pages/internal/InternalPage'
 import { OwnerPage } from '../pages/owner/OwnerPage'
 import { CMSPage } from '../pages/cms/CMSPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
+import { LoyaltyConfigurationPage } from '../pages/loyalty/LoyaltyConfigurationPage'
 import { PosPage } from '@/pages/pos/index'
 import { InvoicePage } from '@/pages/invoices/index'
 import { ShiftOpeningPage } from '../pages/pos/ShiftOpeningPage'
@@ -55,6 +56,7 @@ export function AppRouter() {
         <Route path="internal" element={<InternalPage />} />
         <Route path="owner" element={<OwnerPage />} />
         <Route path="cms" element={<CMSPage />} />
+        <Route path="loyalty/configuration" element={<LoyaltyConfigurationPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 

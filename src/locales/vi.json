@@ -98,7 +98,8 @@
     "operations": "Vận hành & Phục vụ",
     "internal": "Quản trị Nội bộ",
     "owner": "Quản trị Chuỗi (Owner)",
-    "cms": "CMS (Landing Page)"
+    "cms": "CMS (Landing Page)",
+    "loyalty": "Khách hàng & Loyalty (CRM)"
   },
   "pages": {
     "dashboardTitle": "Tổng quan chuỗi Little Hogsmeade",
@@ -320,6 +321,21 @@
       "retryButton": "Tải lại",
       "statusPublished": "Published",
       "statusDraft": "Draft"
+    }
+  },
+  "loyalty": {
+    "sectionLabel": "Quản lý khách hàng & Loyalty (CRM)",
+    "pageTitle": "Cấu hình Loyalty",
+    "pageDescription": "Thiết lập quy tắc tích điểm và quản lý danh mục phần thưởng khách hàng có thể đổi.",
+    "tabs": {
+      "earning": {
+        "label": "Quy tắc Tích Điểm",
+        "description": "Tỷ lệ quy đổi từ chi tiêu sang điểm thưởng"
+      },
+      "rewards": {
+        "label": "Danh sách Đổi Thưởng",
+        "description": "Voucher, sản phẩm miễn phí và trạng thái áp dụng"
+      }
     }
   },
   "landing": {
