@@ -50,3 +50,44 @@ export const openCashierShift = async (startingFloat: number): Promise<ShiftOpen
     body: JSON.stringify({ starting_float: startingFloat }),
   })
 }
+
+export interface RequestClosurePayload {
+  shiftId: string;
+  actualCashCounted: number;
+}
+
+export interface FinalizeClosurePayload {
+  shiftId: string;
+  actualCashCounted: number;
+  code: string;
+}
+
+export function requestShiftClosure(payload: RequestClosurePayload) {
+  return httpClient<any>('/shifts/request-closure', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function finalizeShiftClosure(payload: FinalizeClosurePayload) {
+  return httpClient<any>('/shifts/finalize-closure', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getActiveCashierShift() {
+  return httpClient<any>('/cashier-shifts/active');
+}
+
+export function getShiftCloseRequest(shiftId: string) {
+  return httpClient<any>(`/cashier-shifts/${shiftId}/close-request`, {
+    method: 'POST'
+  });
+}
+
+export function getShiftReconciliation(shiftId: string) {
+  return httpClient<any>(`/shifts/${shiftId}/reconciliation`, {
+    method: 'GET'
+  });
+}

@@ -23,6 +23,7 @@ export const ROUTES = {
   forgotPassword: '/forgot-password',
   cashierLogin: '/cashier-login',
   shiftOpening: '/shift-opening',
+  shiftClosing: '/shift-closing',
   pos: '/pos',
   invoices: '/invoices',
 } as const

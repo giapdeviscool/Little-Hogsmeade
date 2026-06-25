@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/constants/routes';
+import { getShiftId } from '@/store/shift.store';
 import { PosLayout } from '@/layouts/PosLayout';
 import { ProductSection } from '@/components/pos/ProductSection';
 import { OrderSidebar } from '@/components/pos/OrderSidebar';
@@ -23,6 +26,15 @@ export interface OrderType {
 }
 
 export function PosPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const activeShiftId = getShiftId();
+    if (!activeShiftId) {
+      navigate(ROUTES.shiftOpening);
+    }
+  }, [navigate]);
+
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [orders, setOrders] = useState<OrderType[]>([
     { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }
