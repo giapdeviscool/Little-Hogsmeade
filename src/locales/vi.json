@@ -118,6 +118,10 @@
         "label": "Landing Page Editor",
         "description": "Banner, liên hệ, giờ mở cửa, món nổi bật"
       },
+      "featured-menu": {
+        "label": "Menu nổi bật",
+        "description": "Quản lý món nổi bật hiển thị ở Landing Page"
+      },
       "posts": {
         "label": "Posts List",
         "description": "Bài viết, ảnh đại diện, trạng thái hiển thị"

@@ -118,6 +118,10 @@
         "label": "Landing Page Editor",
         "description": "Banner, contact, opening hours, featured menu"
       },
+      "featured-menu": {
+        "label": "Featured Menu",
+        "description": "Manage featured menu items displayed on Landing Page"
+      },
       "posts": {
         "label": "Posts List",
         "description": "Articles, thumbnails, display status"
