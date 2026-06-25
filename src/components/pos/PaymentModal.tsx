@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Banknote, QrCode, CreditCard, Delete, Printer, RefreshCw, Loader2, CheckCircle2 } from 'lucide-react';
 import { getQrIntent, settleCashPayment } from '@/api/payment.api';
+import { updateOrderStatus } from '@/api/order.api';
 import { io } from 'socket.io-client';
 
 interface PaymentModalProps {
@@ -61,7 +62,12 @@ export function PaymentModal({
 
     const socket = io(); // Connect to default host which is proxied by Vite
 
-    socket.on(`payment_success_${invoiceId}`, () => {
+    socket.on(`payment_success_${invoiceId}`, async () => {
+      try {
+        await updateOrderStatus(orderId, 'paid');
+      } catch (err) {
+        console.error("Failed to update status on QR payment success:", err);
+      }
       setPaymentStatus('success');
       setTimeout(() => {
         onSuccess('qr');
@@ -105,7 +111,9 @@ export function PaymentModal({
     setCashSettling(true);
     try {
       await settleCashPayment({ invoice_id: invoiceId, cash_received: cashGiven });
-      // Proceed on 200 OK (no thrown error from httpClient)
+      // officially close out the order state
+      await updateOrderStatus(orderId, 'paid');
+      
       setPaymentStatus('success');
       setTimeout(() => {
         onSuccess('cash');

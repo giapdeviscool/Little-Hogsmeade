@@ -10,6 +10,7 @@ export interface Invoice {
 
 interface InvoiceTableProps {
   onSelectInvoice: (invoice: Invoice) => void;
+  refreshTrigger?: number;
 }
 
 const formatCurrency = (value: number) => {
@@ -32,7 +33,7 @@ const truncateId = (id: string) => {
   return id.length > 8 ? `#...${id.substring(id.length - 8)}` : `#${id}`;
 };
 
-export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
+export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTableProps) {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
     };
 
     fetchInvoicesData();
-  }, [currentPage, appliedFilters]);
+  }, [currentPage, appliedFilters, refreshTrigger]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -294,13 +295,13 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-cream border-b border-line">
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Mã đơn hàng</th>
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Khách hàng</th>
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Thời gian</th>
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Trạng thái</th>
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Phương thức</th>
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted text-right">Tổng cộng</th>
-                <th className="px-6 py-5 text-[11px] font-bold uppercase tracking-widest text-muted text-center">Chi tiết</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Mã đơn hàng</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Khách hàng</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Thời gian</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Trạng thái</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Phương thức</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted text-right">Tổng cộng</th>
+                <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted text-center">Chi tiết</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -308,13 +309,13 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
                 const method = invoice.payments?.[0]?.method || 'N/A';
                 return (
                   <tr key={invoice.id} className="hover:bg-cream/50 transition-colors cursor-pointer group h-20" onClick={() => onSelectInvoice({ id: invoice.orderId, originalInvoiceId: invoice.id })}>
-                    <td className="px-6 py-4 font-bold text-coffee group-hover:text-gold transition-colors" title={invoice.orderId}>{truncateId(invoice.orderId)}</td>
-                    <td className="px-6 py-4 font-semibold text-coffee">{invoice.order?.customer?.fullName || 'Khách vãng lai'}</td>
-                    <td className="px-6 py-4 text-muted text-sm">{formatDate(invoice.createdAt)}</td>
-                    <td className="px-6 py-4">{getStatusDisplay(invoice.status)}</td>
-                    <td className="px-6 py-4 flex items-center gap-2 text-muted text-sm h-20">{getMethodDisplay(method)}</td>
-                    <td className="px-6 py-4 text-right font-bold text-coffee">{formatCurrency(invoice.totalAmount)}</td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-2 py-4 font-bold text-coffee group-hover:text-gold transition-colors" title={invoice.orderId}>{truncateId(invoice.orderId)}</td>
+                    <td className="px-2 py-4 font-semibold text-coffee">{invoice.order?.customer?.fullName || 'Khách vãng lai'}</td>
+                    <td className="px-2 py-4 text-muted text-sm">{formatDate(invoice.createdAt)}</td>
+                    <td className="px-2 py-4">{getStatusDisplay(invoice.status)}</td>
+                    <td className="px-2 py-4 flex items-center gap-2 text-muted text-sm h-20">{getMethodDisplay(method)}</td>
+                    <td className="px-2 py-4 text-right font-bold text-coffee">{formatCurrency(invoice.totalAmount)}</td>
+                    <td className="px-2 py-4 text-center">
                       <button className="p-2 hover:bg-beige rounded-full transition-colors text-coffee" onClick={(e) => { e.stopPropagation(); onSelectInvoice({ id: invoice.orderId, originalInvoiceId: invoice.id }); }}>
                         <Eye className="w-5 h-5" />
                       </button>

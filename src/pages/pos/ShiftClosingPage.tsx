@@ -10,6 +10,8 @@ import {
   getActiveCashierShift, 
   getShiftReconciliation
 } from '../../api/shift.api';
+import { OtpSuccessModal } from '../../components/ui/OtpSuccessModal';
+import { OtpFailureModal } from '../../components/ui/OtpFailureModal';
 
 export function ShiftClosingPage() {
   const navigate = useNavigate();
@@ -28,6 +30,8 @@ export function ShiftClosingPage() {
   const [timeLeft, setTimeLeft] = useState(60);
   const [shake, setShake] = useState(false);
   const [eodReport, setEodReport] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showFailureModal, setShowFailureModal] = useState(false);
 
   // New fields from design
   const [totalInvoices, setTotalInvoices] = useState<number>(0);
@@ -225,16 +229,38 @@ export function ShiftClosingPage() {
       const res = await finalizeShiftClosure({ shiftId, actualCashCounted, code });
       if (res.success && res.data) {
         setEodReport(res.data);
-        setStep(3);
+        setShowSuccessModal(true);
       }
     } catch (err: any) {
       const errorMsg = err.error || err.message || 'Xác thực OTP thất bại. Vui lòng kiểm tra lại.';
       setErrorMessage(errorMsg);
+      setShowFailureModal(true);
       setShake(true);
       setTimeout(() => setShake(false), 400);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessPrimary = () => {
+    setShowSuccessModal(false);
+    setStep(3);
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
+  const handleSuccessSecondary = () => {
+    setShowSuccessModal(false);
+    setStep(3);
+  };
+
+  const handleFailurePrimary = () => {
+    setShowFailureModal(false);
+    setOtpCode(Array(6).fill(''));
+    setTimeout(() => {
+      document.getElementById('otp-0')?.focus();
+    }, 50);
   };
 
   const handlePrint = () => {
@@ -670,6 +696,20 @@ export function ShiftClosingPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider mt-2">Shift Logs</span>
           </div>
         </div>
+
+        <OtpSuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          onPrimaryAction={handleSuccessPrimary}
+          onSecondaryAction={handleSuccessSecondary}
+        />
+
+        <OtpFailureModal
+          isOpen={showFailureModal}
+          onClose={() => setShowFailureModal(false)}
+          onPrimaryAction={handleFailurePrimary}
+          faultReason={errorMessage || undefined}
+        />
       </main>
     </div>
   );
