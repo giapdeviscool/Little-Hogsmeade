@@ -1,5 +1,6 @@
 import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
+import { createDeliveryOrder } from '@/api/delivery.api';
 import { useState } from 'react';
 import { CheckoutSuccessModal } from './CheckoutSuccessModal';
 import { PaymentModal } from './PaymentModal';
@@ -8,10 +9,24 @@ interface CartSummaryProps {
   cartItems?: CartItemType[];
   orderType?: 'dine-in' | 'takeaway' | 'delivery';
   customerId?: string | null;
+  deliveryInfo?: {
+    receiverName: string;
+    receiverPhone: string;
+    deliveryAddress: string;
+    deliveryFee: number;
+    distance?: number;
+    note?: string;
+  };
   onClear?: () => void;
 }
 
-export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId = null, onClear }: CartSummaryProps) {
+export function CartSummary({
+  cartItems = [],
+  orderType = 'dine-in',
+  customerId = null,
+  deliveryInfo,
+  onClear,
+}: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{isOpen: boolean, orderId: string, total: string} | null>(null);
@@ -22,7 +37,8 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
 
   const subtotal = cartItems.reduce((acc, item) => acc + (parsePrice(item.price) * item.quantity), 0);
   const discount = 0;
-  const total = subtotal - discount;
+  const shippingFee = orderType === 'delivery' ? (deliveryInfo?.deliveryFee || 0) : 0;
+  const total = subtotal - discount + shippingFee;
 
   const formatPrice = (val: number) => `₫${Math.round(val).toLocaleString('vi-VN')}`;
 
@@ -31,33 +47,63 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
       alert('Giỏ hàng trống, không thể thanh toán');
       return;
     }
+    if (orderType === 'delivery') {
+      if (!deliveryInfo?.receiverName || !deliveryInfo?.receiverPhone || !deliveryInfo?.deliveryAddress) {
+        alert('Vui lòng điền đầy đủ thông tin giao hàng: Tên, Số điện thoại và Địa chỉ giao hàng.');
+        return;
+      }
+    }
     setIsPaymentModalOpen(true);
   };
 
   const handlePaymentConfirm = async (method: 'cash' | 'qr', _cashGiven?: number) => {
     setIsPaymentModalOpen(false);
     setLoading(true);
-    const items = cartItems.map((ci) => ({
-      menuItemId: ci.id,
-      unitPrice: parsePrice(ci.price),
-      quantity: ci.quantity,
-      toppings: [] as any[],
-    }));
-    const payload = {
-      branchId: 'default-branch-id',
-      customerId: customerId || null,
-      paymentMethod: method,
-      discountAmount: 0,
-      taxAmount: 0,
-      orderType,
-      items,
-      // We could optionally send cashGiven to backend if needed
-      // cashGiven: method === 'cash' ? cashGiven : undefined
-    };
+    
     try {
-      const res = await createOrder(payload);
+      let res;
+      if (orderType === 'delivery') {
+        const items = cartItems.map((ci) => ({
+          menu_item_id: ci.id,
+          unit_price: parsePrice(ci.price),
+          quantity: ci.quantity
+        }));
+        const payload = {
+          customer_id: customerId || null,
+          order_type: 'delivery',
+          note: deliveryInfo?.note || '',
+          payment_method: method,
+          items,
+          delivery_info: {
+            customer_name: deliveryInfo?.receiverName || '',
+            customer_phone: deliveryInfo?.receiverPhone || '',
+            delivery_address: deliveryInfo?.deliveryAddress || '',
+            delivery_fee: deliveryInfo?.deliveryFee || 0,
+            estimated_time: new Date(Date.now() + 45 * 60000).toISOString()
+          }
+        };
+        res = await createDeliveryOrder(payload);
+      } else {
+        const items = cartItems.map((ci) => ({
+          menuItemId: ci.id,
+          unitPrice: parsePrice(ci.price),
+          quantity: ci.quantity,
+          toppings: [] as any[],
+        }));
+        const payload = {
+          branchId: 'default-branch-id',
+          customerId: customerId || null,
+          paymentMethod: method,
+          discountAmount: 0,
+          taxAmount: 0,
+          orderType,
+          items,
+        };
+        res = await createOrder(payload);
+      }
+
       if (res && !res.error) {
-        const orderId = res?.data?.id || `LH-${Math.floor(1000 + Math.random() * 9000)}`;
+        const orderId = res?.data?.id || res?.data?.order_id || `LH-${Math.floor(1000 + Math.random() * 9000)}`;
         setSuccessModalData({
           isOpen: true,
           orderId,

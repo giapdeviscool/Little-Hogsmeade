@@ -20,6 +20,14 @@ export interface OrderType {
   customer: Customer | null;
   cartItems: CartItemType[];
   orderType: 'dine-in' | 'takeaway' | 'delivery';
+  deliveryInfo?: {
+    receiverName: string;
+    receiverPhone: string;
+    deliveryAddress: string;
+    deliveryFee: number;
+    distance?: number;
+    note?: string;
+  };
 }
 
 export function PosPage() {
@@ -129,6 +137,27 @@ export function PosPage() {
     ));
   };
 
+  const handleUpdateDeliveryInfo = (info: Partial<NonNullable<OrderType['deliveryInfo']>>) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id !== activeOrderId) return o;
+      const defaultInfo = {
+        receiverName: o.customer?.fullName || '',
+        receiverPhone: o.customer?.phone || '',
+        deliveryAddress: '',
+        deliveryFee: 0,
+        distance: 0,
+        note: ''
+      };
+      return {
+        ...o,
+        deliveryInfo: {
+          ...(o.deliveryInfo || defaultInfo),
+          ...info
+        }
+      };
+    }));
+  };
+
   return (
     <PosLayout>
       <div className="flex w-full h-full overflow-hidden bg-beige">
@@ -154,6 +183,7 @@ export function PosPage() {
               onChangeOrder={setActiveOrderId}
               onSetCustomer={handleSetCustomer}
               onSetOrderType={handleSetOrderType}
+              onUpdateDeliveryInfo={handleUpdateDeliveryInfo}
               onClearOrder={handleClearOrder}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}

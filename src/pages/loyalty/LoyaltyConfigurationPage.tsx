@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn'
 import { useLocale } from '../../hooks/useLocale'
 import { loyaltyTabKeys } from './loyalty.constants'
 import type { LoyaltyTab } from './loyalty.types'
+import { LoyaltyCrmNav } from './components/LoyaltyCrmNav'
 import { EarnRulesTab } from './components/EarnRulesTab'
 import { RewardsCatalogTab } from './components/RewardsCatalogTab'
 
@@ -18,6 +19,10 @@ export function LoyaltyConfigurationPage() {
         </p>
         <h1 className="mt-2 text-[34px] font-bold tracking-[-0.04em]">{t.loyalty.pageTitle}</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted">{t.loyalty.pageDescription}</p>
+      </div>
+
+      <div className="mt-6">
+        <LoyaltyCrmNav />
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2 rounded-[20px] bg-cream p-2 shadow-soft">
