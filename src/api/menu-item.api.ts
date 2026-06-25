@@ -20,6 +20,13 @@ export function createMenuItem(data: FormData) {
   })
 }
 
+export function updateMenuItem(id: string, data: FormData) {
+  return httpClient<any>(`/menu-items/${id}`, {
+    method: 'PUT',
+    body: data
+  })
+}
+
 export function updateMenuItemStatus(id: string, isActive: boolean) {
   return httpClient<any>(`/menu-items/${id}/status`, {
     method: 'PATCH',
