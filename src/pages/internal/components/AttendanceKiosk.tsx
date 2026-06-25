@@ -58,7 +58,7 @@ export function AttendanceKiosk() {
 
       const loc = await getCurrentLocation()
 
-      const res = await attendanceApi.checkIn({ pin, lat: loc.lat, lng: loc.lng })
+      const res = await attendanceApi.checkIn({ pin, branchId, lat: loc.lat, lng: loc.lng })
       setResult(res.data)
       setPin('')
     } catch (err: unknown) {
@@ -80,7 +80,7 @@ export function AttendanceKiosk() {
 
       const loc = await getCurrentLocation()
 
-      const res = await attendanceApi.checkOut({ pin, lat: loc.lat, lng: loc.lng })
+      const res = await attendanceApi.checkOut({ pin, branchId, lat: loc.lat, lng: loc.lng })
       setResult(res.data)
       setPin('')
     } catch (err: unknown) {
