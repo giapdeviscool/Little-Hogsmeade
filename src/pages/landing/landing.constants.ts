@@ -26,7 +26,7 @@ export const fallbackHours: OpeningHoursBlock = {
 }
 
 export const fallbackMenu: FeaturedMenuBlock = {
-  title: 'Menu nổi bật',
+  title: 'Món nổi bật',
   description: 'Món chủ lực xuất hiện ở Landing Page',
   items: [
     {

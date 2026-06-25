@@ -42,7 +42,7 @@ export const defaultOpeningHoursBlock: OpeningHoursBlock = {
 }
 
 export const defaultFeaturedMenuBlock: FeaturedMenuBlock = {
-  title: 'Menu nổi bật',
+  title: 'Món nổi bật',
   description: 'Gợi ý món chủ lực xuất hiện ở Landing Page',
   items: [
     {

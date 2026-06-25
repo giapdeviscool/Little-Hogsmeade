@@ -120,7 +120,7 @@
         "description": "Banner, liên hệ, giờ mở cửa, món nổi bật"
       },
       "featured-menu": {
-        "label": "Menu nổi bật",
+        "label": "Món nổi bật",
         "description": "Quản lý món nổi bật hiển thị ở Landing Page"
       },
       "posts": {
@@ -181,7 +181,7 @@
       "timeSlot": "Khung giờ",
       "closed": "Đóng cửa",
       "saveOpeningHours": "Lưu giờ mở cửa",
-      "featuredMenu": "Menu nổi bật",
+      "featuredMenu": "Món nổi bật",
       "featuredMenuDesc": "Danh sách hiển thị ở Landing Page, có thể trỏ từ menu_items sau này.",
       "itemName": "Tên món",
       "itemPrice": "Giá",
@@ -189,13 +189,13 @@
       "itemBadge": "Badge",
       "itemImage": "Ảnh",
       "addItem": "Thêm món",
-      "saveFeaturedMenu": "Lưu menu nổi bật",
+      "saveFeaturedMenu": "Lưu món nổi bật",
       "saveSuccessBanner": "Đã lưu banner Landing Page.",
       "saveSuccessLanding": "Đã lưu Hero & Giới thiệu.",
       "saveSuccessContent": "Đã lưu nội dung Landing Page.",
       "saveSuccessContact": "Đã lưu thông tin liên hệ.",
       "saveSuccessOpeningHours": "Đã lưu giờ mở cửa.",
-      "saveSuccessFeaturedMenu": "Đã lưu menu nổi bật.",
+      "saveSuccessFeaturedMenu": "Đã lưu món nổi bật.",
       "deleteSuccessBanner": "Đã xóa banner.",
       "deleteSuccessBlock": "Đã xóa block Landing Page.",
       "reorderSuccessBanner": "Đã thay đổi thứ tự banner.",

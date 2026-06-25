@@ -187,7 +187,7 @@ export function FeaturedMenuEditor() {
       <Card className="p-6">
         <SectionHeading
           title="Danh sách món từ thực đơn"
-          description="Chọn món từ thực đơn để thêm vào Menu nổi bật (tham khảo)"
+          description="Chọn món từ thực đơn để thêm vào Món nổi bật"
         />
         <div className="mt-4">
           <input
@@ -224,7 +224,7 @@ export function FeaturedMenuEditor() {
                 type="button"
                 onClick={() => addItemFromMenu(item)}
                 className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-coffee text-white transition hover:bg-coffee/90"
-                title="Thêm vào menu nổi bật"
+                title="Thêm vào món nổi bật"
               >
                 <Plus className="h-4 w-4" />
               </button>

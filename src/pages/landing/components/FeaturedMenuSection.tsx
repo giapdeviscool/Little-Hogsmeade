@@ -19,9 +19,9 @@ export function FeaturedMenuSection({
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Menu nổi bật</p>
+            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Món nổi bật</p>
             <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">
-              {featuredMenuBlock.title}
+              Món nổi bật
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{featuredMenuBlock.description}</p>
           </div>
@@ -53,7 +53,7 @@ export function FeaturedMenuSection({
         {filteredItems.length === 0 && (
           <Card className="mt-8 p-6 text-center">
             <p className="text-sm font-semibold">Không tìm thấy món phù hợp.</p>
-            <p className="mt-2 text-sm text-muted">Thử xoá từ khoá hoặc cập nhật dữ liệu menu nổi bật trong CMS.</p>
+            <p className="mt-2 text-sm text-muted">Thử xoá từ khoá hoặc cập nhật dữ liệu món nổi bật trong CMS.</p>
           </Card>
         )}
       </div>
