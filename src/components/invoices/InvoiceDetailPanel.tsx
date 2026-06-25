@@ -1,23 +1,32 @@
-import { Star, Printer, RotateCcw, X, Loader2, AlertCircle } from 'lucide-react';
+import { Star, Printer, RotateCcw, X, Loader2, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import type { Invoice } from '@/components/invoices/InvoiceTable';
 import { useState, useEffect } from 'react';
 import { getInvoice } from '@/api/invoice.api';
+import { ConfirmModal } from '../ui/ConfirmModal';
+import { updateOrderStatus } from '@/api/order.api';
 
 interface InvoiceDetailPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onRefund: () => void;
   invoice: Invoice | null;
+  onUpdate?: () => void;
+  refreshTrigger?: number;
+  onCheckout: (orderId: string, invoiceId: string, totalAmount: number) => void;
 }
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
-export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice }: InvoiceDetailPanelProps) {
+export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice, onUpdate, refreshTrigger, onCheckout }: InvoiceDetailPanelProps) {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
+
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen || !invoice) return;
@@ -41,7 +50,48 @@ export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice }: Invoi
     };
 
     fetchInvoiceData();
-  }, [isOpen, invoice]);
+  }, [isOpen, invoice, refreshTrigger]);
+
+  const handleCancelOrder = () => {
+    setIsCancelConfirmOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!invoiceData?.order?.id) return;
+    
+    setIsMutating(true);
+    setIsCancelConfirmOpen(false);
+    try {
+      const response = await updateOrderStatus(invoiceData.order.id, 'cancelled');
+      if (response && response.data) {
+        setInvoiceData((prev: any) => ({
+          ...prev,
+          status: 'cancelled',
+          order: {
+            ...prev.order,
+            status: 'cancelled'
+          }
+        }));
+        
+        setSuccessToast('Đã hủy đơn hàng thành công!');
+        setTimeout(() => setSuccessToast(null), 3000);
+        
+        if (onUpdate) {
+          onUpdate();
+        }
+      }
+    } catch (err: any) {
+      alert(err.message || 'Hủy đơn hàng thất bại.');
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (invoiceData?.order) {
+      onCheckout(invoiceData.order.id, invoiceData.id, invoiceData.totalAmount);
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -188,16 +238,33 @@ export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice }: Invoi
     );
   };
 
+  const status = invoiceData?.order?.status || invoiceData?.status || '';
+
   return (
     <div className={`absolute top-0 right-0 h-full w-[35%] border-l border-line bg-white flex flex-col transition-transform duration-300 z-10 ${isOpen ? 'translate-x-0 shadow-2xl' : 'translate-x-full shadow-none'}`}>
+      {successToast && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-[#5fa876] text-white px-6 py-3.5 rounded-xl shadow-lg font-bold text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300 z-50">
+          <CheckCircle2 className="w-5 h-5" />
+          <span>{successToast}</span>
+        </div>
+      )}
+
       <div className="p-8 border-b border-line flex justify-between items-center bg-cream/30">
         <div>
           <h3 className="text-2xl font-bold text-coffee">Chi tiết Đơn hàng</h3>
           <p className="text-xs font-bold text-gold tracking-widest mt-1">MÃ ĐƠN: {invoiceData?.order?.id ? `#...${invoiceData.order.id.substring(invoiceData.order.id.length - 8)}` : (invoice?.id || '#LH-98210')}</p>
         </div>
         <div className="flex items-center gap-4">
-          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${invoiceData?.status === 'refunded' ? 'bg-red-500/10 text-red-600' : 'bg-green-500/10 text-green-600'}`}>
-            {invoiceData?.status === 'refunded' ? 'Hoàn tiền' : 'Đã thanh toán'}
+          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+            status === 'refunded' ? 'bg-red-500/10 text-red-600' : 
+            status === 'cancelled' ? 'bg-gray-500/10 text-gray-600' : 
+            status === 'pending' || status === 'unpaid' ? 'bg-yellow-500/10 text-yellow-600' :
+            'bg-green-500/10 text-green-600'
+          }`}>
+            {status === 'refunded' ? 'Hoàn tiền' : 
+             status === 'cancelled' ? 'Đã hủy' : 
+             status === 'pending' || status === 'unpaid' ? 'Chờ thanh toán' :
+             'Đã thanh toán'}
           </span>
           <button onClick={onClose} className="p-2 hover:bg-beige rounded-full transition-colors text-muted hover:text-coffee">
             <X className="w-5 h-5" />
@@ -208,13 +275,58 @@ export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice }: Invoi
       {renderContent()}
       
       <div className="p-8 bg-cream/30 border-t border-line grid grid-cols-1 gap-4">
-        <button className="w-full h-14 flex items-center justify-center gap-3 bg-white border border-line text-coffee rounded-xl font-bold text-sm hover:bg-beige transition-all shadow-sm active:scale-95 disabled:opacity-50" disabled={isLoading || !!error}>
-          <Printer className="w-5 h-5" /> In lại hóa đơn
-        </button>
-        <button onClick={onRefund} className="w-full h-14 flex items-center justify-center gap-3 bg-coffee text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all shadow-md active:scale-95 disabled:opacity-50" disabled={isLoading || !!error}>
-          <RotateCcw className="w-5 h-5" /> Hoàn tiền (Refund)
-        </button>
+        {status === 'pending' || status === 'unpaid' ? (
+          <>
+            <button 
+              onClick={handleCheckout} 
+              className="w-full h-14 flex items-center justify-center gap-3 bg-gold text-coffee rounded-xl font-bold text-sm hover:brightness-105 active:scale-95 transition-all shadow-md disabled:opacity-50"
+              disabled={isLoading || isMutating}
+            >
+              {isMutating ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+              Thanh toán
+            </button>
+            <button 
+              onClick={handleCancelOrder}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-red-50 text-[#c25a5a] border border-[#c25a5a]/20 rounded-xl font-bold text-sm hover:bg-red-100/50 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+              disabled={isLoading || isMutating}
+            >
+              {isMutating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+              Hủy đơn
+            </button>
+          </>
+        ) : status === 'paid' ? (
+          <>
+            <button 
+              onClick={() => window.print()}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-white border border-line text-coffee rounded-xl font-bold text-sm hover:bg-beige active:scale-95 transition-all shadow-sm disabled:opacity-50"
+              disabled={isLoading}
+            >
+              <Printer className="w-5 h-5" /> In lại hóa đơn
+            </button>
+            <button onClick={onRefund} className="w-full h-14 flex items-center justify-center gap-3 bg-coffee text-white rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-md disabled:opacity-50" disabled={isLoading}>
+              <RotateCcw className="w-5 h-5" /> Hoàn tiền (Refund)
+            </button>
+          </>
+        ) : status === 'cancelled' ? (
+          <div className="text-center py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50 rounded-xl border border-gray-200">
+            Đơn hàng đã bị hủy
+          </div>
+        ) : status === 'refunded' ? (
+          <div className="text-center py-4 text-xs font-bold text-red-500 uppercase tracking-widest bg-red-50 rounded-xl border border-red-100">
+            Đơn hàng đã hoàn tiền
+          </div>
+        ) : null}
       </div>
+
+      <ConfirmModal
+        isOpen={isCancelConfirmOpen}
+        title="Hủy đơn hàng"
+        message="Bạn có chắc chắn muốn hủy đơn hàng này không?"
+        confirmText="Xác nhận hủy"
+        cancelText="Quay lại"
+        onConfirm={handleCancelConfirm}
+        onCancel={() => setIsCancelConfirmOpen(false)}
+      />
     </div>
   );
 }

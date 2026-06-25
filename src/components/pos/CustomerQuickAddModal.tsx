@@ -50,7 +50,7 @@ export function CustomerQuickAddModal({
     }
     
     // Simple phone regex validation (Vietnamese phones generally have 10 digits)
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    const phoneRegex = /^0[1-9][0-9]{8}$/;
     if (!phoneRegex.test(phone.trim())) {
       setError('Số điện thoại không hợp lệ. Phải gồm 10 chữ số (vd: 0987654321).');
       return;

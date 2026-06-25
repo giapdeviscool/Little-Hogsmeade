@@ -10,6 +10,7 @@ export interface Invoice {
 
 interface InvoiceTableProps {
   onSelectInvoice: (invoice: Invoice) => void;
+  refreshTrigger?: number;
 }
 
 const formatCurrency = (value: number) => {
@@ -32,7 +33,7 @@ const truncateId = (id: string) => {
   return id.length > 8 ? `#...${id.substring(id.length - 8)}` : `#${id}`;
 };
 
-export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
+export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTableProps) {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
     };
 
     fetchInvoicesData();
-  }, [currentPage, appliedFilters]);
+  }, [currentPage, appliedFilters, refreshTrigger]);
 
   const handleSearch = () => {
     setCurrentPage(1);

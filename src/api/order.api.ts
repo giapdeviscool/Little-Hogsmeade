@@ -29,3 +29,40 @@ export function getOrder(id: string) {
     method: 'GET',
   });
 }
+
+export type OrderStatus = 'paid' | 'pending' | 'cancelled' | 'refunded';
+
+export interface UpdateOrderStatusPayload {
+  status: OrderStatus;
+}
+
+export interface UpdateOrderStatusResponse {
+  data: {
+    order: {
+      id: string;
+      status: OrderStatus;
+      customerId?: string | null;
+      branchId: string;
+    };
+    invoice: {
+      id: string;
+      orderId: string;
+      status: 'paid' | 'unpaid' | 'cancelled' | 'refunded';
+      paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
+      totalAmount: number;
+      pointsEarned?: number;
+    } | null;
+  };
+}
+
+/**
+ * Updates the status of an order (e.g. cancelling it or marking it paid).
+ * @param id The Order ID
+ * @param status The new status ('paid', 'pending', 'cancelled', 'refunded')
+ */
+export function updateOrderStatus(id: string, status: OrderStatus) {
+  return httpClient<UpdateOrderStatusResponse>(`/orders/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
