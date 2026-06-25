@@ -1,4 +1,4 @@
-export type TabKey = 'dashboard' | 'pos' | 'operations' | 'internal' | 'owner' | 'cms' | 'loyalty' | 'settings'
+export type TabKey = 'dashboard' | 'pos' | 'operations' | 'internal' | 'owner' | 'cms' | 'customers' | 'settings'
 
 export type SidebarNavKey = Exclude<TabKey, 'settings'>
 
@@ -7,7 +7,6 @@ export type NavIconKey = 'grid' | 'cart' | 'service' | 'users' | 'building' | 'g
 export type NavItem = {
   key: SidebarNavKey
   icon: NavIconKey
-  subItems?: { key: string; label: string }[]
   href?: string
   subItems?: { key: string; label: string }[]
 }
