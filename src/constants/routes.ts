@@ -16,6 +16,7 @@ export const ROUTES = {
   adminInternal: '/admin/internal',
   adminOwner: '/admin/owner',
   adminCms: '/admin/cms',
+  adminLoyaltyCustomers: '/admin/loyalty/customers',
   adminLoyaltyConfiguration: '/admin/loyalty/configuration',
   adminSettings: '/admin/settings',
   login: '/login',

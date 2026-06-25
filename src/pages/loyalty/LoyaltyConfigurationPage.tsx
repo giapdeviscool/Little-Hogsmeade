@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn'
 import { useLocale } from '../../hooks/useLocale'
 import { loyaltyTabKeys } from './loyalty.constants'
 import type { LoyaltyTab } from './loyalty.types'
+import { LoyaltyCrmNav } from './components/LoyaltyCrmNav'
 import { EarnRulesTab } from './components/EarnRulesTab'
 import { RewardsCatalogTab } from './components/RewardsCatalogTab'
 import { AdminPageHeader } from '../../components/ui/AdminPageHeader'
@@ -18,6 +19,10 @@ export function LoyaltyConfigurationPage() {
         pageName={t.loyalty.pageTitle}
         pageDescription={t.loyalty.pageDescription}
       />
+
+      <div className="mt-6">
+        <LoyaltyCrmNav />
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-2 rounded-[20px] bg-cream p-2 shadow-soft">
         {loyaltyTabKeys.map((tabKey) => (

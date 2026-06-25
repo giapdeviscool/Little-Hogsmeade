@@ -327,6 +327,14 @@
     "sectionLabel": "Quản lý khách hàng & Loyalty (CRM)",
     "pageTitle": "Cấu hình Loyalty",
     "pageDescription": "Thiết lập quy tắc tích điểm và quản lý danh mục phần thưởng khách hàng có thể đổi.",
+    "crmNav": {
+      "customers": "Danh sách khách hàng",
+      "configuration": "Cấu hình Loyalty"
+    },
+    "customers": {
+      "pageTitle": "Danh sách khách hàng",
+      "pageDescription": "Tra cứu thành viên, hạng thẻ, điểm tích lũy và tổng chi tiêu theo chi nhánh."
+    },
     "tabs": {
       "earning": {
         "label": "Quy tắc Tích Điểm",

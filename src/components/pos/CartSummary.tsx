@@ -1,5 +1,6 @@
 import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
+import { createDeliveryOrder } from '@/api/delivery.api';
 import { useState } from 'react';
 import { PaymentModal } from './PaymentModal';
 
@@ -7,10 +8,24 @@ interface CartSummaryProps {
   cartItems?: CartItemType[];
   orderType?: 'dine-in' | 'takeaway' | 'delivery';
   customerId?: string | null;
+  deliveryInfo?: {
+    receiverName: string;
+    receiverPhone: string;
+    deliveryAddress: string;
+    deliveryFee: number;
+    distance?: number;
+    note?: string;
+  };
   onClear?: () => void;
 }
 
-export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId = null, onClear }: CartSummaryProps) {
+export function CartSummary({
+  cartItems = [],
+  orderType = 'dine-in',
+  customerId = null,
+  deliveryInfo,
+  onClear,
+}: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState<{isOpen: boolean, orderId: string, invoiceId: string, total: number} | null>(null);
 
@@ -20,7 +35,8 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
 
   const subtotal = cartItems.reduce((acc, item) => acc + (parsePrice(item.price) * item.quantity), 0);
   const discount = 0;
-  const total = subtotal - discount;
+  const shippingFee = orderType === 'delivery' ? (deliveryInfo?.deliveryFee || 0) : 0;
+  const total = subtotal - discount + shippingFee;
 
   const formatPrice = (val: number) => `₫${Math.round(val).toLocaleString('vi-VN')}`;
 
