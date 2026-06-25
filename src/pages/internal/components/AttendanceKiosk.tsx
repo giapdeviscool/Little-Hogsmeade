@@ -4,7 +4,6 @@ import type { AttendanceResult } from '../../../types'
 
 export function AttendanceKiosk() {
   const [pin, setPin] = useState('')
-  const [branchId, setBranchId] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AttendanceResult | null>(null)
   const [error, setError] = useState('')
@@ -48,8 +47,8 @@ export function AttendanceKiosk() {
   }
 
   async function handleCheckIn() {
-    if (pin.length !== 6 || !branchId) {
-      setError('Vui lòng nhập đủ 6 số PIN và Branch ID')
+    if (pin.length !== 6) {
+      setError('Vui lòng nhập đủ 6 số PIN')
       return
     }
     try {
@@ -59,7 +58,7 @@ export function AttendanceKiosk() {
 
       const loc = await getCurrentLocation()
 
-      const res = await attendanceApi.checkIn({ pin, branchId, lat: loc.lat, lng: loc.lng })
+      const res = await attendanceApi.checkIn({ pin, lat: loc.lat, lng: loc.lng })
       setResult(res.data)
       setPin('')
     } catch (err: unknown) {
@@ -70,8 +69,8 @@ export function AttendanceKiosk() {
   }
 
   async function handleCheckOut() {
-    if (pin.length !== 6 || !branchId) {
-      setError('Vui lòng nhập đủ 6 số PIN và Branch ID')
+    if (pin.length !== 6) {
+      setError('Vui lòng nhập đủ 6 số PIN')
       return
     }
     try {
@@ -81,7 +80,7 @@ export function AttendanceKiosk() {
 
       const loc = await getCurrentLocation()
 
-      const res = await attendanceApi.checkOut({ pin, branchId, lat: loc.lat, lng: loc.lng })
+      const res = await attendanceApi.checkOut({ pin, lat: loc.lat, lng: loc.lng })
       setResult(res.data)
       setPin('')
     } catch (err: unknown) {
@@ -97,19 +96,8 @@ export function AttendanceKiosk() {
     <div className="mx-auto max-w-sm space-y-6">
       <h2 className="text-center text-lg font-bold text-foreground">Chấm công (UC61)</h2>
 
-      {/* Branch ID input */}
-      <div>
-        <label className="text-xs font-medium text-muted">Branch ID (POS Terminal)</label>
-        <input
-          value={branchId}
-          onChange={(e) => setBranchId(e.target.value)}
-          placeholder="Nhập Branch ID"
-          className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-        />
-      </div>
-
       {/* PIN display */}
-      <div className="text-center">
+      <div className="rounded-xl border bg-card p-4 text-center">
         <div className="mx-auto flex justify-center gap-2">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <div key={i} className={`h-12 w-12 rounded-lg border-2 flex items-center justify-center text-xl font-bold
