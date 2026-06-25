@@ -10,5 +10,5 @@ export const navItems: NavItem[] = [
   { key: 'internal', icon: 'users' },
   { key: 'owner', icon: 'building' },
   { key: 'cms', icon: 'globe' },
-  { key: 'loyalty', icon: 'loyalty', href: ROUTES.adminLoyaltyConfiguration },
+  { key: 'loyalty', icon: 'loyalty', href: ROUTES.adminLoyaltyCustomers },
 ]
