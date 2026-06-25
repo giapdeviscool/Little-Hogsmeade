@@ -76,10 +76,7 @@ export function PosHeader() {
             )}
           </div>
         </div>
-        <button 
-          onClick={() => navigate(ROUTES.shiftClosing)}
-          className="bg-coffee text-white text-xs font-bold h-9 px-4.5 rounded-lg hover:opacity-90 active:scale-95 transition-all ml-1.5 shadow-sm"
-        >
+        <button className="bg-coffee text-white text-xs font-bold h-9 px-4.5 rounded-lg hover:opacity-90 active:scale-95 transition-all ml-1.5 shadow-sm">
           End Shift
         </button>
       </div>

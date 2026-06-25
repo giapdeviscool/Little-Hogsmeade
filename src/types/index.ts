@@ -44,22 +44,6 @@ export type {
   TabKey,
 } from "./navigation.types";
 export type { OwnerActiveTab } from "./owner.types";
-export type {
-  EarnConfigErrors,
-  LoyaltyConfigApiRecord,
-  LoyaltyConfigUpdatePayload,
-  LoyaltyEarnConfig,
-  LoyaltyReward,
-  LoyaltyRewardApiRecord,
-  LoyaltyRewardListParams,
-  LoyaltyRewardListResult,
-  LoyaltyRewardPayload,
-  LoyaltyRewardStatus,
-  LoyaltyRewardUpsertPayload,
-  RewardDialogMode,
-  RewardFormErrors,
-  RewardType,
-} from "./loyalty.types";
 export type { ProductMock, ProductStatus } from "./product.types";
 export type {
   BranchTable,

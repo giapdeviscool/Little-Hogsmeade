@@ -99,7 +99,7 @@
     "internal": "Internal Management",
     "owner": "Chain Management (Owner)",
     "cms": "CMS (Landing Page)",
-    "loyalty": "Customers & Loyalty (CRM)"
+    "customers": "Customers"
   },
   "pages": {
     "dashboardTitle": "Little Hogsmeade Chain Overview",
@@ -323,28 +323,10 @@
       "statusDraft": "Draft"
     }
   },
-  "loyalty": {
-    "sectionLabel": "Customer & Loyalty Management (CRM)",
-    "pageTitle": "Loyalty Configuration",
-    "pageDescription": "Configure earning rules and manage the reward catalog customers can redeem with points.",
-    "crmNav": {
-      "customers": "Customer List",
-      "configuration": "Loyalty Configuration"
-    },
-    "customers": {
-      "pageTitle": "Customer List",
-      "pageDescription": "Look up members, tier level, accumulated points and total spend by branch."
-    },
-    "tabs": {
-      "earning": {
-        "label": "Earning Rules",
-        "description": "Exchange rate from spend to reward points"
-      },
-      "rewards": {
-        "label": "Redemption & Rewards",
-        "description": "Vouchers, free products and active status"
-      }
-    }
+  "customers": {
+    "sectionLabel": "Customer Management",
+    "pageTitle": "Customer List",
+    "pageDescription": "Look up members, tier level, accumulated points and total spend by branch."
   },
   "landing": {
     "loadError": "Could not load Landing Page.",
