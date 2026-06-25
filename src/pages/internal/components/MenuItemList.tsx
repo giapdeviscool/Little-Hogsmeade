@@ -8,6 +8,7 @@ import { getBranches } from '../../../api/employee.api'
 import type { Branch } from '../../../types'
 
 import { AddMenuItemModal } from './AddMenuItemModal'
+import { EditMenuItemModal } from './EditMenuItemModal'
 import { AssignToppingModal } from './AssignToppingModal'
 import { RecipeConfigModal } from './RecipeConfigModal'
 
@@ -20,6 +21,7 @@ export function MenuItemList() {
   const authSession = getAuthSession()
   const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editModalState, setEditModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
   const [assignModalState, setAssignModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
   const [recipeModalState, setRecipeModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
   const [alertMessage, setAlertMessage] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -211,6 +213,12 @@ export function MenuItemList() {
                       <td className="border-b border-line px-4 py-4">
                         <div className="flex flex-col gap-2 items-start">
                           <button 
+                            onClick={() => setEditModalState({ isOpen: true, item })}
+                            className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            Chỉnh sửa
+                          </button>
+                          <button 
                             onClick={() => setAssignModalState({ isOpen: true, item })}
                             className="text-xs font-bold text-coffee hover:underline flex items-center gap-1"
                           >
@@ -270,6 +278,17 @@ export function MenuItemList() {
           fetchItems()
         }}
         categories={categories}
+      />
+
+      <EditMenuItemModal
+        isOpen={editModalState.isOpen}
+        onClose={() => setEditModalState({ isOpen: false, item: null })}
+        onSuccess={() => {
+          setEditModalState({ isOpen: false, item: null })
+          fetchItems()
+        }}
+        categories={categories}
+        item={editModalState.item}
       />
 
       <AssignToppingModal

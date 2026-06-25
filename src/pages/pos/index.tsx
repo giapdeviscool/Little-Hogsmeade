@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/constants/routes';
+import { getShiftId } from '@/store/shift.store';
 import { PosLayout } from '@/layouts/PosLayout';
 import { ProductSection } from '@/components/pos/ProductSection';
 import { OrderSidebar } from '@/components/pos/OrderSidebar';
@@ -20,9 +23,26 @@ export interface OrderType {
   customer: Customer | null;
   cartItems: CartItemType[];
   orderType: 'dine-in' | 'takeaway' | 'delivery';
+  deliveryInfo?: {
+    receiverName: string;
+    receiverPhone: string;
+    deliveryAddress: string;
+    deliveryFee: number;
+    distance?: number;
+    note?: string;
+  };
 }
 
 export function PosPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const activeShiftId = getShiftId();
+    if (!activeShiftId) {
+      navigate(ROUTES.shiftOpening);
+    }
+  }, [navigate]);
+
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [orders, setOrders] = useState<OrderType[]>([
     { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }
@@ -114,7 +134,11 @@ export function PosPage() {
   };
 
   const handleClearOrder = () => {
-    setOrders(prev => prev.map(o => o.id === activeOrderId ? { ...o, cartItems: [] } : o));
+    setOrders(prev => prev.map(o => 
+      o.id === activeOrderId 
+        ? { ...o, cartItems: [], customer: o.customer?.isNew ? null : o.customer } 
+        : o
+    ));
   };
 
   const handleSetCustomer = (customer: Customer | null) => {
@@ -129,6 +153,27 @@ export function PosPage() {
     ));
   };
 
+  const handleUpdateDeliveryInfo = (info: Partial<NonNullable<OrderType['deliveryInfo']>>) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id !== activeOrderId) return o;
+      const defaultInfo = {
+        receiverName: o.customer?.fullName || '',
+        receiverPhone: o.customer?.phone || '',
+        deliveryAddress: '',
+        deliveryFee: 0,
+        distance: 0,
+        note: ''
+      };
+      return {
+        ...o,
+        deliveryInfo: {
+          ...(o.deliveryInfo || defaultInfo),
+          ...info
+        }
+      };
+    }));
+  };
+
   return (
     <PosLayout>
       <div className="flex w-full h-full overflow-hidden bg-beige">
@@ -140,7 +185,7 @@ export function PosPage() {
         {/* Order panel as a flex sibling — auto-resizes the menu */}
         <div 
           className={`h-full bg-white flex flex-col border-l border-line transition-all duration-300 overflow-hidden ${
-            isOrderOpen ? 'w-[42%] shadow-xl' : 'w-[72px] items-center py-6'
+            isOrderOpen ? 'w-[38%] shadow-xl' : 'w-[60px] items-center py-5'
           }`}
         >
           {isOrderOpen ? (
@@ -154,30 +199,31 @@ export function PosPage() {
               onChangeOrder={setActiveOrderId}
               onSetCustomer={handleSetCustomer}
               onSetOrderType={handleSetOrderType}
+              onUpdateDeliveryInfo={handleUpdateDeliveryInfo}
               onClearOrder={handleClearOrder}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}
             />
           ) : (
-            <div className="flex flex-col gap-3 mt-4 items-center">
+            <div className="flex flex-col gap-2.5 mt-3 items-center">
               <button 
                 onClick={() => setIsOrderOpen(true)}
-                className="w-11 h-11 bg-white text-coffee border border-line rounded-full flex items-center justify-center hover:bg-beige transition-colors shadow-sm relative"
+                className="w-9 h-9 bg-white text-coffee border border-line rounded-full flex items-center justify-center hover:bg-beige transition-colors shadow-sm relative"
                 title="Mở đơn hiện tại"
               >
-                <ShoppingCart className="w-5 h-5" />
+                <ShoppingCart className="w-4 h-4" />
                 {activeOrder.cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                     {activeOrder.cartItems.length}
                   </span>
                 )}
               </button>
               <button 
                 onClick={handleAddOrder}
-                className="w-11 h-11 bg-coffee text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+                className="w-9 h-9 bg-coffee text-white rounded-full flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
                 title="Tạo đơn mới"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           )}

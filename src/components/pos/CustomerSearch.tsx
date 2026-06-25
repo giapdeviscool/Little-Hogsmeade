@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, X, User } from 'lucide-react';
+import { Search, X, User, Plus } from 'lucide-react';
 import { searchCustomerByPhone } from '@/api/customer.api';
 import type { Customer } from '@/types/customer.types';
+import { CustomerQuickAddModal } from './CustomerQuickAddModal';
 
 interface CustomerSearchProps {
   customer: Customer | null;
@@ -14,6 +15,7 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
   const [results, setResults] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (query.length < 3) {
@@ -41,38 +43,53 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
 
   if (customer) {
     return (
-      <div className="flex items-center justify-between p-3 bg-cream rounded-xl border border-line">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-coffee">
-            <User className="w-5 h-5" />
+      <div className="flex items-center justify-between p-2 bg-cream rounded-lg border border-line">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-coffee">
+            <User className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-coffee text-sm">{customer.fullName}</h3>
-            {/* <p className="text-xs text-muted font-medium">{customer.phone} • {customer.totalPoints || 0} điểm</p> */}
+            <h3 className="font-bold text-coffee text-xs">{customer.fullName}</h3>
+            <span className="text-[10px] text-muted">{customer.phone}</span>
           </div>
         </div>
         <button 
           onClick={onClear}
-          className="w-8 h-8 flex items-center justify-center text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+          className="w-6 h-6 flex items-center justify-center text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
     );
   }
 
+  const shouldShrink = query.length >= 10 && results.length === 0 && !loading;
+
   return (
     <div className="relative">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-        <input 
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Tìm SĐT khách hàng (từ 3 số)..."
-          className="w-full h-11 pl-9 pr-4 bg-white border border-line rounded-xl text-sm outline-none focus:border-coffee transition-colors"
-        />
-        {loading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-coffee border-t-transparent rounded-full animate-spin" />}
+      <div className="flex items-center w-full transition-all duration-300">
+        <div className={`relative transition-all duration-300 flex-1 ${shouldShrink ? 'max-w-[70%]' : 'max-w-full'}`}>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
+          <input 
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tìm SĐT khách hàng (từ 3 số)..."
+            className="w-full h-9 pl-8 pr-3 bg-white border border-line rounded-lg text-xs outline-none focus:border-coffee transition-colors"
+          />
+          {loading && <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-coffee border-t-transparent rounded-full animate-spin" />}
+        </div>
+        
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className={`bg-coffee text-white text-[11px] font-bold h-9 rounded-lg flex items-center justify-center gap-1.5 transition-all duration-300 overflow-hidden shrink-0 ${
+            shouldShrink ? 'w-[28%] opacity-100 ml-2 px-2' : 'w-0 opacity-0 ml-0 p-0 pointer-events-none'
+          }`}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Thêm mới</span>
+        </button>
       </div>
       
       {isOpen && results.length > 0 && (
@@ -91,19 +108,28 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
                 <div className="font-bold text-coffee text-sm">{c.fullName}</div>
                 <div className="text-xs text-muted">{c.phone}</div>
               </div>
-              <div className="text-xs font-bold text-gold bg-gold/10 px-2 py-1 rounded-lg">
-                {/* {c.totalPoints || 0} đ */}
-              </div>
             </button>
           ))}
         </div>
       )}
       
-      {isOpen && !loading && query.length >= 3 && results.length === 0 && (
-        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-line rounded-xl shadow-xl z-50 p-4 text-center text-sm text-muted">
+      {isOpen && !loading && query.length >= 3 && results.length === 0 && !shouldShrink && (
+        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-line rounded-xl shadow-xl z-50 p-4 text-center text-xs text-muted animate-fade-in">
           Không tìm thấy khách hàng
         </div>
       )}
+
+      {/* Quick Add Customer Modal */}
+      <CustomerQuickAddModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        phoneQuery={query}
+        onSuccess={(newCustomer) => {
+          onSelect(newCustomer);
+          setQuery('');
+          setIsOpen(false);
+        }}
+      />
     </div>
   );
 }

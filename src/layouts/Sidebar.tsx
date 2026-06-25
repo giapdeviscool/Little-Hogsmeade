@@ -41,8 +41,8 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
 
       <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
-
-          const isActive = location.pathname.includes(`/admin/${item.key}`)
+          const href = item.href ?? `/admin/${item.key}`
+          const isActive = location.pathname.startsWith(href)
           const isExpanded = isActive && !collapsedKeys.includes(item.key)
           return (
             <div key={item.key} className="flex flex-col">

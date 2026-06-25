@@ -22,14 +22,16 @@ import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { POSPage } from '../pages/pos/POSPage'
 import { OperationsPage } from '../pages/operations/OperationsPage'
 import { TableLayoutPage } from '../pages/operations/TableLayoutPage'
+import { DeliveryManagementTab } from '../pages/operations/DeliveryManagementTab'
 import { InternalPage } from '../pages/internal/InternalPage'
 import { OwnerPage } from '../pages/owner/OwnerPage'
 import { CMSPage } from '../pages/cms/CMSPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
-import { LoyaltyConfigurationPage } from '../pages/loyalty/LoyaltyConfigurationPage'
+import { CustomerListPage } from '../pages/loyalty/CustomerListPage'
 import { PosPage } from '@/pages/pos/index'
 import { InvoicePage } from '@/pages/invoices/index'
 import { ShiftOpeningPage } from '../pages/pos/ShiftOpeningPage'
+import { ShiftClosingPage } from '../pages/pos/ShiftClosingPage'
 
 export function AppRouter() {
   return (
@@ -51,12 +53,17 @@ export function AppRouter() {
         <Route index element={<Navigate to={ROUTES.adminDashboard} replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="pos" element={<POSPage />} />
-        <Route path="operations" element={<OperationsPage />} />
+        <Route path="operations" element={<OperationsPage />}>
+          <Route index element={<Navigate to="tables" replace />} />
+          <Route path="tables" element={<TableLayoutPage />} />
+          <Route path="delivery" element={<DeliveryManagementTab />} />
+        </Route>
         <Route path="table-layout" element={<TableLayoutPage />} />
         <Route path="internal" element={<InternalPage />} />
         <Route path="owner" element={<OwnerPage />} />
         <Route path="cms" element={<CMSPage />} />
-        <Route path="loyalty" element={<LoyaltyConfigurationPage />} />
+        <Route path="customers" element={<CustomerListPage />} />
+        <Route path="loyalty/*" element={<Navigate to={ROUTES.adminCustomers} replace />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
@@ -68,6 +75,7 @@ export function AppRouter() {
       <Route path={ROUTES.cashierLogin} element={<CashierLoginPage />} />
       
       <Route path={ROUTES.shiftOpening} element={<ShiftOpeningPage />} />
+      <Route path={ROUTES.shiftClosing} element={<ShiftClosingPage />} />
       <Route path={ROUTES.pos} element={<PosPage />} />
       <Route path={ROUTES.invoices} element={<InvoicePage />} />
       
@@ -75,4 +83,3 @@ export function AppRouter() {
     </Routes>
   )
 }
-

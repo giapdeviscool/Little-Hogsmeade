@@ -11,8 +11,6 @@ export interface OrderItemPayload {
 export interface CreateOrderPayload {
   branchId: string;
   customerId?: string | null;
-  status?: string; // defaults to "paid" on backend
-  paymentMethod: string;
   discountAmount?: number;
   taxAmount?: number;
   orderType?: string;
