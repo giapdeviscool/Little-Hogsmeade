@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, Eye, CreditCard, Banknote, Wallet, ChevronLeft, ChevronRight, Loader2, AlertCircle, Filter, RotateCcw } from 'lucide-react';
+import { Search, ChevronDown, Eye, CreditCard, Banknote, Wallet, Loader2, AlertCircle, Filter, RotateCcw } from 'lucide-react';
 import { listInvoices } from '@/api/invoice.api';
+import { RecordPagination } from '../ui/RecordPagination';
 
 export interface Invoice {
   id: string; // Map orderId here for compatibility with existing Detail Panel
@@ -37,6 +38,7 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalDocs, setTotalDocs] = useState(0);
   const limit = 10;
 
   const [customerName, setCustomerName] = useState('');
@@ -64,6 +66,7 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
           setInvoices(response.data || []);
           if (response.pagination) {
             setTotalPages(response.pagination.totalPages || 1);
+            setTotalDocs(response.pagination.totalRecords || 0);
           }
         } else {
           setError('Failed to fetch invoices');
@@ -322,29 +325,18 @@ export function InvoiceTable({ onSelectInvoice }: InvoiceTableProps) {
             </tbody>
           </table>
         )}
+        {!isLoading && !error && invoices.length > 0 && (
+          <RecordPagination
+            currentPage={currentPage}
+            pageSize={limit}
+            totalDocs={totalDocs}
+            totalPages={totalPages}
+            loading={isLoading}
+            onPageChange={setCurrentPage}
+            label="hóa đơn"
+          />
+        )}
       </div>
-
-      {!isLoading && !error && invoices.length > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">Trang <span className="font-bold text-coffee">{currentPage}</span> / {totalPages}</p>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="flex items-center justify-center w-10 h-10 rounded-xl border border-line bg-white text-coffee hover:bg-beige disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="flex items-center justify-center w-10 h-10 rounded-xl border border-line bg-white text-coffee hover:bg-beige disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

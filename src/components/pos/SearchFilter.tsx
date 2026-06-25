@@ -25,14 +25,14 @@ export function SearchFilter({
   }, []);
 
   return (
-    <div className="p-6 bg-white/50 space-y-4">
+    <div className="p-4.5 bg-white/50 space-y-3">
       {/* Search Bar */}
       <div className="relative w-full">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted">
-          <Search className="w-5 h-5" />
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+          <Search className="w-4 h-4" />
         </span>
         <input 
-          className="w-full pl-12 pr-4 py-3 bg-white border border-line rounded-xl focus:ring-2 focus:ring-coffee/20 font-sans text-sm outline-none shadow-sm" 
+          className="w-full pl-10 pr-3 py-2 bg-white border border-line rounded-lg focus:ring-2 focus:ring-coffee/20 font-sans text-xs outline-none shadow-sm" 
           placeholder="Tìm kiếm món ăn, đồ uống..." 
           type="text" 
           value={searchQuery}
@@ -40,10 +40,10 @@ export function SearchFilter({
         />
       </div>
       {/* Category Tabs */}
-      <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
         <button 
           onClick={() => setSelectedCategory('')}
-          className={`h-11 px-6 rounded-full font-bold whitespace-nowrap shadow-sm transition-all ${
+          className={`h-9 px-4.5 rounded-full font-bold text-xs whitespace-nowrap shadow-sm transition-all ${
             selectedCategory === '' 
               ? 'bg-latte text-white' 
               : 'bg-white text-coffee border border-line hover:bg-latte/10'
@@ -55,7 +55,7 @@ export function SearchFilter({
           <button 
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`h-11 px-6 rounded-full font-bold whitespace-nowrap shadow-sm transition-all ${
+            className={`h-9 px-4.5 rounded-full font-bold text-xs whitespace-nowrap shadow-sm transition-all ${
               selectedCategory === cat.id 
                 ? 'bg-latte text-white' 
                 : 'bg-white text-coffee border border-line hover:bg-latte/10'

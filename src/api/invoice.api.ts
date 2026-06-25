@@ -33,3 +33,29 @@ export function getInvoice(id: string) {
     method: 'GET',
   });
 }
+
+export function getAdminInvoices(params: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  paymentMethod?: string;
+  cashierId?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const query = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      query.append(key, String(value));
+    }
+  });
+
+  const queryString = query.toString();
+  const endpoint = queryString ? `/invoices/admin?${queryString}` : '/invoices/admin';
+
+  return httpClient<any>(endpoint, {
+    method: 'GET',
+  });
+}
+

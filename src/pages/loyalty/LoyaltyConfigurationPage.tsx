@@ -6,6 +6,7 @@ import type { LoyaltyTab } from './loyalty.types'
 import { LoyaltyCrmNav } from './components/LoyaltyCrmNav'
 import { EarnRulesTab } from './components/EarnRulesTab'
 import { RewardsCatalogTab } from './components/RewardsCatalogTab'
+import { AdminPageHeader } from '../../components/ui/AdminPageHeader'
 
 export function LoyaltyConfigurationPage() {
   const { t } = useLocale()
@@ -13,13 +14,11 @@ export function LoyaltyConfigurationPage() {
 
   return (
     <>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted">
-          {t.loyalty.sectionLabel}
-        </p>
-        <h1 className="mt-2 text-[34px] font-bold tracking-[-0.04em]">{t.loyalty.pageTitle}</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted">{t.loyalty.pageDescription}</p>
-      </div>
+      <AdminPageHeader 
+        moduleName={t.loyalty.sectionLabel}
+        pageName={t.loyalty.pageTitle}
+        pageDescription={t.loyalty.pageDescription}
+      />
 
       <div className="mt-6">
         <LoyaltyCrmNav />
