@@ -327,6 +327,14 @@
     "sectionLabel": "Customer & Loyalty Management (CRM)",
     "pageTitle": "Loyalty Configuration",
     "pageDescription": "Configure earning rules and manage the reward catalog customers can redeem with points.",
+    "crmNav": {
+      "customers": "Customer List",
+      "configuration": "Loyalty Configuration"
+    },
+    "customers": {
+      "pageTitle": "Customer List",
+      "pageDescription": "Look up members, tier level, accumulated points and total spend by branch."
+    },
     "tabs": {
       "earning": {
         "label": "Earning Rules",

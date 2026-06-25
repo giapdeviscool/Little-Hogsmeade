@@ -178,19 +178,19 @@ export function CategoryList() {
                 </tbody>
               </table>
             </div>
-            
+
             {totalPages > 1 && (
               <div className="mt-4 flex justify-end gap-2">
-                <button 
-                  disabled={page === 1} 
+                <button
+                  disabled={page === 1}
                   onClick={() => setPage(p => p - 1)}
                   className="rounded px-3 py-1 border border-line disabled:opacity-50 hover:bg-gray-50"
                 >
                   Trang trước
                 </button>
                 <span className="px-3 py-1 font-medium">Trang {page} / {totalPages}</span>
-                <button 
-                  disabled={page === totalPages} 
+                <button
+                  disabled={page === totalPages}
                   onClick={() => setPage(p => p + 1)}
                   className="rounded px-3 py-1 border border-line disabled:opacity-50 hover:bg-gray-50"
                 >
