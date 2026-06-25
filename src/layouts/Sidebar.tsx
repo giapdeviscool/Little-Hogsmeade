@@ -43,15 +43,12 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
           const href = item.href ?? `/admin/${item.key}`
-          const isActive =
-            item.key === 'loyalty'
-              ? location.pathname.includes('/admin/loyalty')
-              : location.pathname.includes(href)
+          const isActive = location.pathname.startsWith(href)
           const isExpanded = isActive && !collapsedKeys.includes(item.key)
           return (
             <div key={item.key} className="flex flex-col">
               <Link 
-                to={`/admin/${item.key}`} 
+                to={href} 
                 onClick={(e) => handleParentClick(e, item.key, isActive, !!item.subItems)}
                 className={cn(navButton, isActive && !item.subItems ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}
               >
