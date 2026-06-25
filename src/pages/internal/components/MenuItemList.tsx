@@ -3,6 +3,9 @@ import { Card } from '../../../components/ui/Card'
 import type { MenuItem, Category } from '../../../types'
 import { getMenuItems, updateMenuItemStatus } from '../../../api/menu-item.api'
 import { getCategories } from '../../../api/category.api'
+import { getAuthSession } from '../../../store/auth.store'
+import { getBranches } from '../../../api/employee.api'
+import type { Branch } from '../../../types'
 
 import { AddMenuItemModal } from './AddMenuItemModal'
 import { AssignToppingModal } from './AssignToppingModal'
@@ -11,7 +14,11 @@ import { RecipeConfigModal } from './RecipeConfigModal'
 export function MenuItemList() {
   const [items, setItems] = useState<MenuItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
+
+  const authSession = getAuthSession()
+  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [assignModalState, setAssignModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
   const [recipeModalState, setRecipeModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
@@ -25,11 +32,17 @@ export function MenuItemList() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
+  const [selectedBranch, setSelectedBranch] = useState('')
 
   useEffect(() => {
-    // Fetch categories for the filter dropdown
+    // Fetch categories and branches for the filter dropdown
     getCategories({ limit: 100 }).then(res => {
       setCategories(res.data.items)
+    }).catch(console.error)
+    
+    getBranches().then(res => {
+      const data = res.data
+      setBranches(Array.isArray(data) ? data : (data as any)?.items || [])
     }).catch(console.error)
   }, [])
 
@@ -41,7 +54,8 @@ export function MenuItemList() {
         limit: 10,
         search,
         categoryId: selectedCategory,
-        status: selectedStatus
+        status: selectedStatus,
+        branchId: selectedBranch || undefined
       })
       setItems(res.data.items)
       setTotalPages(res.data.pagination.totalPages)
@@ -51,7 +65,7 @@ export function MenuItemList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, selectedCategory, selectedStatus])
+  }, [page, search, selectedCategory, selectedStatus, selectedBranch])
 
   useEffect(() => {
     fetchItems()
@@ -124,6 +138,21 @@ export function MenuItemList() {
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleSearch}
           />
+          {isChainOwner && (
+            <select
+              className="rounded-[14px] border border-line px-4 py-2.5 bg-white text-sm"
+              value={selectedBranch}
+              onChange={(e) => {
+                setSelectedBranch(e.target.value)
+                setPage(1)
+              }}
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
           <select
             className="rounded-[14px] border border-line px-4 py-2.5 bg-white text-sm"
             value={selectedCategory}

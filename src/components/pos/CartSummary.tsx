@@ -34,7 +34,7 @@ export function CartSummary({ cartItems = [], orderType = 'dine-in', customerId 
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentConfirm = async (method: 'cash' | 'qr', cashGiven?: number) => {
+  const handlePaymentConfirm = async (method: 'cash' | 'qr', _cashGiven?: number) => {
     setIsPaymentModalOpen(false);
     setLoading(true);
     const items = cartItems.map((ci) => ({

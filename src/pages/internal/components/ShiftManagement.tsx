@@ -6,7 +6,9 @@ import type { Shift, CreateShiftPayload, Branch } from '../../../types'
 
 export function ShiftManagement() {
   const authSession = getAuthSession()
-  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
+  const isChainOwner = userRole.includes('owner')
+  const isChainAdmin = userRole.includes('chain admin')
   const userBranchId = authSession?.user?.branchId || ''
   const [shifts, setShifts] = useState<Shift[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
@@ -134,31 +136,32 @@ export function ShiftManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">Quản lý Ca làm việc (UC59)</h2>
-        <button
-          onClick={() => { resetForm(); setFormBranch(selectedBranch || ''); setShowForm(true) }}
-          className="rounded-lg bg-coffee px-4 py-2 text-sm font-bold text-white hover:bg-coffee/90 transition-colors"
-        >
-          + Tạo ca mới
-        </button>
-      </div>
-
-      {/* Branch filter - Only show for Owner */}
-      {isChainOwner && (
-        <div className="flex gap-3 items-center">
-          <label className="text-sm font-medium text-secondary min-w-[100px]">Chi nhánh:</label>
-          <select
-            value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
-            className="w-full sm:w-64 rounded-lg border border-border bg-white px-4 py-2 text-sm focus:border-coffee focus:outline-none"
-          >
-            {branches.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <h1 className="text-[28px] font-bold">Quản lý Ca làm việc</h1>
+          <p className="text-sm text-muted mt-1">Thiết lập và quản lý các ca làm việc</p>
         </div>
-      )}
+        <div className="flex gap-2">
+          {isChainOwner && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded-[14px] border border-line px-4 bg-white outline-none text-sm"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
+          <button
+            onClick={() => { resetForm(); setFormBranch(selectedBranch || ''); setShowForm(true) }}
+            className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+          >
+            + Tạo ca mới
+          </button>
+        </div>
+      </div>
 
       {/* Form Modal */}
       {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>}
@@ -184,16 +187,18 @@ export function ShiftManagement() {
               <input type="time" value={formEnd} onChange={(e) => setFormEnd(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm" />
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted">Chi nhánh *</label>
-              <select value={formBranch} onChange={(e) => setFormBranch(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm" disabled={!!editId}>
-                <option value="">Chọn chi nhánh</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
+            {!isChainAdmin && (
+              <div>
+                <label className="text-xs font-medium text-muted">Chi nhánh *</label>
+                <select value={formBranch} onChange={(e) => setFormBranch(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm" disabled={!!editId}>
+                  <option value="">Chọn chi nhánh</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={handleSave} disabled={saving}
@@ -222,7 +227,7 @@ export function ShiftManagement() {
                 <th className="px-4 py-3 text-left font-bold text-muted">Giờ bắt đầu</th>
                 <th className="px-4 py-3 text-left font-bold text-muted">Giờ kết thúc</th>
                 <th className="px-4 py-3 text-left font-bold text-muted">Thời lượng</th>
-                <th className="px-4 py-3 text-left font-bold text-muted">Chi nhánh</th>
+                {!isChainAdmin && <th className="px-4 py-3 text-left font-bold text-muted">Chi nhánh</th>}
                 <th className="px-4 py-3 text-right font-bold text-muted">Thao tác</th>
               </tr>
             </thead>
@@ -233,7 +238,7 @@ export function ShiftManagement() {
                   <td className="px-4 py-3">{formatTime(s.startTime)}</td>
                   <td className="px-4 py-3">{formatTime(s.endTime)}</td>
                   <td className="px-4 py-3 text-muted">{calcDuration(formatTime(s.startTime), formatTime(s.endTime))}</td>
-                  <td className="px-4 py-3">{s.branch?.name ?? '—'}</td>
+                  {!isChainAdmin && <td className="px-4 py-3">{s.branch?.name ?? '—'}</td>}
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => startEdit(s)}
                       className="mr-2 text-coffee hover:underline text-xs font-bold">Sửa</button>

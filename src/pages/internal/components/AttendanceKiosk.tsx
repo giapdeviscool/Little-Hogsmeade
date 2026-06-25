@@ -9,6 +9,28 @@ export function AttendanceKiosk() {
   const [result, setResult] = useState<AttendanceResult | null>(null)
   const [error, setError] = useState('')
 
+  const getCurrentLocation = (): Promise<{lat: number, lng: number}> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Trình duyệt không hỗ trợ định vị (Geolocation).'))
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            })
+          },
+          (err) => {
+            console.error(err)
+            reject(new Error('Không thể lấy vị trí. Vui lòng bật định vị và cấp quyền truy cập Vị trí cho trình duyệt.'))
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        )
+      }
+    })
+  }
+
   function handlePinInput(digit: string) {
     if (pin.length < 6) {
       setPin(pin + digit)
@@ -34,7 +56,10 @@ export function AttendanceKiosk() {
       setLoading(true)
       setError('')
       setResult(null)
-      const res = await attendanceApi.checkIn({ pin, branchId })
+
+      const loc = await getCurrentLocation()
+
+      const res = await attendanceApi.checkIn({ pin, branchId, lat: loc.lat, lng: loc.lng })
       setResult(res.data)
       setPin('')
     } catch (err: unknown) {
@@ -53,7 +78,10 @@ export function AttendanceKiosk() {
       setLoading(true)
       setError('')
       setResult(null)
-      const res = await attendanceApi.checkOut({ pin, branchId })
+
+      const loc = await getCurrentLocation()
+
+      const res = await attendanceApi.checkOut({ pin, branchId, lat: loc.lat, lng: loc.lng })
       setResult(res.data)
       setPin('')
     } catch (err: unknown) {

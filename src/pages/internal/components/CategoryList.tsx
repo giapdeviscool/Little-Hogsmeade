@@ -3,6 +3,9 @@ import { Card } from '../../../components/ui/Card'
 import type { Category } from '../../../types'
 import { getCategories, deleteCategory } from '../../../api/category.api'
 import { CategoryModal } from './CategoryModal'
+import { getAuthSession } from '../../../store/auth.store'
+import { getBranches } from '../../../api/employee.api'
+import type { Branch } from '../../../types'
 
 export function CategoryList() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -11,6 +14,11 @@ export function CategoryList() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [search, setSearch] = useState('')
+  const [selectedBranch, setSelectedBranch] = useState('')
+  const [branches, setBranches] = useState<Branch[]>([])
+
+  const authSession = getAuthSession()
+  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -19,7 +27,7 @@ export function CategoryList() {
   const fetchCategories = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await getCategories({ page, limit: 10, search })
+      const res = await getCategories({ page, limit: 10, search, branchId: selectedBranch || undefined })
       setCategories(res.data.items)
       setTotalPages(res.data.pagination.totalPages)
       setTotalItems(res.data.pagination.total)
@@ -28,11 +36,18 @@ export function CategoryList() {
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, selectedBranch])
 
   useEffect(() => {
     fetchCategories()
   }, [fetchCategories])
+
+  useEffect(() => {
+    getBranches().then(res => {
+      const data = res.data
+      setBranches(Array.isArray(data) ? data : (data as any)?.items || [])
+    }).catch(console.error)
+  }, [])
 
   const renderStatus = (isActive: boolean) => {
     if (isActive) {
@@ -97,6 +112,20 @@ export function CategoryList() {
           <p className="text-sm text-muted mt-1">Tổng cộng {totalItems} danh mục</p>
         </div>
         <div className="flex gap-2">
+          {isChainOwner && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded-[14px] border border-line px-4 bg-white outline-none"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <input 
             className="rounded-[14px] border border-line px-4" 
             placeholder="Tìm tên danh mục (Enter)..." 

@@ -57,6 +57,8 @@ export interface BulkRosterResult {
 export interface AttendanceCheckPayload {
   pin: string
   branchId: string
+  lat?: number
+  lng?: number
 }
 
 export interface AttendanceResult {
