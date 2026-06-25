@@ -3,7 +3,7 @@ import { Card } from '../../../components/ui/Card'
 import type { Employee, Role, Branch } from '../../../types'
 import { getEmployees, getRoles, getBranches } from '../../../api/employee.api'
 import { EmployeeModal } from './EmployeeModal'
-
+import { getAuthSession } from '../../../store/auth.store'
 export function EmployeeList() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [roles, setRoles] = useState<Role[]>([])
@@ -12,15 +12,20 @@ export function EmployeeList() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
+  const [selectedBranch, setSelectedBranch] = useState('')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  const authSession = getAuthSession()
+  const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
+  const isChainAdmin = userRole.includes('chain admin')
+
   const fetchEmployees = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await getEmployees({ page, limit: 10 })
+      const res = await getEmployees({ page, limit: 10, branchId: selectedBranch || undefined })
       setEmployees(res.data.items)
       setTotalPages(res.data.pagination.totalPages)
       setTotalItems(res.data.pagination.total)
@@ -29,7 +34,7 @@ export function EmployeeList() {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [page, selectedBranch])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -95,6 +100,18 @@ export function EmployeeList() {
           <p className="text-sm text-muted mt-1">Tổng cộng {totalItems} nhân viên</p>
         </div>
         <div className="flex gap-2">
+          {!isChainAdmin && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded-[14px] border border-line px-4 bg-white outline-none"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
           <input className="rounded-[14px] border border-line px-4" placeholder="Tìm tên hoặc SĐT..." />
           <button onClick={handleOpenCreate} className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
             + Thêm nhân viên
@@ -111,7 +128,7 @@ export function EmployeeList() {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr>
-                    {['Họ và tên', 'SĐT', 'Chi nhánh', 'Vai trò', 'Ngày vào làm', 'Trạng thái', 'Thao tác'].map((h) => (
+                    {['Họ và tên', 'SĐT', ...(isChainAdmin ? [] : ['Chi nhánh']), 'Vai trò', 'Ngày vào làm', 'Trạng thái', 'Thao tác'].map((h) => (
                       <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>
                     ))}
                   </tr>
@@ -121,7 +138,9 @@ export function EmployeeList() {
                     <tr key={emp.id} className="hover:bg-gray-50">
                       <td className="border-b border-line px-4 py-4 font-semibold">{emp.fullName}</td>
                       <td className="border-b border-line px-4 py-4">{emp.phone}</td>
-                      <td className="border-b border-line px-4 py-4">{emp.branch?.name || emp.branchId}</td>
+                      {!isChainAdmin && (
+                        <td className="border-b border-line px-4 py-4">{emp.branch?.name || emp.branchId}</td>
+                      )}
                       <td className="border-b border-line px-4 py-4">{emp.role?.name || emp.roleId}</td>
                       <td className="border-b border-line px-4 py-4">{new Date(emp.hiredDate).toLocaleDateString('vi-VN')}</td>
                       <td className="border-b border-line px-4 py-4">{renderStatus(emp.status)}</td>
@@ -132,7 +151,7 @@ export function EmployeeList() {
                   ))}
                   {employees.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="border-b border-line px-4 py-8 text-center text-muted">Không tìm thấy nhân viên nào</td>
+                      <td colSpan={isChainAdmin ? 6 : 7} className="border-b border-line px-4 py-8 text-center text-muted">Không tìm thấy nhân viên nào</td>
                     </tr>
                   )}
                 </tbody>

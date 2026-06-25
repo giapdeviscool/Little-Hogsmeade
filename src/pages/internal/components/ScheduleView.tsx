@@ -3,6 +3,7 @@ import * as rosterApi from '../../../api/roster.api'
 import * as shiftApi from '../../../api/shift.api'
 import * as employeeApi from '../../../api/employee.api'
 import { getAuthSession } from '../../../store/auth.store'
+import { Card } from '../../../components/ui/Card'
 import type { RosterEntry, Shift, Employee, Branch, CreateRosterPayload } from '../../../types'
 
 const DAY_LABELS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN']
@@ -114,10 +115,7 @@ export function ScheduleView() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [showAssign, setShowAssign] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
-  const [countrySearch, setCountrySearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | Employee['status']>('all')
   const [activeShiftIds, setActiveShiftIds] = useState<string[]>([])
   const [selectedRoster, setSelectedRoster] = useState<RosterEntry | null>(null)
   const [assignDate, setAssignDate] = useState('')
@@ -129,7 +127,7 @@ export function ScheduleView() {
   }, [])
 
   useEffect(() => {
-    if (selectedBranch) loadData()
+    loadData()
   }, [selectedBranch, weekStart])
 
   useEffect(() => {
@@ -223,9 +221,7 @@ export function ScheduleView() {
     })
   }, [weekStart])
 
-  const visibleEmployees = useMemo(() => {
-    return employees.filter((employee) => statusFilter === 'all' || employee.status === statusFilter)
-  }, [employees, statusFilter])
+  const visibleEmployees = useMemo(() => employees, [employees])
 
   const visibleRosters = useMemo(() => {
     return rosters.filter((roster) => activeShiftIds.includes(roster.shiftId))
@@ -234,7 +230,7 @@ export function ScheduleView() {
   const employeeGroups = useMemo(() => {
     const groups = new Map<string, Employee[]>()
     visibleEmployees.forEach((employee) => {
-      const key = employee.role?.name || 'Đội vận hành'
+      const key = employee.branch?.name || 'Chi nhánh chưa xác định'
       groups.set(key, [...(groups.get(key) || []), employee])
     })
     return Array.from(groups.entries())
@@ -284,124 +280,59 @@ export function ScheduleView() {
   }
 
   return (
-    <div className="space-y-5 text-[#17161f]">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="h-full flex flex-col">
+      <div className="flex justify-between items-end mb-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted">
-            <span>Lịch</span>
-            <span>/</span>
-            <span className="text-coffee">Lịch làm việc</span>
-          </div>
-          <div className="mt-4 flex items-center gap-4">
-            <h2 className="text-4xl font-black tracking-normal text-black">
-              {timelineDates[0].getDate()} {MONTHS[timelineDates[0].getMonth()]} {timelineDates[0].getFullYear()}
-            </h2>
-            <button
-              onClick={prevPeriod}
-              className="grid h-11 w-11 place-items-center rounded-full border border-line bg-white text-xl font-bold shadow-sm hover:bg-cream"
-              title="Tuần trước"
-            >
-              &larr;
-            </button>
-            <button
-              onClick={nextPeriod}
-              className="grid h-11 w-11 place-items-center rounded-full border border-line bg-white text-xl font-bold shadow-sm hover:bg-cream"
-              title="Tuần sau"
-            >
-              &rarr;
-            </button>
+          <h1 className="text-[28px] font-bold">Lịch làm việc</h1>
+          <div className="flex items-center gap-4 mt-2">
+            <span className="text-sm font-semibold text-muted">
+              Tuần: {timelineDates[0].getDate()} {MONTHS[timelineDates[0].getMonth()]} {timelineDates[0].getFullYear()}
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={prevPeriod}
+                className="grid h-7 w-7 place-items-center rounded-full border border-line bg-white shadow-sm hover:bg-cream"
+                title="Tuần trước"
+              >
+                &larr;
+              </button>
+              <button
+                onClick={nextPeriod}
+                className="grid h-7 w-7 place-items-center rounded-full border border-line bg-white shadow-sm hover:bg-cream"
+                title="Tuần sau"
+              >
+                &rarr;
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="relative flex flex-wrap items-center gap-3 pt-9">
-          <button
-            onClick={() => setShowFilters((value) => !value)}
-            className="inline-flex h-12 items-center gap-3 rounded-lg border border-line bg-white px-5 text-sm font-bold shadow-sm hover:bg-cream"
-          >
-            <span className="text-lg leading-none">▽</span>
-            Bộ lọc
-            <span className="text-sm">{showFilters ? '^' : 'v'}</span>
-          </button>
+        <div className="relative flex gap-2">
+          {isChainOwner && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded-[14px] border border-line px-4 bg-white outline-none text-sm font-semibold"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             onClick={() => openAssign()}
-            className="inline-flex h-12 items-center gap-3 rounded-lg bg-[#171126] px-6 text-sm font-bold text-white shadow-sm hover:bg-[#241a38]"
+            className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
           >
-            <span className="text-lg leading-none">+</span>
-            Xếp lịch
+            + Xếp lịch
           </button>
-
-          {showFilters && (
-            <div className="absolute right-24 top-24 z-30 w-80 rounded-lg border border-line bg-white p-5 shadow-[0_18px_45px_rgba(23,17,38,0.16)]">
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-lg font-black">Bộ lọc</h3>
-                <button
-                  onClick={() => {
-                    setCountrySearch('')
-                    setStatusFilter('all')
-                    setActiveShiftIds(shifts.map((shift) => shift.id))
-                  }}
-                  className="text-xs font-bold text-blue-600 underline"
-                >
-                  Xóa bộ lọc
-                </button>
-              </div>
-              {isChainOwner && (
-                <label className="mb-5 block">
-                  <span className="mb-2 block text-sm font-bold text-muted">Chi nhánh</span>
-                  <select
-                    value={selectedBranch}
-                    onChange={(event) => setSelectedBranch(event.target.value)}
-                    className="h-11 w-full rounded-lg border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-blue-500"
-                  >
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>{branch.name}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <div className="mb-5 border-t border-line pt-5">
-                <div className="mb-3 flex items-center justify-between text-sm font-bold">
-                  <span>Quốc gia</span>
-                  <span>^</span>
-                </div>
-                <div className="mb-3 flex h-11 items-center rounded-lg border border-blue-500 px-3 shadow-[0_0_0_2px_rgba(37,99,235,0.12)]">
-                  <input
-                    value={countrySearch}
-                    onChange={(event) => setCountrySearch(event.target.value)}
-                    placeholder="Tìm kiếm"
-                    className="w-full border-0 bg-transparent text-sm outline-none"
-                  />
-                  <span className="text-lg text-muted">⌕</span>
-                </div>
-                {['Belarus', 'Serbia', 'Georgia', 'Ukraine', 'Vương quốc Anh', 'Hoa Kỳ']
-                  .filter((country) => country.toLowerCase().includes(countrySearch.toLowerCase()))
-                  .map((country) => (
-                    <label key={country} className="flex h-9 items-center gap-3 text-sm text-muted">
-                      <input type="checkbox" checked={country === 'Vương quốc Anh'} readOnly className="h-5 w-5 accent-blue-600" />
-                      <span className={country === 'Vương quốc Anh' ? 'font-semibold text-[#17161f]' : ''}>{country}</span>
-                    </label>
-                  ))}
-              </div>
-              <label className="block border-t border-line pt-5">
-                <span className="mb-2 block text-sm font-bold text-muted">Trạng thái</span>
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-                  className="h-11 w-full rounded-lg border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-blue-500"
-                >
-                  <option value="all">Tất cả nhân viên đang làm</option>
-                  <option value="active">Đang hoạt động</option>
-                  <option value="on_leave">Đang nghỉ phép</option>
-                  <option value="inactive">Không hoạt động</option>
-                  <option value="resigned">Đã nghỉ việc</option>
-                </select>
-              </label>
-            </div>
-          )}
         </div>
       </div>
+      <Card className="p-6 space-y-6">
 
-      <div className="grid grid-cols-12 overflow-hidden rounded-lg border border-line bg-white text-sm">
+      <div className="grid grid-cols-12 overflow-hidden rounded-[14px] border border-line bg-white text-sm">
         {MONTHS.map((month, index) => (
           <button
             key={month}
@@ -413,7 +344,7 @@ export function ScheduleView() {
         ))}
       </div>
 
-      <div className="grid grid-cols-[280px_1fr_150px] items-center gap-6 rounded-lg border border-line bg-white px-6 py-5 shadow-sm">
+      <div className="grid grid-cols-[280px_1fr_150px] items-center gap-6 rounded-[14px] border border-line bg-white px-6 py-5 shadow-sm">
         <div className="border-r border-line pr-6">
           <div className="text-xs font-bold text-muted">Tổng giờ làm trong tuần</div>
           <div className="mt-3 flex items-center gap-5">
@@ -448,7 +379,7 @@ export function ScheduleView() {
               <button
                 key={shift.id}
                 onClick={() => toggleShift(shift.id)}
-                className={`inline-flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-bold shadow-sm ${isActive ? 'border-line bg-white text-[#17161f]' : 'border-line bg-[#f8f8f8] text-muted opacity-60'}`}
+                className={`inline-flex h-10 items-center gap-2 rounded-[14px] border px-3 text-sm font-bold shadow-sm ${isActive ? 'border-line bg-white text-[#17161f]' : 'border-line bg-[#f8f8f8] text-muted opacity-60'}`}
               >
                 <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
                 {shift.name}
@@ -462,14 +393,14 @@ export function ScheduleView() {
         <div className="relative">
           <button
             onClick={() => setShowCategories((value) => !value)}
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-bold shadow-sm"
+            className="inline-flex h-10 items-center gap-2 rounded-[14px] border border-line bg-white px-4 text-sm font-bold shadow-sm"
           >
             <span className="text-muted">Danh mục:</span>
             Nhiều lựa chọn
             <span>{showCategories ? '^' : 'v'}</span>
           </button>
           {showCategories && (
-            <div className="absolute right-0 top-12 z-20 w-72 rounded-lg border border-line bg-white py-4 shadow-[0_18px_45px_rgba(23,17,38,0.16)]">
+            <div className="absolute right-0 top-12 z-20 w-72 rounded-[14px] border border-line bg-white py-4 shadow-[0_18px_45px_rgba(23,17,38,0.16)]">
               {shifts.map((shift) => {
                 const tone = getTone(shift.id)
                 return (
@@ -490,11 +421,11 @@ export function ScheduleView() {
         </div>
       </div>
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>}
-      {notice && <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">{notice}</div>}
+      {error && <div className="rounded-[14px] border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>}
+      {notice && <div className="rounded-[14px] border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">{notice}</div>}
 
       {showAssign && (
-        <div className="rounded-lg border border-line bg-white p-5 shadow-sm">
+        <div className="rounded-[14px] border border-line bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-black">Xếp lịch làm việc</h3>
             <button onClick={() => setShowAssign(false)} className="grid h-9 w-9 place-items-center rounded-full border border-line text-xl hover:bg-cream">×</button>
@@ -502,27 +433,27 @@ export function ScheduleView() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <label>
               <span className="mb-1 block text-xs font-bold text-muted">Nhân viên</span>
-              <select value={assignEmployee} onChange={(event) => setAssignEmployee(event.target.value)} className="h-11 w-full rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-coffee">
+              <select value={assignEmployee} onChange={(event) => setAssignEmployee(event.target.value)} className="h-11 w-full rounded-[14px] border border-line bg-white px-3 text-sm outline-none focus:border-coffee">
                 <option value="">Chọn nhân viên</option>
                 {visibleEmployees.map((employee) => <option key={employee.id} value={employee.id}>{employee.fullName}</option>)}
               </select>
             </label>
             <label>
               <span className="mb-1 block text-xs font-bold text-muted">Ca làm</span>
-              <select value={assignShift} onChange={(event) => setAssignShift(event.target.value)} className="h-11 w-full rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-coffee">
+              <select value={assignShift} onChange={(event) => setAssignShift(event.target.value)} className="h-11 w-full rounded-[14px] border border-line bg-white px-3 text-sm outline-none focus:border-coffee">
                 <option value="">Chọn ca làm</option>
                 {shifts.map((shift) => <option key={shift.id} value={shift.id}>{shift.name} ({formatTime(shift.startTime)} - {formatTime(shift.endTime)})</option>)}
               </select>
             </label>
             <label>
               <span className="mb-1 block text-xs font-bold text-muted">Ngày</span>
-              <input type="date" value={assignDate} onChange={(event) => setAssignDate(event.target.value)} className="h-11 w-full rounded-lg border border-line bg-white px-3 text-sm outline-none focus:border-coffee" />
+              <input type="date" value={assignDate} onChange={(event) => setAssignDate(event.target.value)} className="h-11 w-full rounded-[14px] border border-line bg-white px-3 text-sm outline-none focus:border-coffee" />
             </label>
             <div className="flex items-end gap-2">
-              <button onClick={handleAssign} disabled={saving} className="h-11 rounded-lg bg-coffee px-5 text-sm font-bold text-white hover:bg-coffee/90 disabled:opacity-50">
+              <button onClick={handleAssign} disabled={saving} className="h-11 rounded-[14px] bg-coffee px-5 text-sm font-bold text-white hover:bg-coffee/90 disabled:opacity-50">
                 {saving ? 'Đang lưu...' : 'Lưu lịch'}
               </button>
-              <button onClick={() => setShowAssign(false)} className="h-11 rounded-lg border border-line px-5 text-sm font-bold text-muted hover:bg-cream">
+              <button onClick={() => setShowAssign(false)} className="h-11 rounded-[14px] border border-line px-5 text-sm font-bold text-muted hover:bg-cream">
                 Hủy
               </button>
             </div>
@@ -531,9 +462,9 @@ export function ScheduleView() {
       )}
 
       {loading ? (
-        <div className="rounded-lg border border-line bg-white py-12 text-center text-sm font-semibold text-muted">Đang tải lịch làm việc...</div>
+        <div className="rounded-[14px] border border-line bg-white py-12 text-center text-sm font-semibold text-muted">Đang tải lịch làm việc...</div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[14px] border border-line bg-white shadow-sm">
           <div className="overflow-x-auto">
             <div style={{ minWidth: SCHEDULE_MIN_WIDTH }}>
               <div className="sticky top-0 z-10 grid bg-white" style={{ gridTemplateColumns: SCHEDULE_GRID_TEMPLATE }}>
@@ -545,7 +476,7 @@ export function ScheduleView() {
                   const isToday = formatDate(date) === formatDate(new Date())
                   return (
                     <div key={formatDate(date)} className="flex h-16 flex-col items-center justify-center border-b border-r border-line">
-                      <div className={`grid h-14 w-14 place-items-center rounded-lg ${isToday ? 'bg-blue-600 text-white' : 'text-[#17161f]'}`}>
+                      <div className={`grid h-14 w-14 place-items-center rounded-[14px] ${isToday ? 'bg-blue-600 text-white' : 'text-[#17161f]'}`}>
                         <span className="text-xl font-black leading-5">{date.getDate()}</span>
                         <span className="text-xs font-medium">{DAY_LABELS[(date.getDay() + 6) % 7]}</span>
                       </div>
@@ -584,9 +515,10 @@ export function ScheduleView() {
                                 {employeeInitials(employee.fullName)}
                               </span>
                             )}
-                            <div className="min-w-0">
-                              <div className="truncate text-sm font-black">{employee.fullName}</div>
-                              <div className="truncate text-xs font-semibold text-muted">@{employee.email?.split('@')[0] || employee.phone}</div>
+                            <div className="min-w-0 flex flex-col justify-center">
+                              <div className="truncate text-sm font-black leading-tight">{employee.fullName}</div>
+                              <div className="truncate text-[10px] font-black text-green-700 uppercase mt-0.5">{employee.role?.name || 'Nhân viên'}</div>
+                              <div className="truncate text-xs font-semibold text-muted mt-0.5">@{employee.email?.split('@')[0] || employee.phone}</div>
                             </div>
                           </div>
                           {timelineDates.map((date) => {
@@ -629,28 +561,12 @@ export function ScheduleView() {
               )}
             </div>
           </div>
-
-          <div className="flex items-center justify-between border-t border-line bg-white px-5 py-4 text-sm font-bold">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-11 place-items-center rounded border border-line bg-white">10</span>
-              <span>Dòng mỗi trang</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <button onClick={prevPeriod} className="grid h-9 w-9 place-items-center rounded border border-line hover:bg-cream">&lsaquo;</button>
-              <span>1</span>
-              <button onClick={nextPeriod} className="grid h-9 w-9 place-items-center rounded border border-line hover:bg-cream">&rsaquo;</button>
-            </div>
-            <div className="flex items-center gap-3">
-              <span>Trang</span>
-              <span className="grid h-9 w-11 place-items-center rounded border border-line bg-white">1</span>
-            </div>
-          </div>
         </div>
       )}
 
       {selectedRoster && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/10 p-4" onClick={() => setSelectedRoster(null)}>
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-[0_18px_45px_rgba(23,17,38,0.18)]" onClick={(event) => event.stopPropagation()}>
+          <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-[0_18px_45px_rgba(23,17,38,0.18)]" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3">
@@ -678,6 +594,7 @@ export function ScheduleView() {
           </div>
         </div>
       )}
+      </Card>
     </div>
   )
 }

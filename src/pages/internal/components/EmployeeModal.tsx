@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Employee, CreateEmployeePayload, UpdateEmployeePayload, Role, Branch } from '../../../types'
 import { createEmployee, updateEmployee } from '../../../api/employee.api'
+import { getAuthSession } from '../../../store/auth.store'
 
 interface Props {
   employee?: Employee | null
@@ -55,12 +56,17 @@ export function EmployeeModal({ employee, roles, branches, onClose, onSuccess }:
   const [error, setError] = useState<string | null>(null)
   const [successPin, setSuccessPin] = useState<string | null>(null)
 
+  const authSession = getAuthSession()
+  const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
+  const isChainAdmin = userRole.includes('chain admin')
+  const defaultBranchId = isChainAdmin ? authSession?.user?.branchId || '' : ''
+
   const [formData, setFormData] = useState({
     fullName: employee?.fullName || '',
     phone: employee?.phone || '',
     email: employee?.email || '',
     roleId: employee?.roleId || '',
-    branchId: employee?.branchId || '',
+    branchId: employee?.branchId || defaultBranchId,
     baseSalary: employee?.baseSalary?.toString() || '',
     hiredDate: employee?.hiredDate ? new Date(employee.hiredDate).toISOString().split('T')[0] : '',
     status: employee?.status || 'active',
@@ -163,20 +169,25 @@ export function EmployeeModal({ employee, roles, branches, onClose, onSuccess }:
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className={isChainAdmin ? "col-span-2" : ""}>
               <label className="mb-1 block text-sm font-medium">Vai trò {isEditing && '(Không thể sửa)'}</label>
               <select name="roleId" value={formData.roleId} onChange={handleChange} disabled={isEditing} className="w-full rounded-[14px] border border-line px-4 py-2 disabled:bg-gray-100">
                 <option value="">-- Chọn vai trò --</option>
-                {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                {(isChainAdmin 
+                  ? roles.filter(r => r.name.toLowerCase() === 'cashier' || r.name.toLowerCase() === 'staff') 
+                  : roles
+                ).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Chi nhánh {isEditing && '(Không thể sửa)'}</label>
-              <select name="branchId" value={formData.branchId} onChange={handleChange} disabled={isEditing} className="w-full rounded-[14px] border border-line px-4 py-2 disabled:bg-gray-100">
-                <option value="">-- Chọn chi nhánh --</option>
-                {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
-            </div>
+            {!isChainAdmin && (
+              <div>
+                <label className="mb-1 block text-sm font-medium">Chi nhánh {isEditing && '(Không thể sửa)'}</label>
+                <select name="branchId" value={formData.branchId} onChange={handleChange} disabled={isEditing} className="w-full rounded-[14px] border border-line px-4 py-2 disabled:bg-gray-100">
+                  <option value="">-- Chọn chi nhánh --</option>
+                  {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

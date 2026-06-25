@@ -12,6 +12,7 @@ function getCurrentMonth(): string {
 export function PayrollView() {
   const authSession = getAuthSession()
   const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const isChainAdmin = authSession?.user?.roleName?.toLowerCase().includes('chain admin') || authSession?.user?.role?.toLowerCase().includes('chain admin')
   const userBranchId = authSession?.user?.branchId || ''
 
   const [payroll, setPayroll] = useState<PayrollSummary[]>([])
@@ -122,7 +123,7 @@ export function PayrollView() {
             <thead className="bg-surface-alt">
               <tr>
                 <th className="px-4 py-3 text-left font-bold text-muted">Nhân viên</th>
-                <th className="px-4 py-3 text-left font-bold text-muted">Chi nhánh</th>
+                {!isChainAdmin && <th className="px-4 py-3 text-left font-bold text-muted">Chi nhánh</th>}
                 <th className="px-4 py-3 text-left font-bold text-muted">Vai trò</th>
                 <th className="px-4 py-3 text-right font-bold text-muted">Lương cơ bản</th>
                 <th className="px-4 py-3 text-right font-bold text-muted">Giờ làm</th>
@@ -137,7 +138,7 @@ export function PayrollView() {
                 <>
                   <tr key={p.employeeId} className="hover:bg-surface-alt/50 transition-colors">
                     <td className="px-4 py-3 font-medium">{p.employeeName}</td>
-                    <td className="px-4 py-3">{p.branchName ?? '—'}</td>
+                    {!isChainAdmin && <td className="px-4 py-3">{p.branchName ?? '—'}</td>}
                     <td className="px-4 py-3">{p.roleName ?? '—'}</td>
                     <td className="px-4 py-3 text-right">{formatCurrency(p.baseSalary)}</td>
                     <td className="px-4 py-3 text-right">{p.totalWorkedHours.toFixed(1)}h</td>
@@ -157,7 +158,7 @@ export function PayrollView() {
                   </tr>
                   {expandedId === p.employeeId && p.dailyDetails.length > 0 && (
                     <tr key={`${p.employeeId}-detail`}>
-                      <td colSpan={9} className="px-4 py-3 bg-surface-alt/30">
+                      <td colSpan={isChainAdmin ? 8 : 9} className="px-4 py-3 bg-surface-alt/30">
                         <div className="text-xs font-bold text-muted mb-2">Chi tiết chấm công hàng ngày:</div>
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
                           {p.dailyDetails.map((d, idx) => (
