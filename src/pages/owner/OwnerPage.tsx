@@ -197,9 +197,8 @@ export function OwnerPage() {
       setError("");
       const response = await chainApi.syncMenu();
       setNotice(
-        `Đã đồng bộ ${response.data?.syncedBranches} chi nhánh đang hoạt động.`,
+        `Đã đồng bộ ${response.data?.syncedBranches ?? response.data?.activeBranches ?? 0} chi nhánh đang hoạt động.`,
       );
-      setConfirmSyncOpen(false);
       await loadModule();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -388,24 +387,13 @@ export function OwnerPage() {
         />
       ) : null}
       {!loading && activeTab === "sync" ? (
-        <>
-          <SyncPanel
-            config={config}
-            preview={menuPreview}
-            saving={saving}
-            overrideBranchesCount={overrideBranches.length}
-            onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
-            onSync={() => setConfirmSyncOpen(true)}
-          />
-          <ConfirmDialog
-            isOpen={confirmSyncOpen}
-            title="Đồng bộ menu chuẩn xuống chi nhánh?"
-            description={`Hành động này sẽ áp dụng ${menuPreview.categories.length} danh mục và ${menuPreview.menuItems.length} món chuẩn xuống ${activeBranches.length} chi nhánh đang hoạt động. Dữ liệu menu hiện tại tại các chi nhánh này sẽ bị ghi đè.${overrideBranches.length > 0 ? `\n\n⚠ ${overrideBranches.length} chi nhánh đang được phép tự set giá riêng. Đồng bộ sẽ GHI ĐÈ GIÁ hiện tại của các chi nhánh này thành giá chuẩn. (TODO: Confirm BE behavior)` : ''}`}
-            onConfirm={() => void runSyncMenu()}
-            onClose={() => setConfirmSyncOpen(false)}
-            loading={saving}
-          />
-        </>
+        <SyncPanel
+          config={config}
+          saving={saving}
+          overrideBranchesCount={overrideBranches.length}
+          onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
+          onSync={() => void runSyncMenu()}
+        />
       ) : null}
       {!loading && activeTab === "pricing" ? (
         <PricingPanel

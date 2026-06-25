@@ -37,3 +37,10 @@ export function deleteCategory(id: string) {
     method: 'DELETE',
   })
 }
+
+export function moveCategory(id: string, direction: 'up' | 'down') {
+  return httpClient<any>(`/categories/${id}/move`, {
+    method: 'PATCH',
+    body: JSON.stringify({ direction }),
+  })
+}

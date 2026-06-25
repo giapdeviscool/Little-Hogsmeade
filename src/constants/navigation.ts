@@ -1,5 +1,5 @@
-import { ROUTES } from './routes'
 import type { NavItem } from '../types'
+import { ROUTES } from './routes'
 
 export type { TabKey } from '../types'
 
@@ -26,5 +26,7 @@ export const navItems: NavItem[] = [
   },
   { key: 'owner', icon: 'building' },
   { key: 'cms', icon: 'globe' },
-  { key: 'customers', icon: 'loyalty', href: ROUTES.adminCustomers },
+  { key: 'loyalty', icon: 'loyalty' },
+  { key: 'customers', icon: 'users' },
+
 ]

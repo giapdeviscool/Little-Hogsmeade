@@ -1,13 +1,38 @@
 import { Card } from "../../ui/Card";
 import type { OwnerActiveTab } from "../../../types";
 import { X } from "lucide-react";
+import { cn } from "@/utils/cn";
 
-const ownerTabs: Array<[OwnerActiveTab, string]> = [
-  ["dashboard", "Dashboard"],
-  ["branches", "Chi nhánh"],
-  ["sync", "Đồng bộ"],
-  ["pricing", "Giá bán"],
-  ["promotions", "Khuyến mãi"],
+const ownerTabs: Array<{
+  key: OwnerActiveTab;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    description: "Tổng quan doanh thu - hiệu suất",
+  },
+  {
+    key: "branches",
+    label: "Chi nhánh",
+    description: "Quản lý thông tin chi nhánh",
+  },
+  {
+    key: "sync",
+    label: "Đồng bộ",
+    description: "Đồng bộ thực đơn - cấu hình",
+  },
+  {
+    key: "pricing",
+    label: "Giá bán",
+    description: "Thiết lập & tùy chỉnh giá bán",
+  },
+  {
+    key: "promotions",
+    label: "Khuyến mãi",
+    description: "Quản lý các chiến lược giảm giá",
+  },
 ];
 
 export function OwnerHeader({ onRefresh }: { onRefresh: () => void }) {
@@ -73,22 +98,33 @@ export function OwnerTabs({
   onChange: (tab: OwnerActiveTab) => void;
 }) {
   return (
-    <div className="flex border-b-2 border-line">
-      {ownerTabs.map(([key, label]) => (
-        <button
-          key={key}
-          className={`relative h-[38px] px-4 text-sm font-semibold whitespace-nowrap transition-colors
-            after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-0.5 after:transition-all
-            ${
-              activeTab === key
-                ? "text-coffee after:bg-coffee"
-                : "text-muted after:bg-transparent hover:text-coffee"
-            }`}
-          onClick={() => onChange(key)}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="flex flex-wrap gap-2 rounded-xl border border-line/50 bg-cream p-2 shadow-soft">
+      {ownerTabs.map((tab) => {
+        const isActive = activeTab === tab.key;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              "flex-1 min-w-[200px] rounded-[16px] p-4 text-left transition",
+              isActive 
+                ? "bg-white text-coffee shadow-soft" 
+                : "text-muted hover:bg-white/70"
+            )}
+          >
+            <span className="block text-[15px] font-semibold">
+              {tab.label}
+            </span>
+            <span className={cn(
+              "mt-1 block text-xs leading-5",
+              isActive ? "text-coffee/80" : "text-muted/70"
+            )}>
+              {tab.description}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

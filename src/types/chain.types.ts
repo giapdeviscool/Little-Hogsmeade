@@ -38,6 +38,11 @@ export type BranchListResponse = {
 }
 
 export type ChainDashboard = {
+  filters: {
+    startDate: string
+    endDate: string
+    branchId: string | null
+  }
   kpis: {
     totalRevenue: number
     totalOrders: number
@@ -52,6 +57,13 @@ export type ChainDashboard = {
     branchName: string
     revenue: number
     orders: number
+    expenses: number
+    grossProfit: number
+  }>
+  lowStockAlerts: Array<{
+    branchId: string
+    branchName: string
+    count: number
   }>
 }
 

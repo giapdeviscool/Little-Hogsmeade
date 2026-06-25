@@ -1,4 +1,5 @@
 import { httpClient } from './httpClient'
+import { env } from '../config/env'
 import { getAuthToken } from '../store/auth.store'
 import type { ApiResponse, PaginatedData, Branch, BranchListResponse, BranchPayload, ChainConfig, ChainDashboard, MenuSyncPreview, MenuSyncResult, Promotion, PromotionPayload } from '../types'
 
@@ -18,6 +19,25 @@ export function getChainDashboard(params: { branchId?: string; startDate?: strin
   return httpClient<ApiResponse<ChainDashboard>>(`/chain/dashboard?${query.toString()}`, {
     headers: authHeaders(),
   })
+}
+
+export async function exportChainDashboard(params: { branchId?: string; startDate?: string; endDate?: string }) {
+  const query = new URLSearchParams()
+  const headers = authHeaders()
+
+  if (params.branchId) query.set('branchId', params.branchId)
+  if (params.startDate) query.set('startDate', params.startDate)
+  if (params.endDate) query.set('endDate', params.endDate)
+
+  const response = await fetch(`${env.apiBaseUrl}/chain/dashboard/export?${query.toString()}`, {
+    headers,
+  })
+
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`)
+  }
+
+  return response.blob()
 }
 
 export function getBranches() {
