@@ -35,11 +35,11 @@ export function LedgerRow({
         className={cn("transition-colors cursor-pointer group border-l-4", borderLeftColor)}
         onClick={onToggleExpand}
       >
-        <td className="px-4 py-3 text-sm">{formatDate(invoice.createdAt)}</td>
-        <td className="px-4 py-3 text-sm font-bold text-gold">{displayId}</td>
-        <td className="px-4 py-3 text-sm">Hogsmeade Central</td>
-        <td className="px-4 py-3 text-sm">{invoice.cashierId?.name || "Hệ thống"}</td>
-        <td className="px-4 py-3 text-sm flex items-center gap-2">
+        <td className="px-2 py-3 text-sm">{formatDate(invoice.createdAt)}</td>
+        <td className="px-2 py-3 text-sm font-bold text-gold">{displayId}</td>
+        <td className="px-2 py-3 text-sm">Hogsmeade Central</td>
+        <td className="px-2 py-3 text-sm">{invoice.cashierId?.name || "Hệ thống"}</td>
+        <td className="px-2 py-3 text-sm flex items-center gap-2">
           {method === 'vietqr' ? (
             <>
               <span className="material-symbols-outlined text-lg text-latte">qr_code_2</span> Chuyển khoản / QR
@@ -54,8 +54,8 @@ export function LedgerRow({
             </>
           )}
         </td>
-        <td className="px-4 py-3 text-right font-bold text-base text-coffee">{formatCurrency(invoice.totalAmount)}</td>
-        <td className="px-4 py-3">
+        <td className="px-2 py-3 text-right font-bold text-base text-coffee">{formatCurrency(invoice.totalAmount)}</td>
+        <td className="px-2 py-3">
           {invoice.status === 'paid' && (
             <span className="px-3 py-1 rounded-full bg-[#5fa876]/10 text-[#5fa876] text-xs font-bold uppercase tracking-wide">Đã thanh toán</span>
           )}
@@ -66,7 +66,7 @@ export function LedgerRow({
             <span className="px-3 py-1 rounded-full bg-gold/10 text-gold text-xs font-bold uppercase tracking-wide">Chờ thanh toán</span>
           )}
         </td>
-        <td className="px-4 py-3 text-right">
+        <td className="px-2 py-3 text-right">
           <span className={cn("material-symbols-outlined text-coffee transition-transform", isExpanded ? 'rotate-90' : '')}>expand_more</span>
         </td>
       </tr>
