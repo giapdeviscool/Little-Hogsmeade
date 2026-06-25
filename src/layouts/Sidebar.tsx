@@ -42,16 +42,48 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
 
       <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
-          const href = item.href ?? `/admin/${item.key}`
-          const isActive =
-            item.key === 'loyalty'
-              ? location.pathname.includes('/admin/loyalty')
-              : location.pathname.includes(href)
+
+          const isActive = location.pathname.includes(`/admin/${item.key}`)
+          const isExpanded = isActive && !collapsedKeys.includes(item.key)
           return (
-            <Link key={item.key} to={href} className={cn(navButton, isActive ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}>
-              <Icon name={item.icon} />
-              <span>{t.navigation[item.key]}</span>
-            </Link>
+            <div key={item.key} className="flex flex-col">
+              <Link
+                to={`/admin/${item.key}`}
+                onClick={(e) => handleParentClick(e, item.key, isActive, !!item.subItems)}
+                className={cn(navButton, isActive && !item.subItems ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}
+              >
+                <Icon name={item.icon} />
+                <span className="flex-1">{t.navigation[item.key]}</span>
+                {item.subItems && (
+                  <span className={cn('transition-transform duration-200', isExpanded ? 'rotate-180' : '')}>
+                    <Icon name="chevronDown" />
+                  </span>
+                )}
+              </Link>
+
+              {item.subItems && isExpanded && (
+                <div className="mt-1 flex flex-col gap-1 pl-11 pr-2">
+                  {item.subItems.map((sub) => {
+                    const searchParams = new URLSearchParams(location.search)
+                    const currentTab = searchParams.get('tab') || item.subItems![0].key
+                    const isSubActive = currentTab === sub.key
+
+                    return (
+                      <Link
+                        key={sub.key}
+                        to={`/admin/${item.key}?tab=${sub.key}`}
+                        className={cn(
+                          'rounded-[10px] px-3 py-2 text-sm font-semibold transition-colors',
+                          isSubActive ? 'bg-coffee/10 text-coffee' : 'text-coffee/70 hover:bg-white/50 hover:text-coffee'
+                        )}
+                      >
+                        {sub.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )
         })}
       </nav>
