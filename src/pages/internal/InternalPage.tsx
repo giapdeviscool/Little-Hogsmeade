@@ -9,7 +9,7 @@ import { CategoryList } from './components/CategoryList'
 import { MenuItemList } from './components/MenuItemList'
 import { ToppingGroups } from './components/ToppingGroups'
 import { RecipesList } from './components/RecipesList'
-//import { StockConversion } from './components/StockConversion'
+import { StockConversion } from './components/StockConversion'
 
 export function InternalPage() {
   const [searchParams] = useSearchParams()
@@ -28,7 +28,7 @@ export function InternalPage() {
         { activeTab === 'menuItems' && <MenuItemList /> }
         { activeTab === 'toppingGroups' && <ToppingGroups /> }
         { activeTab === 'recipes' && <RecipesList /> }
-        {/* { activeTab === 'stock-conversion' && <StockConversion /> } */}
+        { activeTab === 'stock-conversion' && <StockConversion /> }
       </div>
     </div>
   )

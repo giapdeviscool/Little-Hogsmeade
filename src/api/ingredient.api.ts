@@ -12,6 +12,7 @@ export interface Ingredient {
   minStockLevel: number
   currentStock: number
   isActive: boolean
+  ingredientType: 'raw' | 'preparation'
 }
 
 export function getIngredients(params?: { search?: string, branchId?: string }) {
