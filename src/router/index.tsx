@@ -56,7 +56,7 @@ export function AppRouter() {
         <Route path="internal" element={<InternalPage />} />
         <Route path="owner" element={<OwnerPage />} />
         <Route path="cms" element={<CMSPage />} />
-        <Route path="loyalty/configuration" element={<LoyaltyConfigurationPage />} />
+        <Route path="loyalty" element={<LoyaltyConfigurationPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 

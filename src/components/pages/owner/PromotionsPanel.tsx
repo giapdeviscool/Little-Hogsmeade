@@ -3,7 +3,7 @@ import { dateToInput, formatCurrency } from '../../../utils/owner.utils'
 import { StatusBadge, ScopeBadge } from './OwnerFields'
 import { DataTable } from './DataTable'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Eye, Pencil, Power, PowerOff, Plus } from 'lucide-react'
+import { Eye, Pencil, Power, PowerOff, Plus, Ticket, BadgeDollarSign } from 'lucide-react'
 import { ConfirmDialog } from './ConfirmDialog'
 import { PromotionDialog } from './PromotionDialog'
 
@@ -71,8 +71,8 @@ export function PromotionsPanel({
           renderHeader={() => (
             <tr>
               <th className="px-4 py-3">Tên</th>
-              <th className="px-4 py-3">Thời gian</th>
-              <th className="px-4 py-3">Giảm</th>
+              <th className="px-4 py-3">Thời gian khuyến mãi</th>
+              <th className="px-4 py-3 flex items-center gap-1">Giảm <BadgeDollarSign className="inline h-4 w-4 " /></th>
               <th className="px-4 py-3">Phạm vi</th>
               <th className="px-4 py-3">Trạng thái</th>
               <th className="px-4 py-3 text-right">Thao tác</th>
@@ -86,6 +86,7 @@ export function PromotionsPanel({
                 onClick={() => onView(promotion)}
               >
                 <td className="px-4 py-3 font-semibold">
+                  <Ticket className="mr-1.5 inline h-4 w-4 text-coffee" />
                   {promotion.name}
                   {promotion.description && <div className="text-sm font-normal text-muted mt-0.5">{promotion.description}</div>}
                 </td>
