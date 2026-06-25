@@ -8,6 +8,13 @@ export function searchCustomerByPhone(phone: string) {
   return httpClient<ApiResponse<Customer[]>>(`/customers?phone=${phone}`)
 }
 
+export function quickRegisterCustomer(payload: { name: string; phone: string }) {
+  return httpClient<ApiResponse<{ _id: string; name: string; phone: string; points: number }>>('/customers/quick-register', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
 export function getCustomerMemberships(customerId: string) {
   return httpClient<ApiResponse<CustomerMembership[]>>(`/customer-memberships?customerId=${customerId}&_expand=tier`)
 }

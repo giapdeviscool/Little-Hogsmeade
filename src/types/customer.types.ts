@@ -7,6 +7,7 @@ export type Customer = {
   avatarUrl?: string
   createdAt: string
   source: string
+  isNew?: boolean
 }
 
 export type MembershipTier = {
