@@ -10,6 +10,7 @@ const paths: Record<string, string> = {
   logout: 'M10 17l5-5-5-5M15 12H3M21 4v16',
   bell: 'M18 16v-5a6 6 0 0 0-12 0v5l-2 2h16zM10 20h4',
   search: 'M11 19a8 8 0 1 1 5.7-2.3L21 21',
+  chevronDown: 'M6 9l6 6 6-6',
 }
 
 export function Icon({ name }: { name: string }) {

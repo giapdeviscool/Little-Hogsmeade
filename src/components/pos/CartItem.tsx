@@ -11,7 +11,7 @@ interface CartItemProps {
   onRemove: () => void;
 }
 
-export function CartItem({ id, name, note, price, quantity, onIncrease, onDecrease, onRemove }: CartItemProps) {
+export function CartItem({ name, note, price, quantity, onIncrease, onDecrease, onRemove }: CartItemProps) {
   return (
     <>
       <div className="group">

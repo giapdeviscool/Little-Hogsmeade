@@ -6,6 +6,9 @@ interface IngredientFormModalProps {
   onClose: () => void
   onSuccess: () => void
   ingredient?: Ingredient | null
+  branchId?: string
+  branches?: any[]
+  isChainOwner?: boolean
 }
 
 const CATEGORIES = [
@@ -16,17 +19,19 @@ const CATEGORIES = [
   'Khác'
 ]
 
-export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient }: IngredientFormModalProps) {
+export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient, branchId, branches, isChainOwner }: IngredientFormModalProps) {
   const isEditing = !!ingredient
 
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
     category: CATEGORIES[0],
+    ingredientType: 'raw',
     unit: 'g',
     importUnit: 'kg',
     conversionRate: 1000,
-    minStockLevel: 0
+    minStockLevel: 0,
+    branchId: branchId || ''
   })
 
   const [loading, setLoading] = useState(false)
@@ -39,20 +44,24 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient }: 
           name: ingredient.name,
           sku: ingredient.sku || '',
           category: ingredient.category || CATEGORIES[0],
+          ingredientType: ingredient.ingredientType || 'raw',
           unit: ingredient.unit,
           importUnit: ingredient.importUnit || '',
           conversionRate: ingredient.conversionRate || 1,
-          minStockLevel: ingredient.minStockLevel || 0
+          minStockLevel: ingredient.minStockLevel || 0,
+          branchId: ingredient.branchId || branchId || ''
         })
       } else {
         setFormData({
           name: '',
           sku: '',
           category: CATEGORIES[0],
+          ingredientType: 'raw',
           unit: 'g',
           importUnit: 'kg',
           conversionRate: 1000,
-          minStockLevel: 0
+          minStockLevel: 0,
+          branchId: branchId || (branches?.length ? branches[0].id : '')
         })
       }
       setError('')
@@ -67,10 +76,10 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient }: 
     setError('')
 
     try {
-      if (isEditing) {
+      if (ingredient) {
         await updateIngredient(ingredient.id, formData)
       } else {
-        await createIngredient(formData)
+        await createIngredient({ ...formData })
       }
       onSuccess()
     } catch (err: any) {
@@ -94,15 +103,46 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient }: 
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Tên nguyên liệu *</label>
-            <input
-              type="text"
-              required
-              className="w-full rounded-lg border border-line px-4 py-2"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
+          {isChainOwner && branches && branches.length > 0 && (
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Chi nhánh *</label>
+              <select
+                required
+                className="w-full rounded-lg border border-line px-4 py-2"
+                value={formData.branchId}
+                onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+              >
+                <option value="" disabled>Chọn chi nhánh</option>
+                {branches.map((b: any) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Tên nguyên liệu *</label>
+              <input
+                type="text"
+                required
+                className="w-full rounded-lg border border-line px-4 py-2"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Loại nguyên liệu *</label>
+              <select
+                className="w-full rounded-lg border border-line px-4 py-2"
+                value={formData.ingredientType}
+                onChange={(e) => setFormData({ ...formData, ingredientType: e.target.value as 'raw' | 'preparation' })}
+                disabled={isEditing}
+              >
+                <option value="raw">Nguyên liệu thô</option>
+                <option value="preparation">Bán thành phẩm</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -136,7 +176,7 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient }: 
                 className="w-full rounded-lg border border-line px-4 py-2"
                 value={formData.importUnit}
                 onChange={(e) => setFormData({ ...formData, importUnit: e.target.value })}
-                placeholder="VD: kg, can, hộp"
+                placeholder="VD: kg, can, hộp, mẻ"
               />
             </div>
             <div>
