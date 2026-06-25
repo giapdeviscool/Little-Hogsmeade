@@ -50,6 +50,7 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
           </div>
           <div>
             <h3 className="font-bold text-coffee text-xs">{customer.fullName}</h3>
+            <span className="text-[10px] text-muted">{customer.phone}</span>
           </div>
         </div>
         <button 
@@ -66,16 +67,29 @@ export function CustomerSearch({ customer, onSelect, onClear }: CustomerSearchPr
 
   return (
     <div className="relative">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
-        <input 
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Tìm SĐT khách hàng (từ 3 số)..."
-          className="w-full h-9 pl-8 pr-3 bg-white border border-line rounded-lg text-xs outline-none focus:border-coffee transition-colors"
-        />
-        {loading && <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-coffee border-t-transparent rounded-full animate-spin" />}
+      <div className="flex items-center w-full transition-all duration-300">
+        <div className={`relative transition-all duration-300 flex-1 ${shouldShrink ? 'max-w-[70%]' : 'max-w-full'}`}>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
+          <input 
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tìm SĐT khách hàng (từ 3 số)..."
+            className="w-full h-9 pl-8 pr-3 bg-white border border-line rounded-lg text-xs outline-none focus:border-coffee transition-colors"
+          />
+          {loading && <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-coffee border-t-transparent rounded-full animate-spin" />}
+        </div>
+        
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className={`bg-coffee text-white text-[11px] font-bold h-9 rounded-lg flex items-center justify-center gap-1.5 transition-all duration-300 overflow-hidden shrink-0 ${
+            shouldShrink ? 'w-[28%] opacity-100 ml-2 px-2' : 'w-0 opacity-0 ml-0 p-0 pointer-events-none'
+          }`}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Thêm mới</span>
+        </button>
       </div>
       
       {isOpen && results.length > 0 && (
