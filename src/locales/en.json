@@ -328,6 +328,21 @@
     "pageTitle": "Customer List",
     "pageDescription": "Look up members, tier level, accumulated points and total spend by branch."
   },
+  "loyalty": {
+    "sectionLabel": "Customer & Loyalty Management (CRM)",
+    "pageTitle": "Loyalty Configuration",
+    "pageDescription": "Configure earning rules and manage the reward catalog customers can redeem with points.",
+    "tabs": {
+      "earning": {
+        "label": "Earning Rules",
+        "description": "Exchange rate from spend to reward points"
+      },
+      "rewards": {
+        "label": "Redemption & Rewards",
+        "description": "Vouchers, free products and active status"
+      }
+    }
+  },
   "landing": {
     "loadError": "Could not load Landing Page.",
     "preview": "Preview",

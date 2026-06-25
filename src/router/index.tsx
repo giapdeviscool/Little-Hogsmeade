@@ -32,6 +32,7 @@ import { PosPage } from '@/pages/pos/index'
 import { InvoicePage } from '@/pages/invoices/index'
 import { ShiftOpeningPage } from '../pages/pos/ShiftOpeningPage'
 import { ShiftClosingPage } from '../pages/pos/ShiftClosingPage'
+import { LoyaltyConfigurationPage } from '@/pages/loyalty/LoyaltyConfigurationPage'
 
 export function AppRouter() {
   return (
@@ -63,7 +64,7 @@ export function AppRouter() {
         <Route path="owner" element={<OwnerPage />} />
         <Route path="cms" element={<CMSPage />} />
         <Route path="customers" element={<CustomerListPage />} />
-        <Route path="loyalty/*" element={<Navigate to={ROUTES.adminCustomers} replace />} />
+        <Route path="loyalty" element={<LoyaltyConfigurationPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
