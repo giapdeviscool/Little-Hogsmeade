@@ -1,14 +1,8 @@
 import { useState } from "react";
 import type { Branch, BranchPayload } from "../../../types";
-import { StatusBadge } from "./OwnerFields";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-  Tooltip,
-} from "@/components/ui/tooltip";
-import { Eye, Pencil, Power, PowerOff, Plus } from "lucide-react";
-import { DataTable } from "./DataTable";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Plus, Store } from "lucide-react";
+import { BranchCard } from "./BranchCard";
 import { BranchDialog } from "./BranchDialog";
 import { BranchDetailDialog } from "./BranchDetailDialog";
 
@@ -55,106 +49,25 @@ export function BranchesPanel({
           </button>
         </div>
 
-        <DataTable
-          data={branches}
-          colSpan={6}
-          emptyMessage="Chưa có chi nhánh."
-          renderHeader={() => (
-            <tr>
-              <th className="px-3 py-3">Tên</th>
-              <th className="px-3 py-3">Địa chỉ</th>
-              <th className="px-3 py-3">Số ĐT</th>
-              <th className="px-3 py-3">GPS</th>
-              <th className="px-3 py-3">Trạng thái</th>
-              <th className="px-3 py-3 text-right">Thao tác</th>
-            </tr>
-          )}
-          renderRow={(branch) => (
-            <tr
-              key={branch.id}
-              className="cursor-pointer border-t border-line bg-white hover:bg-cream"
-              onClick={() => setDetailBranch(branch)}
-            >
-              <td className="px-3 py-3 font-semibold">{branch.name}</td>
-              <td className="max-w-[260px] px-3 py-3 text-muted">
-                {branch.address}
-              </td>
-              <td className="px-3 py-3">{branch.phone}</td>
-              <td className="px-3 py-3 text-xs text-muted">
-                {branch.lat.toFixed(4)}, {branch.lng.toFixed(4)}
-              </td>
-              <td className="px-3 py-3">
-                <StatusBadge status={branch.status} />
-              </td>
-              <td className="px-3 py-3 text-right">
-                <div className="flex justify-end gap-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetailBranch(branch);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Xem chi tiết</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(branch);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Chỉnh sửa chi nhánh</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                          branch.status === "active"
-                            ? "text-red-700 hover:bg-red-50"
-                            : "text-green-700 hover:bg-green-50"
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleStatus(branch.id);
-                        }}
-                      >
-                        {branch.status === "active" ? (
-                          <PowerOff className="h-4 w-4" />
-                        ) : (
-                          <Power className="h-4 w-4" />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {branch.status === "active"
-                          ? "Vô hiệu hóa chi nhánh"
-                          : "Kích hoạt chi nhánh"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </td>
-            </tr>
-          )}
-        />
+        {branches.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line bg-cream py-16 text-center">
+            <Store className="mb-3 h-10 w-10 text-latte" />
+            <p className="text-base font-semibold text-coffee">Chưa có chi nhánh</p>
+            <p className="mt-1 text-sm text-muted">Bắt đầu bằng cách tạo chi nhánh đầu tiên.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {branches.map((branch) => (
+              <BranchCard
+                key={branch.id}
+                branch={branch}
+                onView={() => setDetailBranch(branch)}
+                onEdit={() => onEdit(branch)}
+                onToggle={() => onToggleStatus(branch.id)}
+              />
+            ))}
+          </div>
+        )}
 
         <BranchDialog
           isOpen={isModalOpen}
