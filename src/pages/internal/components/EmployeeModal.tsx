@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Employee, CreateEmployeePayload, UpdateEmployeePayload, Role, Branch } from '../../../types'
 import { createEmployee, updateEmployee } from '../../../api/employee.api'
 import { getAuthSession } from '../../../store/auth.store'
+import { CurrencyInput } from '../../../components/ui/CurrencyInput'
 
 interface Props {
   employee?: Employee | null
@@ -193,7 +194,7 @@ export function EmployeeModal({ employee, roles, branches, onClose, onSuccess }:
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium">Mức lương cơ bản</label>
-              <input type="number" name="baseSalary" value={formData.baseSalary} onChange={handleChange} className="w-full rounded-[14px] border border-line px-4 py-2" placeholder="VD: 5000000" />
+              <CurrencyInput name="baseSalary" value={formData.baseSalary} onValueChange={(val) => setFormData(prev => ({ ...prev, baseSalary: val }))} className="w-full rounded-[14px] border border-line px-4 py-2" placeholder="VD: 5000000" />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Ngày vào làm</label>

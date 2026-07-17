@@ -3,6 +3,7 @@ import { Card } from '../../../components/ui/Card'
 import { createMenuItem } from '../../../api/menu-item.api'
 import { getBranches } from '../../../api/chain.api'
 import type { Category, Branch } from '../../../types'
+import { CurrencyInput } from '../../../components/ui/CurrencyInput'
 
 interface AddMenuItemModalProps {
   isOpen: boolean
@@ -113,13 +114,11 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
 
             <div>
               <label className="mb-1 block text-sm font-medium">Giá bán (VND) <span className="text-red-500">*</span></label>
-              <input
-                type="number"
+              <CurrencyInput
                 required
-                min="0"
                 className="w-full rounded-lg border border-line px-3 py-2"
                 value={formData.basePrice}
-                onChange={e => setFormData({ ...formData, basePrice: e.target.value })}
+                onValueChange={val => setFormData({ ...formData, basePrice: val })}
                 placeholder="VD: 35000"
               />
             </div>
