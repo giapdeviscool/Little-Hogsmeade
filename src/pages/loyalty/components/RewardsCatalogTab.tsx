@@ -21,7 +21,7 @@ import {
 } from './LoyaltySharedUI'
 import { RewardDialog } from './RewardDialog'
 
-type TypeFilter = 'all' | 'VOUCHER' | 'FREE_PRODUCT'
+type TypeFilter = 'all' | 'percent' | 'fixed' | 'gift'
 type StatusFilter = 'all' | 'active' | 'inactive'
 
 const PAGE_SIZE = 10
@@ -71,7 +71,7 @@ export function RewardsCatalogTab() {
         page,
         limit: PAGE_SIZE,
         search: debouncedSearch || undefined,
-        reward_type: typeFilter === 'all' ? undefined : typeFilter,
+        discount_type: typeFilter === 'all' ? undefined : typeFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
       })
 
@@ -198,8 +198,9 @@ export function RewardsCatalogTab() {
             }}
           >
             <option value="all">Tất cả loại</option>
-            <option value="VOUCHER">Voucher</option>
-            <option value="FREE_PRODUCT">Sản phẩm miễn phí</option>
+            <option value="percent">Giảm Phần trăm (%)</option>
+            <option value="fixed">Giảm Số tiền (VNĐ)</option>
+            <option value="gift">Sản phẩm miễn phí</option>
           </select>
           <select
             className="h-10 rounded-lg border border-line bg-white px-3 text-sm"
@@ -248,7 +249,7 @@ export function RewardsCatalogTab() {
                 <td className="px-4 py-3">
                   <div className="flex items-start gap-3">
                     <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-beige text-coffee">
-                      {reward.type === 'VOUCHER' ? <Ticket className="h-4 w-4" /> : <Gift className="h-4 w-4" />}
+                      {reward.discountType === 'gift' ? <Gift className="h-4 w-4" /> : <Ticket className="h-4 w-4" />}
                     </span>
                     <div>
                       <p className="font-semibold text-coffee">{reward.name}</p>
@@ -257,7 +258,7 @@ export function RewardsCatalogTab() {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <RewardTypeBadge type={reward.type} />
+                  <RewardTypeBadge type={reward.discountType} />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className="font-semibold text-[#d99a4b]">{formatPoints(reward.pointsRequired)}</span>

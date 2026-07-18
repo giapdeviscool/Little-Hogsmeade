@@ -13,7 +13,7 @@ import type {
   PointTransaction,
   PointTransactionType,
 } from '../types/customer.types'
-import type { Promotion } from '../types/chain.types'
+import type { Voucher } from '../types/chain.types'
 
 const TIER_CODES: MembershipTierCode[] = ['MEMBER', 'SILVER', 'GOLD', 'VIP']
 
@@ -194,6 +194,17 @@ export function searchCustomerByPhone(phone: string) {
   return httpClient<ApiResponse<Customer[]>>(`/customers?phone=${phone}`)
 }
 
+export function checkCustomerPhone(phone: string) {
+  return httpClient<{ status: 'not_found' | 'no_pin' | 'has_pin', customer?: { id: string, fullName: string } }>(`/customers/auth/check-phone?phone=${phone}`)
+}
+
+export function customerLogin(payload: { phone: string, pin: string, fullName?: string }) {
+  return httpClient<ApiResponse<CustomerProfileApiRecord>>('/customers/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
 export function quickRegisterCustomer(payload: { name: string; phone: string }) {
   return httpClient<ApiResponse<{ _id: string; name: string; phone: string; points: number }>>('/customers/quick-register', {
     method: 'POST',
@@ -227,6 +238,25 @@ export function updateMembershipPoints(id: string, totalPoints: number) {
   })
 }
 
-export function getActiveCampaigns() {
-  return httpClient<ApiResponse<Promotion[]>>('/campaigns?isActive=true')
+export function getActiveVouchers() {
+  return httpClient<ApiResponse<Voucher[]>>('/vouchers?isActive=true')
+}
+
+
+export function getCustomerVouchers(customerId: string) {
+  return httpClient<ApiResponse<Voucher[]>>('/vouchers?isActive=true&customerId=' + customerId)
+}
+
+export function redeemLoyaltyRewardApi(customerId: string, rewardId: string) {
+  return httpClient<ApiResponse<any>>('/customers/' + customerId + '/loyalty/redeem', {
+    method: 'POST',
+    body: JSON.stringify({ rewardId })
+  })
+}
+
+export function updateCustomerMembershipApi(customerId: string, payload: { totalPoints?: number, tierId?: string }) {
+  return httpClient<ApiResponse<any>>('/customers/' + customerId + '/membership', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  })
 }

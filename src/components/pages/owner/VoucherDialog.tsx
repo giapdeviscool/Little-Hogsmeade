@@ -6,15 +6,15 @@ import {
 } from "@/components/ui/dialog";
 import { DateField, Field, NumberField, TextField, StatusBadge, DetailRow } from "./OwnerFields";
 import { dateToInput } from "../../../utils/owner.utils";
-import type { Branch, Promotion, PromotionPayload } from "../../../types";
+import type { Branch, Voucher, VoucherPayload } from "../../../types";
 
-type PromotionDialogMode = "create" | "edit" | "view";
+type VoucherDialogMode = "create" | "edit" | "view";
 
-export function PromotionDialog({
+export function VoucherDialog({
   isOpen,
   onClose,
   mode,
-  promotion,
+  Voucher: voucher,
   form,
   branches,
   saving,
@@ -23,20 +23,20 @@ export function PromotionDialog({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  mode: PromotionDialogMode;
-  promotion: Promotion | null;
-  form: PromotionPayload;
+  mode: VoucherDialogMode;
+  Voucher: Voucher | null;
+  form: VoucherPayload;
   branches: Branch[];
   saving: boolean;
-  onFormChange: (form: PromotionPayload) => void;
+  onFormChange: (form: VoucherPayload) => void;
   onSave: () => void;
 }) {
   const isViewMode = mode === "view";
-  const title = mode === "create" ? "Tạo khuyến mãi mới" : mode === "edit" ? "Sửa khuyến mãi" : promotion?.name || "Chi tiết khuyến mãi";
+  const title = mode === "create" ? "Tạo Voucher mới" : mode === "edit" ? "Sửa Voucher" : voucher?.name || "Chi tiết Voucher";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-coffee">
             {title}
@@ -44,38 +44,74 @@ export function PromotionDialog({
         </DialogHeader>
 
         <div className="mt-2 space-y-4">
-          {isViewMode && promotion ? (
-            <>
-              <DetailRow label="Mô tả" value={promotion.description || "—"} />
-              <DetailRow
-                label="Thời gian"
-                value={`${dateToInput(new Date(promotion.startDate))} → ${dateToInput(new Date(promotion.endDate))}`}
-              />
-              <DetailRow
-                label="Giảm giá"
-                value={promotion.discountType === "percent" ? `${promotion.discountValue}%` : `${promotion.discountValue.toLocaleString("vi-VN")} ₫`}
-              />
-              <DetailRow
-                label="Phạm vi"
-                value={promotion.scope === "global" ? "Toàn chuỗi" : `${promotion.appliedBranches?.length || 0} chi nhánh`}
-              />
-              <DetailRow
-                label="Trạng thái"
-                value={<StatusBadge status={promotion.isActive ? "active" : "inactive"} />}
-              />
-            </>
+          {isViewMode && voucher ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <DetailRow label="Tên Voucher" value={voucher.name} />
+                <DetailRow label="Mã nhập" value={voucher.requiresCode ? (voucher.code || "Có mã (chưa thiết lập)") : "Tự động áp dụng"} />
+                <DetailRow label="Mô tả" value={voucher.description || "—"} />
+                <DetailRow
+                  label="Thời gian"
+                  value={`${dateToInput(new Date(voucher.startDate))} → ${dateToInput(new Date(voucher.expireDate))}`}
+                />
+              </div>
+              <div className="space-y-4">
+                <DetailRow
+                  label="Giảm giá"
+                  value={voucher.discountType === "percent" ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString("vi-VN")} ₫`}
+                />
+                <DetailRow
+                  label="Điều kiện"
+                  value={`Tối thiểu ${voucher.minOrderValue?.toLocaleString("vi-VN")} ₫`}
+                />
+                <DetailRow
+                  label="Giới hạn dùng"
+                  value={`${voucher.usedCount} / ${voucher.maxUses} lượt`}
+                />
+                <DetailRow
+                  label="Trạng thái"
+                  value={<StatusBadge status={voucher.isActive ? "active" : "inactive"} />}
+                />
+              </div>
+            </div>
           ) : (
             <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <TextField
+                  label="Tên Voucher"
+                  value={form.name}
+                  onChange={(value) => onFormChange({ ...form, name: value })}
+                />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mt-7">
+                    <input
+                      type="checkbox"
+                      id="requiresCode"
+                      checked={form.requiresCode}
+                      onChange={(e) => onFormChange({ ...form, requiresCode: e.target.checked })}
+                      className="w-4 h-4 text-coffee"
+                    />
+                    <label htmlFor="requiresCode" className="text-sm font-semibold text-coffee">
+                      Yêu cầu nhập mã
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {form.requiresCode && (
+                <TextField
+                  label="Mã giảm giá (code)"
+                  value={form.code ?? ""}
+                  onChange={(value) => onFormChange({ ...form, code: value.toUpperCase() })}
+                />
+              )}
+
               <TextField
-                label="Tên khuyến mãi"
-                value={form.name}
-                onChange={(value) => onFormChange({ ...form, name: value })}
-              />
-              <TextField
-                label="Mô tả"
+                label="Mô tả chi tiết"
                 value={form.description ?? ""}
                 onChange={(value) => onFormChange({ ...form, description: value })}
               />
+
               <div className="grid grid-cols-2 gap-3">
                 <DateField
                   label="Bắt đầu"
@@ -84,13 +120,14 @@ export function PromotionDialog({
                 />
                 <DateField
                   label="Kết thúc"
-                  value={form.endDate}
-                  onChange={(value) => onFormChange({ ...form, endDate: value })}
+                  value={form.expireDate}
+                  onChange={(value) => onFormChange({ ...form, expireDate: value })}
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <NumberField
-                  label="Giảm giá"
+                  label="Mức giảm"
                   value={form.discountValue}
                   onChange={(value) => onFormChange({ ...form, discountValue: value })}
                 />
@@ -101,7 +138,7 @@ export function PromotionDialog({
                     onChange={(event) =>
                       onFormChange({
                         ...form,
-                        discountType: event.target.value as PromotionPayload["discountType"],
+                        discountType: event.target.value as VoucherPayload["discountType"],
                       })
                     }
                   >
@@ -110,14 +147,28 @@ export function PromotionDialog({
                   </select>
                 </Field>
               </div>
-              <Field label="Phạm vi">
+
+              <div className="grid grid-cols-2 gap-3">
+                <NumberField
+                  label="Đơn tối thiểu (VNĐ)"
+                  value={form.minOrderValue ?? 0}
+                  onChange={(value) => onFormChange({ ...form, minOrderValue: value })}
+                />
+                <NumberField
+                  label="Giới hạn số lượt"
+                  value={form.maxUses ?? 100}
+                  onChange={(value) => onFormChange({ ...form, maxUses: value })}
+                />
+              </div>
+
+              <Field label="Phạm vi áp dụng">
                 <select
                   className="h-9 rounded-lg border border-line bg-white px-3 text-sm"
                   value={form.scope}
                   onChange={(event) =>
                     onFormChange({
                       ...form,
-                      scope: event.target.value as PromotionPayload["scope"],
+                      scope: event.target.value as VoucherPayload["scope"],
                       appliedBranches: [],
                     })
                   }
@@ -163,7 +214,7 @@ export function PromotionDialog({
                 disabled={saving}
                 onClick={onSave}
               >
-                {mode === "create" ? "Tạo khuyến mãi" : "Lưu"}
+                {mode === "create" ? "Tạo Voucher" : "Lưu"}
               </button>
             ) : null}
           </div>
@@ -172,3 +223,4 @@ export function PromotionDialog({
     </Dialog>
   );
 }
+

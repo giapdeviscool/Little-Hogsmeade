@@ -5,6 +5,8 @@ import { loyaltyTabKeys } from './loyalty.constants'
 import type { LoyaltyTab } from './loyalty.types'
 import { EarnRulesTab } from './components/EarnRulesTab'
 import { RewardsCatalogTab } from './components/RewardsCatalogTab'
+import { VouchersTab } from './components/VouchersTab'
+import { TiersTab } from './components/TiersTab'
 
 export function LoyaltyConfigurationPage() {
   const { t } = useLocale()
@@ -39,7 +41,9 @@ export function LoyaltyConfigurationPage() {
 
       <div className="mt-7 space-y-6">
         {activeTab === 'earning' && <EarnRulesTab />}
+        {activeTab === 'tiers' && <TiersTab />}
         {activeTab === 'rewards' && <RewardsCatalogTab />}
+        {activeTab === 'vouchers' && <VouchersTab />}
       </div>
     </>
   )

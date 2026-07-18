@@ -18,8 +18,8 @@ export type {
   ChainDashboard,
   MenuSyncPreview,
   MenuSyncResult,
-  Promotion,
-  PromotionPayload,
+  Voucher,
+  VoucherPayload,
 } from "./chain.types";
 export type {
   Banner,
@@ -67,3 +67,4 @@ export type {
 export * from "./customer.types";
 export * from "./menu.types";
 export * from "./recipe.types";
+export * from "./loyalty.types";

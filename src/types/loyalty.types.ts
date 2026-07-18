@@ -1,4 +1,5 @@
-export type RewardType = 'VOUCHER' | 'FREE_PRODUCT'
+export type RewardType = 'percent' | 'fixed' | 'gift'
+export type TypeFilter = 'all' | 'percent' | 'fixed' | 'gift'
 
 export type LoyaltyEarnConfig = {
   id?: string
@@ -36,18 +37,18 @@ export type LoyaltyConfigUpdatePayload = {
 export type LoyaltyReward = {
   id: string
   name: string
-  type: RewardType
   pointsRequired: number
-  voucherAmount?: number
-  minOrderAmount?: number
-  menuItemId?: string
-  menuItemName?: string
+  discountValue: number
+  discountType: 'percent' | 'fixed' | 'gift'
+  minOrderValue: number
+  expiryDays: number
   description?: string
+  imageUrl?: string
   isActive: boolean
   isDeleted?: boolean
 }
 
-export type LoyaltyRewardPayload = Omit<LoyaltyReward, 'id' | 'isDeleted' | 'menuItemName'>
+export type LoyaltyRewardPayload = Omit<LoyaltyReward, 'id' | 'isDeleted'>
 
 export type LoyaltyRewardStatus = 'active' | 'inactive'
 
@@ -55,34 +56,33 @@ export type LoyaltyRewardApiRecord = {
   id: string
   branch_id?: string
   name: string
-  required_points: number
-  reward_type: RewardType
-  discount_value?: number | null
-  min_order_value?: number | null
-  product_id?: string | null
-  product?: { id: string; name: string } | null
-  product_name?: string | null
+  pointsRequired: number
+  discountValue: number
+  discountType: 'percent' | 'fixed' | 'gift'
+  minOrderValue: number
+  expiryDays: number
   description?: string | null
-  status: LoyaltyRewardStatus
-  is_deleted?: boolean
+  imageUrl?: string | null
+  isActive: boolean
+  isDeleted?: boolean
 }
 
 export type LoyaltyRewardUpsertPayload = {
   name: string
-  required_points: number
-  reward_type: RewardType
-  discount_value?: number | null
-  min_order_value?: number | null
-  product_id?: string | null
+  pointsRequired: number
+  discountValue: number
+  discountType: 'percent' | 'fixed' | 'gift'
+  minOrderValue: number
+  expiryDays: number
   description?: string
-  status: LoyaltyRewardStatus
+  isActive: boolean
 }
 
 export type LoyaltyRewardListParams = {
   page?: number
   limit?: number
   search?: string
-  reward_type?: RewardType
+  discount_type?: TypeFilter
   status?: 'active' | 'inactive'
   branchId?: string
 }
@@ -99,6 +99,6 @@ export type LoyaltyRewardListResult = {
 
 export type RewardDialogMode = 'create' | 'edit'
 
-export type RewardFormErrors = Partial<Record<'name' | 'pointsRequired' | 'voucherAmount' | 'menuItemId', string>>
+export type RewardFormErrors = Partial<Record<keyof LoyaltyRewardPayload, string>>
 
 export type EarnConfigErrors = Partial<Record<'spendAmount' | 'pointsEarned' | 'pointExpiryDays', string>>
