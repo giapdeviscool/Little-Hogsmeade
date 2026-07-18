@@ -1,40 +1,81 @@
 import { useEffect, useState, useMemo } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getPublicMenu, type PublicCategory, type PublicMenuItem } from "../../../api/public-menu.api"
+import {
+  getPublicMenu,
+  getPublicBranchMenu,
+  getBranchesPublic,
+  type PublicCategory,
+  type PublicMenuItem,
+  type PublicMenuResponse,
+} from "../../../api/public-menu.api"
 import { MenuCategorySection } from "../../../components/menu/MenuCategorySection"
+import type { Branch } from "../../../types"
 
 type State =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "loaded"; categories: PublicCategory[]; menuItems: PublicMenuItem[] }
 
-export function FullMenuSection() {
+export function PublicMenuSection() {
+  const [activeTab, setActiveTab] = useState<"global" | string>("global")
+  const [branches, setBranches] = useState<Branch[]>([])
   const [state, setState] = useState<State>({ status: "loading" })
+
+  useEffect(() => {
+    let active = true
+    getBranchesPublic()
+      .then((res) => {
+        if (!active) return
+        const body = (res as any).data ?? res
+        const items: Branch[] = body?.items ?? []
+        setBranches(items)
+      })
+      .catch(() => {
+        // silently fail — branches tabs are a progressive enhancement
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
     setState({ status: "loading" })
 
-    getPublicMenu()
-      .then((res) => {
-        if (!active) return
-        const data = res.data?.data ?? res.data
-        const categories: PublicCategory[] = data?.categories ?? []
-        const menuItems: PublicMenuItem[] = data?.menuItems ?? []
-        setState({ status: "loaded", categories, menuItems })
-      })
-      .catch(() => {
-        if (!active) return
-        setState({
-          status: "error",
-          message: "Không thể tải thực đơn lúc này, vui lòng thử lại sau.",
+    if (activeTab === "global") {
+      getPublicMenu()
+        .then((res) => {
+          if (!active) return
+          const { categories = [], menuItems = [] } = res.data as PublicMenuResponse
+          setState({ status: "loaded", categories, menuItems })
         })
-      })
+        .catch(() => {
+          if (!active) return
+          setState({
+            status: "error",
+            message: "Không thể tải thực đơn lúc này, vui lòng thử lại sau.",
+          })
+        })
+    } else {
+      getPublicBranchMenu(activeTab)
+        .then((res) => {
+          if (!active) return
+          const { categories = [], menuItems = [] } = res.data as PublicMenuResponse
+          setState({ status: "loaded", categories, menuItems })
+        })
+        .catch(() => {
+          if (!active) return
+          setState({
+            status: "error",
+            message: "Không thể tải thực đơn lúc này, vui lòng thử lại sau.",
+          })
+        })
+    }
 
     return () => {
       active = false
     }
-  }, [])
+  }, [activeTab])
 
   const categoriesWithItems = useMemo(() => {
     if (state.status !== "loaded") return []
@@ -103,9 +144,38 @@ export function FullMenuSection() {
   return (
     <section className="py-16 md:py-20" id="full-menu">
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
+        {/* Branch tabs */}
+        <div className="sticky top-20 z-50 -mx-4 mb-6 bg-white/95 px-4 backdrop-blur md:-mx-8 md:px-8 lg:-mx-14 lg:px-14">
+          <div className="flex gap-2 border-b border-line py-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setActiveTab("global")}
+              className={`shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition-colors ${
+                activeTab === "global"
+                  ? "border-coffee bg-coffee text-white"
+                  : "border-line bg-white text-muted hover:border-coffee hover:text-coffee"
+              }`}
+            >
+              Thực đơn chung
+            </button>
+            {branches.map((branch) => (
+              <button
+                key={branch.id}
+                onClick={() => setActiveTab(branch.id)}
+                className={`shrink-0 rounded-full border px-5 py-2 text-sm font-semibold transition-colors ${
+                  activeTab === branch.id
+                    ? "border-coffee bg-coffee text-white"
+                    : "border-line bg-white text-muted hover:border-coffee hover:text-coffee"
+                }`}
+              >
+                {branch.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Category nav */}
-        <div className="sticky top-20 z-40 -mx-4 mb-10 overflow-x-auto bg-white/95 px-4 backdrop-blur md:-mx-8 md:px-8 lg:-mx-14 lg:px-14">
-          <div className="flex gap-2 border-b border-line pb-3">
+        <div className="sticky top-[136px] z-40 -mx-4 mb-10 overflow-x-auto bg-white/95 px-4 backdrop-blur md:-mx-8 md:px-8 lg:-mx-14 lg:px-14">
+          <div className="flex gap-2 border-b border-line py-3">
             {categoriesWithItems.map(({ category }) => (
               <a
                 key={category.id}

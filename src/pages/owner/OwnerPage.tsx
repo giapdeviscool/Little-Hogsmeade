@@ -10,8 +10,7 @@ import {
 } from "../../components/pages/owner/OwnerShell";
 import { PricingPanel } from "../../components/pages/owner/PricingPanel";
 import { PromotionsPanel } from "../../components/pages/owner/PromotionsPanel";
-import { SyncPanel } from "../../components/pages/owner/SyncPanel";
-import { ConfirmDialog } from "../../components/pages/owner/ConfirmDialog";
+import { BranchMenuPanel } from "../../components/pages/owner/BranchMenuPanel";
 import {
   addDays,
   dateToInput,
@@ -77,7 +76,7 @@ export function OwnerPage() {
   const [branchForm, setBranchForm] = useState<BranchPayload>(emptyBranchForm);
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
-  const [confirmSyncOpen, setConfirmSyncOpen] = useState(false);
+
   const [promotionForm, setPromotionForm] =
     useState<PromotionPayload>(emptyPromotionForm);
   const [pricingItemId, setPricingItemId] = useState("");
@@ -154,11 +153,13 @@ export function OwnerPage() {
       if (branchForm.imageFile) {
         const { uploadImage } = await import("../../api/cms.api");
         const uploadRes = await uploadImage(branchForm.imageFile, "bistro-cafe/branches");
-        imageUrl = uploadRes.data.secure_url;
+        if (uploadRes?.data?.secure_url) {
+          imageUrl = uploadRes.data.secure_url;
+        }
       }
 
       // Build payload gửi BE — loại bỏ imageFile vì chỉ tồn tại ở client
-      const payload = {
+      const payload: BranchPayload = {
         name: branchForm.name,
         address: branchForm.address,
         phone: branchForm.phone,
@@ -170,13 +171,14 @@ export function OwnerPage() {
         status: branchForm.status,
         allowLocalPricingOverride: branchForm.allowLocalPricingOverride,
         imageUrl,
+        imageFile: null, // Always null when sending to API
       };
 
       if (editingBranchId) {
-        await chainApi.updateBranch(editingBranchId, payload);
+        await chainApi.updateBranch(editingBranchId, payload as BranchPayload);
         setNotice("Đã cập nhật chi nhánh.");
       } else {
-        await chainApi.createBranch(payload);
+        await chainApi.createBranch(payload as BranchPayload);
         setNotice("Đã tạo chi nhánh mới.");
       }
       setBranchForm(emptyBranchForm);
@@ -224,7 +226,7 @@ export function OwnerPage() {
       setError("");
       const response = await chainApi.syncMenu();
       setNotice(
-        `Đã đồng bộ ${response.data?.syncedBranches ?? response.data?.activeBranches ?? 0} chi nhánh đang hoạt động.`,
+        `Đã đồng bộ ${response.data?.syncedBranches ?? 0} chi nhánh đang hoạt động.`,
       );
       await loadModule();
     } catch (err) {
@@ -387,6 +389,7 @@ export function OwnerPage() {
       />
       <OwnerTabs activeTab={activeTab} onChange={setActiveTab} />
 
+
       {loading ? <OwnerLoading /> : null}
       {!loading && activeTab === "dashboard" ? (
         <DashboardPanel
@@ -415,13 +418,14 @@ export function OwnerPage() {
           onToggleStatus={(id) => void toggleBranchStatus(id)}
         />
       ) : null}
-      {!loading && activeTab === "sync" ? (
-        <SyncPanel
+      {!loading && activeTab === "branch-menu" ? (
+        <BranchMenuPanel
+          branches={activeBranches}
           config={config}
           saving={saving}
           overrideBranchesCount={overrideBranches.length}
-          onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
           onSync={() => void runSyncMenu()}
+          onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
         />
       ) : null}
       {!loading && activeTab === "pricing" ? (

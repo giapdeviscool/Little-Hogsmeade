@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { BookingSection } from '../landing/components/BookingSection'
 import { EventSection } from '../landing/components/EventSection'
 import { FeaturedMenuSection } from '../landing/components/FeaturedMenuSection'
-import { FullMenuSection } from './components/FullMenuSection'
+import { PublicMenuSection } from './components/PublicMenuSection'
 import { StoreAndMemberSection } from '../landing/components/StoreAndMemberSection'
 import { StorySection } from '../landing/components/StorySection'
 import {
@@ -55,7 +55,7 @@ export function CustomerMenuPage() {
   return (
     <>
       <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={query} setQuery={setQuery} />
-      <FullMenuSection />
+      <PublicMenuSection />
     </>
   )
 }

@@ -7,7 +7,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { TriangleAlert } from "lucide-react";
 import { GlobalMenuPanel } from "./GlobalMenuPanel";
 
-function EditableLoyaltyEarnField({ saving }: { saving: boolean }) {
+export function EditableLoyaltyEarnField({ saving }: { saving: boolean }) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<LoyaltyEarnConfig | null>(null);
   const [localSpend, setLocalSpend] = useState(10000);
@@ -123,6 +123,94 @@ function EditableLoyaltyEarnField({ saving }: { saving: boolean }) {
   );
 }
 
+export function PricingToggleSection({
+  config,
+  saving,
+  overrideBranchesCount = 0,
+  onSaveConfig,
+}: {
+  config: ChainConfig | null;
+  saving: boolean;
+  overrideBranchesCount?: number;
+  onSaveConfig: (config: Partial<ChainConfig>) => void;
+}) {
+  const [confirmGlobalPricing, setConfirmGlobalPricing] = useState(false);
+
+  const globalPricingEnabled = config?.globalPricingEnabled ?? true;
+
+  return (
+    <>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-coffee">
+            Trạng thái hiện tại:{" "}
+            <span
+              className={
+                globalPricingEnabled ? "text-green-600" : "text-muted"
+              }
+            >
+              {globalPricingEnabled ? "Đang bật" : "Đang tắt"}
+            </span>
+          </p>
+          {globalPricingEnabled ? (
+            <p className="text-xs text-muted">
+              Giá chuẩn đang được áp dụng cho toàn chuỗi.
+            </p>
+          ) : (
+            <p className="text-xs text-muted">
+              Các chi nhánh đang dùng giá riêng của mình.
+            </p>
+          )}
+        </div>
+        <button
+          className={`h-9 rounded-lg px-4 text-sm font-semibold transition-colors disabled:opacity-50 ${
+            globalPricingEnabled
+              ? "border border-line text-muted hover:bg-beige"
+              : "bg-coffee text-white hover:bg-coffee/90"
+          }`}
+          disabled={saving}
+          onClick={() => setConfirmGlobalPricing(true)}
+        >
+          {globalPricingEnabled
+            ? "Tắt chính sách giá toàn chuỗi"
+            : "Bật chính sách giá toàn chuỗi"}
+        </button>
+      </div>
+
+      {globalPricingEnabled && overrideBranchesCount > 0 && (
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            {overrideBranchesCount} chi nhánh đang được phép tự set giá
+            riêng — chính sách giá toàn chuỗi không áp dụng cho các chi
+            nhánh này.
+          </p>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={confirmGlobalPricing}
+        title={
+          globalPricingEnabled
+            ? "Tắt chính sách giá toàn chuỗi?"
+            : "Bật chính sách giá toàn chuỗi?"
+        }
+        description={
+          globalPricingEnabled
+            ? "Sau khi tắt, mỗi chi nhánh sẽ dùng giá riêng của mình. Giá trên menu chuẩn sẽ không còn được áp dụng tự động."
+            : `Sau khi bật, giá từ menu chuẩn sẽ được áp dụng cho toàn bộ chi nhánh. Giá hiện tại tại các chi nhánh có thể bị ghi đè.${overrideBranchesCount > 0 ? ` (${overrideBranchesCount} chi nhánh đang có quyền override sẽ không bị ảnh hưởng.)` : ""}`
+        }
+        onConfirm={() => {
+          onSaveConfig({ globalPricingEnabled: !globalPricingEnabled });
+          setConfirmGlobalPricing(false);
+        }}
+        onClose={() => setConfirmGlobalPricing(false)}
+        loading={saving}
+      />
+    </>
+  );
+}
+
 export function SyncPanel({
   config,
   saving,
@@ -136,10 +224,6 @@ export function SyncPanel({
   onSaveConfig: (config: Partial<ChainConfig>) => void;
   onSync: () => void;
 }) {
-  const [confirmGlobalPricing, setConfirmGlobalPricing] = useState(false);
-
-  const globalPricingEnabled = config?.globalPricingEnabled ?? true;
-
   return (
     <div className="space-y-10">
       <section>
@@ -171,74 +255,13 @@ export function SyncPanel({
           override.
         </p>
         <Card className="mt-4 p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-coffee">
-                Trạng thái hiện tại:{" "}
-                <span
-                  className={
-                    globalPricingEnabled ? "text-green-600" : "text-muted"
-                  }
-                >
-                  {globalPricingEnabled ? "Đang bật" : "Đang tắt"}
-                </span>
-              </p>
-              {globalPricingEnabled ? (
-                <p className="text-xs text-muted">
-                  Giá chuẩn đang được áp dụng cho toàn chuỗi.
-                </p>
-              ) : (
-                <p className="text-xs text-muted">
-                  Các chi nhánh đang dùng giá riêng của mình.
-                </p>
-              )}
-            </div>
-            <button
-              className={`h-9 rounded-lg px-4 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                globalPricingEnabled
-                  ? "border border-line text-muted hover:bg-beige"
-                  : "bg-coffee text-white hover:bg-coffee/90"
-              }`}
-              disabled={saving}
-              onClick={() => setConfirmGlobalPricing(true)}
-            >
-              {globalPricingEnabled
-                ? "Tắt chính sách giá toàn chuỗi"
-                : "Bật chính sách giá toàn chuỗi"}
-            </button>
-          </div>
-
-          {globalPricingEnabled && overrideBranchesCount > 0 && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                {overrideBranchesCount} chi nhánh đang được phép tự set giá
-                riêng — chính sách giá toàn chuỗi không áp dụng cho các chi
-                nhánh này.
-              </p>
-            </div>
-          )}
+          <PricingToggleSection
+            config={config}
+            saving={saving}
+            overrideBranchesCount={overrideBranchesCount}
+            onSaveConfig={onSaveConfig}
+          />
         </Card>
-
-        <ConfirmDialog
-          isOpen={confirmGlobalPricing}
-          title={
-            globalPricingEnabled
-              ? "Tắt chính sách giá toàn chuỗi?"
-              : "Bật chính sách giá toàn chuỗi?"
-          }
-          description={
-            globalPricingEnabled
-              ? "Sau khi tắt, mỗi chi nhánh sẽ dùng giá riêng của mình. Giá trên menu chuẩn sẽ không còn được áp dụng tự động."
-              : `Sau khi bật, giá từ menu chuẩn sẽ được áp dụng cho toàn bộ chi nhánh. Giá hiện tại tại các chi nhánh có thể bị ghi đè.${overrideBranchesCount > 0 ? ` (${overrideBranchesCount} chi nhánh đang có quyền override sẽ không bị ảnh hưởng.)` : ""}`
-          }
-          onConfirm={() => {
-            onSaveConfig({ globalPricingEnabled: !globalPricingEnabled });
-            setConfirmGlobalPricing(false);
-          }}
-          onClose={() => setConfirmGlobalPricing(false)}
-          loading={saving}
-        />
       </section>
 
       {/* Section 3: Global Menu Builder */}

@@ -19,9 +19,9 @@ const ownerTabs: Array<{
     description: "Quản lý thông tin chi nhánh",
   },
   {
-    key: "sync",
-    label: "Đồng bộ",
-    description: "Đồng bộ thực đơn - cấu hình",
+    key: "branch-menu",
+    label: "Branch Menu",
+    description: "Quản lý thực đơn từng chi nhánh",
   },
   {
     key: "pricing",
