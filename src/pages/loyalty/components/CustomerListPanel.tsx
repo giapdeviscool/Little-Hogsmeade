@@ -5,7 +5,9 @@ import { Skeleton } from '../../../components/ui/skeleton'
 import { Pagination } from '../../../components/ui/Pagination'
 import { DataTable } from '../../../components/pages/owner/DataTable'
 import { fetchCustomerList } from '../../../api/customer.api'
+import { getMembershipTiers } from '../../../api/loyalty.api'
 import type { CustomerListItem, MembershipTierCode } from '../../../types/customer.types'
+import type { MembershipTier } from '../../../api/loyalty.api'
 import { CustomerProfileDrawer } from './CustomerProfileDrawer'
 import {
   CustomerTierBadge,
@@ -79,6 +81,11 @@ export function CustomerListPanel() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   const [selectedCustomerPreview, setSelectedCustomerPreview] = useState<CustomerListItem | null>(null)
+  const [dynamicTiers, setDynamicTiers] = useState<MembershipTier[]>([])
+
+  useEffect(() => {
+    getMembershipTiers().then(setDynamicTiers).catch(console.error)
+  }, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -167,10 +174,16 @@ export function CustomerListPanel() {
             onChange={(event) => handleTierChange(event.target.value as TierFilter)}
           >
             <option value="all">Tất cả hạng thẻ</option>
-            <option value="MEMBER">Member</option>
-            <option value="SILVER">Silver</option>
-            <option value="GOLD">Gold</option>
-            <option value="VIP">VIP</option>
+            {dynamicTiers.length > 0 ? dynamicTiers.map(t => (
+              <option key={t.id} value={t.name}>{t.name}</option>
+            )) : (
+              <>
+                <option value="MEMBER">Member</option>
+                <option value="SILVER">Silver</option>
+                <option value="GOLD">Gold</option>
+                <option value="VIP">VIP</option>
+              </>
+            )}
           </select>
         </div>
       </Card>
