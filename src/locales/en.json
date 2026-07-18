@@ -344,6 +344,14 @@
       "rewards": {
         "label": "Redemption & Rewards",
         "description": "Vouchers, free products and active status"
+      },
+      "vouchers": {
+        "label": "Voucher Management",
+        "description": "Public and private voucher list"
+      },
+      "tiers": {
+        "label": "Membership Tiers",
+        "description": "Manage membership tiers and upgrading rules"
       }
     }
   },

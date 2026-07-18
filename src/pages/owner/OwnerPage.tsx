@@ -9,9 +9,7 @@ import {
   OwnerTabs,
 } from "../../components/pages/owner/OwnerShell";
 import { PricingPanel } from "../../components/pages/owner/PricingPanel";
-import { PromotionsPanel } from "../../components/pages/owner/PromotionsPanel";
-import { SyncPanel } from "../../components/pages/owner/SyncPanel";
-import { ConfirmDialog } from "../../components/pages/owner/ConfirmDialog";
+import { BranchMenuPanel } from "../../components/pages/owner/BranchMenuPanel";
 import {
   addDays,
   dateToInput,
@@ -25,8 +23,6 @@ import type {
   ChainDashboard,
   MenuSyncPreview,
   OwnerActiveTab,
-  Promotion,
-  PromotionPayload,
 } from "../../types";
 
 const emptyBranchForm: BranchPayload = {
@@ -44,17 +40,6 @@ const emptyBranchForm: BranchPayload = {
   imageFile: null,
 };
 
-const emptyPromotionForm: PromotionPayload = {
-  name: "",
-  description: "",
-  startDate: dateToInput(new Date()),
-  endDate: dateToInput(addDays(new Date(), 7)),
-  discountValue: 10,
-  discountType: "percent",
-  scope: "global",
-  appliedBranches: [],
-};
-
 export function OwnerPage() {
   const [activeTab, setActiveTab] = useState<OwnerActiveTab>("dashboard");
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -64,11 +49,6 @@ export function OwnerPage() {
     categories: [],
     menuItems: [],
   });
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
-  const [promotionDialogMode, setPromotionDialogMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
-  const [confirmTogglePromotionId, setConfirmTogglePromotionId] = useState<string | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [startDate, setStartDate] = useState(
     dateToInput(addDays(new Date(), -30)),
@@ -77,9 +57,6 @@ export function OwnerPage() {
   const [branchForm, setBranchForm] = useState<BranchPayload>(emptyBranchForm);
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
-  const [confirmSyncOpen, setConfirmSyncOpen] = useState(false);
-  const [promotionForm, setPromotionForm] =
-    useState<PromotionPayload>(emptyPromotionForm);
   const [pricingItemId, setPricingItemId] = useState("");
   const [pricingBranchId, setPricingBranchId] = useState("");
   const [newPrice, setNewPrice] = useState(0);
@@ -111,18 +88,15 @@ export function OwnerPage() {
         branchResponse,
         configResponse,
         previewResponse,
-        promotionsResponse,
       ] = await Promise.all([
         chainApi.getBranches(),
         chainApi.getChainConfig(),
         chainApi.getMenuSyncPreview(),
-        chainApi.getPromotions(),
       ]);
 
       setBranches(branchResponse.data?.items || []);
       setConfig(configResponse.data || null);
       setMenuPreview(previewResponse.data || { categories: [], menuItems: [] });
-      setPromotions(promotionsResponse.data?.items || []);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -154,11 +128,13 @@ export function OwnerPage() {
       if (branchForm.imageFile) {
         const { uploadImage } = await import("../../api/cms.api");
         const uploadRes = await uploadImage(branchForm.imageFile, "bistro-cafe/branches");
-        imageUrl = uploadRes.data.secure_url;
+        if (uploadRes?.data?.secure_url) {
+          imageUrl = uploadRes.data.secure_url;
+        }
       }
 
       // Build payload gửi BE — loại bỏ imageFile vì chỉ tồn tại ở client
-      const payload = {
+      const payload: BranchPayload = {
         name: branchForm.name,
         address: branchForm.address,
         phone: branchForm.phone,
@@ -170,13 +146,14 @@ export function OwnerPage() {
         status: branchForm.status,
         allowLocalPricingOverride: branchForm.allowLocalPricingOverride,
         imageUrl,
+        imageFile: null, // Always null when sending to API
       };
 
       if (editingBranchId) {
-        await chainApi.updateBranch(editingBranchId, payload);
+        await chainApi.updateBranch(editingBranchId, payload as BranchPayload);
         setNotice("Đã cập nhật chi nhánh.");
       } else {
-        await chainApi.createBranch(payload);
+        await chainApi.createBranch(payload as BranchPayload);
         setNotice("Đã tạo chi nhánh mới.");
       }
       setBranchForm(emptyBranchForm);
@@ -224,7 +201,7 @@ export function OwnerPage() {
       setError("");
       const response = await chainApi.syncMenu();
       setNotice(
-        `Đã đồng bộ ${response.data?.syncedBranches ?? response.data?.activeBranches ?? 0} chi nhánh đang hoạt động.`,
+        `Đã đồng bộ ${response.data?.syncedBranches ?? 0} chi nhánh đang hoạt động.`,
       );
       await loadModule();
     } catch (err) {
@@ -255,87 +232,6 @@ export function OwnerPage() {
         `Đã cập nhật ${response.data?.updatedBranchItems} giá bán tại chi nhánh.`,
       );
       await loadModule();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function savePromotion() {
-    if (new Date(promotionForm.endDate) <= new Date(promotionForm.startDate)) {
-      setError("Ngày kết thúc phải lớn hơn ngày bắt đầu.");
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError("");
-
-      if (promotionDialogMode === "edit" && selectedPromotionId) {
-        await chainApi.updatePromotion(selectedPromotionId, promotionForm);
-        setNotice("Đã cập nhật khuyến mãi.");
-      } else {
-        await chainApi.createPromotion(promotionForm);
-        setNotice("Đã tạo khuyến mãi mới.");
-      }
-
-      setPromotionForm(emptyPromotionForm);
-      setIsPromotionModalOpen(false);
-      setSelectedPromotionId(null);
-      const response = await chainApi.getPromotions();
-      setPromotions(response.data?.items || []);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function openCreatePromotionModal() {
-    setPromotionDialogMode("create");
-    setSelectedPromotionId(null);
-    setPromotionForm(emptyPromotionForm);
-    setIsPromotionModalOpen(true);
-  }
-
-  function editPromotion(promotion: Promotion) {
-    setPromotionDialogMode("edit");
-    setSelectedPromotionId(promotion.id);
-    setPromotionForm({
-      name: promotion.name,
-      description: promotion.description || "",
-      startDate: dateToInput(new Date(promotion.startDate)),
-      endDate: dateToInput(new Date(promotion.endDate)),
-      discountValue: promotion.discountValue,
-      discountType: promotion.discountType,
-      scope: promotion.scope,
-      appliedBranches: promotion.appliedBranches || [],
-    });
-    setIsPromotionModalOpen(true);
-  }
-
-  function viewPromotion(promotion: Promotion) {
-    setPromotionDialogMode("view");
-    setSelectedPromotionId(promotion.id);
-    setIsPromotionModalOpen(true);
-  }
-
-  function closePromotionModal() {
-    setIsPromotionModalOpen(false);
-    setSelectedPromotionId(null);
-    setPromotionForm(emptyPromotionForm);
-  }
-
-  async function togglePromotionStatusHandler(id: string) {
-    try {
-      setSaving(true);
-      setError("");
-      await chainApi.togglePromotionStatus(id);
-      setNotice("Đã cập nhật trạng thái khuyến mãi.");
-      setConfirmTogglePromotionId(null);
-      const response = await chainApi.getPromotions();
-      setPromotions(response.data?.items || []);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -387,6 +283,7 @@ export function OwnerPage() {
       />
       <OwnerTabs activeTab={activeTab} onChange={setActiveTab} />
 
+
       {loading ? <OwnerLoading /> : null}
       {!loading && activeTab === "dashboard" ? (
         <DashboardPanel
@@ -415,13 +312,14 @@ export function OwnerPage() {
           onToggleStatus={(id) => void toggleBranchStatus(id)}
         />
       ) : null}
-      {!loading && activeTab === "sync" ? (
-        <SyncPanel
+      {!loading && activeTab === "branch-menu" ? (
+        <BranchMenuPanel
+          branches={activeBranches}
           config={config}
           saving={saving}
           overrideBranchesCount={overrideBranches.length}
-          onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
           onSync={() => void runSyncMenu()}
+          onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
         />
       ) : null}
       {!loading && activeTab === "pricing" ? (
@@ -436,26 +334,6 @@ export function OwnerPage() {
           onBranchChange={setPricingBranchId}
           onPriceChange={setNewPrice}
           onSave={() => void savePricing()}
-        />
-      ) : null}
-      {!loading && activeTab === "promotions" ? (
-        <PromotionsPanel
-          branches={activeBranches}
-          promotions={promotions}
-          form={promotionForm}
-          saving={saving}
-          onFormChange={setPromotionForm}
-          onSave={() => void savePromotion()}
-          isModalOpen={isPromotionModalOpen}
-          dialogMode={promotionDialogMode}
-          selectedPromotionId={selectedPromotionId}
-          onOpenModal={openCreatePromotionModal}
-          onCloseModal={closePromotionModal}
-          onEdit={editPromotion}
-          onView={viewPromotion}
-          confirmTogglePromotionId={confirmTogglePromotionId}
-          setConfirmTogglePromotionId={setConfirmTogglePromotionId}
-          onTogglePromotionStatus={(id) => void togglePromotionStatusHandler(id)}
         />
       ) : null}
     </div>

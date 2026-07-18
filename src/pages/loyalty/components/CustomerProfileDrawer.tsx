@@ -21,7 +21,10 @@ import {
   fetchCustomerOrders,
   fetchCustomerPointTransactions,
   fetchCustomerProfile,
+  updateCustomerMembershipApi
 } from '../../../api/customer.api'
+import { getMembershipTiers } from '../../../api/loyalty.api'
+import type { MembershipTier } from '../../../api/loyalty.api'
 import type {
   CustomerListItem,
   CustomerOrderHistoryItem,
@@ -271,6 +274,36 @@ export function CustomerProfileDrawer({
     points: false,
   })
 
+  // State for Membership Editing
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editTotalPoints, setEditTotalPoints] = useState(0)
+  const [editTierId, setEditTierId] = useState<string>('')
+  const [dynamicTiers, setDynamicTiers] = useState<MembershipTier[]>([])
+  const [savingMembership, setSavingMembership] = useState(false)
+
+  useEffect(() => {
+    getMembershipTiers().then(setDynamicTiers).catch(console.error)
+  }, [])
+
+  const handleSaveMembership = async () => {
+    if (!profile) return
+    try {
+      setSavingMembership(true)
+      await updateCustomerMembershipApi(profile.id, {
+        totalPoints: editTotalPoints,
+        tierId: editTierId
+      })
+      // Refresh profile
+      const data = await fetchCustomerProfile(profile.id)
+      setProfile(data)
+      setIsEditMode(false)
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi cập nhật hạng thẻ.')
+    } finally {
+      setSavingMembership(false)
+    }
+  }
+
   useEffect(() => {
     if (!customerId) {
       setProfile(null)
@@ -375,7 +408,19 @@ export function CustomerProfileDrawer({
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <ProfileAvatar profile={profile} />
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-2xl font-bold tracking-tight text-coffee">{displayName}</h2>
+                    <div className="flex justify-between items-start">
+                      <h2 className="text-2xl font-bold tracking-tight text-coffee">{displayName}</h2>
+                      <button 
+                        onClick={() => {
+                          setEditTotalPoints(profile.totalPoints)
+                          setEditTierId(profile.tier?.id || (dynamicTiers[0]?.id ?? ''))
+                          setIsEditMode(!isEditMode)
+                        }}
+                        className="text-sm font-semibold text-muted hover:text-coffee px-3 py-1.5 rounded-lg border border-line"
+                      >
+                        {isEditMode ? 'Hủy sửa' : 'Sửa hạng/điểm'}
+                      </button>
+                    </div>
                     <div className="mt-2">
                       <CustomerTierBadge tier={profile.tier} />
                     </div>
@@ -427,6 +472,43 @@ export function CustomerProfileDrawer({
                     </p>
                   </div>
                 </div>
+
+                {isEditMode && (
+                  <div className="mt-5 rounded-2xl bg-cream p-4 space-y-4 border border-line">
+                    <h3 className="text-sm font-bold text-coffee">Điều chỉnh hạng & điểm</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-semibold text-muted block mb-1">Điểm hiện tại</label>
+                        <input 
+                          type="number" 
+                          min="0"
+                          value={editTotalPoints} 
+                          onChange={e => setEditTotalPoints(parseInt(e.target.value) || 0)}
+                          className="w-full h-10 rounded-lg px-3 border border-line text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-muted block mb-1">Hạng thành viên</label>
+                        <select 
+                          value={editTierId} 
+                          onChange={e => setEditTierId(e.target.value)}
+                          className="w-full h-10 rounded-lg px-3 border border-line text-sm"
+                        >
+                          {dynamicTiers.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={handleSaveMembership}
+                      disabled={savingMembership}
+                      className="w-full h-10 rounded-lg bg-coffee text-white font-semibold text-sm transition hover:bg-coffee/90 disabled:opacity-50"
+                    >
+                      {savingMembership ? 'Đang lưu...' : 'Lưu cập nhật'}
+                    </button>
+                  </div>
+                )}
               </section>
 
               <section className="rounded-2xl border border-line bg-white p-5">

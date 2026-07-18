@@ -100,26 +100,35 @@ export type MenuSyncResult = {
   standardMenuItems: number
 }
 
-export type Promotion = {
+export type Voucher = {
   id: string
   name: string
   description?: string | null
+  code: string | null
+  requiresCode: boolean
   startDate: string
-  endDate: string
+  expireDate: string
   discountValue: number
   discountType: 'percent' | 'fixed'
+  minOrderValue: number
+  maxUses: number
+  usedCount: number
   scope: 'global' | 'specific'
   appliedBranches: string[]
   isActive: boolean
 }
 
-export type PromotionPayload = {
+export type VoucherPayload = {
   name: string
   description?: string
+  code?: string
+  requiresCode?: boolean
   startDate: string
-  endDate: string
+  expireDate: string
   discountValue: number
   discountType: 'percent' | 'fixed'
+  minOrderValue?: number
+  maxUses?: number
   scope: 'global' | 'specific'
   appliedBranches: string[]
   isActive?: boolean

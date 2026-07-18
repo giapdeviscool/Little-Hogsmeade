@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -6,19 +6,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Field, NumberField, TextField } from '../../../components/pages/owner/OwnerFields'
-import { getMenuItems } from '../../../api/menu-item.api'
-import type { MenuItem } from '../../../types/menu.types'
 import type { LoyaltyReward, LoyaltyRewardPayload, RewardDialogMode, RewardFormErrors } from '../loyalty.types'
-import { fallbackMenuOptions } from '../loyalty.constants'
-import { cn } from '../../../utils/cn'
 
 const emptyForm: LoyaltyRewardPayload = {
   name: '',
-  type: 'VOUCHER',
   pointsRequired: 1,
-  voucherAmount: 50000,
-  minOrderAmount: 0,
-  menuItemId: '',
+  discountValue: 10,
+  discountType: 'percent',
+  minOrderValue: 0,
+  expiryDays: 30,
   description: '',
   isActive: true,
 }
@@ -34,12 +30,8 @@ function validateForm(form: LoyaltyRewardPayload): RewardFormErrors {
     errors.pointsRequired = 'Số điểm tối thiểu là 1'
   }
 
-  if (form.type === 'VOUCHER' && (!form.voucherAmount || form.voucherAmount <= 0)) {
-    errors.voucherAmount = 'Mệnh giá giảm phải lớn hơn 0'
-  }
-
-  if (form.type === 'FREE_PRODUCT' && !form.menuItemId) {
-    errors.menuItemId = 'Vui lòng chọn sản phẩm từ thực đơn'
+  if (form.discountType !== 'gift' && form.discountValue <= 0) {
+    errors.discountValue = 'Mức giảm giá phải lớn hơn 0'
   }
 
   return errors
@@ -62,8 +54,6 @@ export function RewardDialog({
 }) {
   const [form, setForm] = useState<LoyaltyRewardPayload>(emptyForm)
   const [errors, setErrors] = useState<RewardFormErrors>({})
-  const [menuItems, setMenuItems] = useState<Array<{ id: string; name: string }>>(fallbackMenuOptions)
-  const [productSearch, setProductSearch] = useState('')
 
   useEffect(() => {
     if (!isOpen) return
@@ -71,11 +61,11 @@ export function RewardDialog({
     if (mode === 'edit' && reward) {
       setForm({
         name: reward.name,
-        type: reward.type,
         pointsRequired: reward.pointsRequired,
-        voucherAmount: reward.voucherAmount ?? 0,
-        minOrderAmount: reward.minOrderAmount ?? 0,
-        menuItemId: reward.menuItemId ?? '',
+        discountValue: reward.discountValue ?? 0,
+        discountType: reward.discountType ?? 'percent',
+        minOrderValue: reward.minOrderValue ?? 0,
+        expiryDays: reward.expiryDays ?? 30,
         description: reward.description ?? '',
         isActive: reward.isActive,
       })
@@ -84,29 +74,7 @@ export function RewardDialog({
     }
 
     setErrors({})
-    setProductSearch('')
   }, [isOpen, mode, reward])
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    getMenuItems({ isActive: true, limit: 100 })
-      .then((response) => {
-        const items = (response?.data?.items ?? response?.data ?? []) as MenuItem[]
-        if (Array.isArray(items) && items.length > 0) {
-          setMenuItems(items.map((item) => ({ id: item.id, name: item.name })))
-        }
-      })
-      .catch(() => {
-        setMenuItems(fallbackMenuOptions)
-      })
-  }, [isOpen])
-
-  const filteredMenuItems = useMemo(() => {
-    const keyword = productSearch.trim().toLowerCase()
-    if (!keyword) return menuItems
-    return menuItems.filter((item) => item.name.toLowerCase().includes(keyword))
-  }, [menuItems, productSearch])
 
   const title = mode === 'create' ? 'Thêm phần thưởng mới' : 'Chỉnh sửa phần thưởng'
 
@@ -139,73 +107,46 @@ export function RewardDialog({
           />
           {errors.pointsRequired ? <p className="-mt-2 text-xs text-[#c25a5a]">{errors.pointsRequired}</p> : null}
 
-          <Field label="Loại phần thưởng">
-            <select
-              className="h-9 w-full rounded-lg border border-line bg-white px-3 text-sm"
-              value={form.type}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  type: event.target.value as LoyaltyRewardPayload['type'],
-                }))
-              }
-            >
-              <option value="VOUCHER">Tặng Voucher giảm giá</option>
-              <option value="FREE_PRODUCT">Tặng Sản phẩm/Đồ uống</option>
-            </select>
-          </Field>
-
-          {form.type === 'VOUCHER' ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <NumberField
-                  label="Số tiền giảm giá (VND)"
-                  value={form.voucherAmount ?? 0}
-                  onChange={(value) => setForm((prev) => ({ ...prev, voucherAmount: value }))}
-                />
-                {errors.voucherAmount ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.voucherAmount}</p> : null}
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <NumberField
-                label="Giá trị đơn hàng tối thiểu (VND)"
-                value={form.minOrderAmount ?? 0}
-                onChange={(value) => setForm((prev) => ({ ...prev, minOrderAmount: value }))}
+                label="Mức giảm"
+                value={form.discountType === 'gift' ? 0 : form.discountValue ?? 0}
+                onChange={(value) => setForm((prev) => ({ ...prev, discountValue: value }))}
               />
+              {errors.discountValue ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.discountValue}</p> : null}
             </div>
-          ) : (
-            <div className="space-y-3">
-              <Field label="Tìm kiếm sản phẩm">
-                <input
-                  className="h-9 w-full rounded-lg border border-line bg-white px-3 text-sm"
-                  placeholder="Gõ tên món để lọc nhanh..."
-                  value={productSearch}
-                  onChange={(event) => setProductSearch(event.target.value)}
-                />
-              </Field>
-              <Field label="Chọn sản phẩm từ Menu">
-                <select
-                  className={cn(
-                    'h-9 w-full rounded-lg border bg-white px-3 text-sm',
-                    errors.menuItemId ? 'border-[#c25a5a]' : 'border-line',
-                  )}
-                  value={form.menuItemId ?? ''}
-                  onChange={(event) => {
-                    setForm((prev) => ({
-                      ...prev,
-                      menuItemId: event.target.value,
-                    }))
-                  }}
-                >
-                  <option value="">Chọn sản phẩm</option>
-                  {filteredMenuItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              {errors.menuItemId ? <p className="text-xs text-[#c25a5a]">{errors.menuItemId}</p> : null}
-            </div>
-          )}
+            <Field label="Loại phần thưởng / Giảm giá">
+              <select
+                className="h-9 w-full rounded-lg border border-line bg-white px-3 text-sm"
+                value={form.discountType}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    discountType: event.target.value as 'percent' | 'fixed' | 'gift',
+                    ...(event.target.value === 'gift' ? { discountValue: 0, minOrderValue: 0 } : {})
+                  }))
+                }
+              >
+                <option value="percent">Giảm Phần trăm (%)</option>
+                <option value="fixed">Giảm Số tiền (VNĐ)</option>
+                <option value="gift">Quà tặng (Miễn phí)</option>
+              </select>
+            </Field>
+          </div>
+          
+          <div className="grid gap-3 sm:grid-cols-2">
+            <NumberField
+              label="Giá trị đơn hàng tối thiểu (VND)"
+              value={form.discountType === 'gift' ? 0 : form.minOrderValue ?? 0}
+              onChange={(value) => setForm((prev) => ({ ...prev, minOrderValue: value }))}
+            />
+            <NumberField
+              label="Thời hạn Voucher (Số ngày)"
+              value={form.expiryDays ?? 30}
+              onChange={(value) => setForm((prev) => ({ ...prev, expiryDays: value }))}
+            />
+          </div>
 
           <label className="block text-sm font-medium text-coffee">
             <span className="mb-1.5 block">Mô tả chi tiết</span>

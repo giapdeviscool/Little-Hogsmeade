@@ -351,7 +351,15 @@
       },
       "rewards": {
         "label": "Danh sách Đổi Thưởng",
-        "description": "Voucher, sản phẩm miễn phí và trạng thái áp dụng"
+        "description": "Quà tặng và phần thưởng bằng điểm"
+      },
+      "vouchers": {
+        "label": "Quản lý Ưu Đãi (Voucher)",
+        "description": "Danh sách voucher công khai và riêng tư"
+      },
+      "tiers": {
+        "label": "Hạng thành viên",
+        "description": "Quản lý các hạng thẻ và điều kiện lên hạng"
       }
     }
   },

@@ -1,6 +1,6 @@
 import type { LoyaltyEarnConfig, LoyaltyTab } from './loyalty.types'
 
-export const loyaltyTabKeys: LoyaltyTab[] = ['earning', 'rewards']
+export const loyaltyTabKeys: LoyaltyTab[] = ['earning', 'tiers', 'rewards', 'vouchers']
 
 export const defaultLoyaltyEarnConfig: LoyaltyEarnConfig = {
   spendAmount: 10000,
