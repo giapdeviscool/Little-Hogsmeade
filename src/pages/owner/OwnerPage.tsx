@@ -40,6 +40,8 @@ const emptyBranchForm: BranchPayload = {
   closeTime: timeToIso("22:00"),
   status: "active",
   allowLocalPricingOverride: false,
+  imageUrl: null,
+  imageFile: null,
 };
 
 const emptyPromotionForm: PromotionPayload = {
@@ -145,11 +147,36 @@ export function OwnerPage() {
     try {
       setSaving(true);
       setError("");
+
+      let imageUrl = branchForm.imageUrl;
+
+      // Upload ảnh trước nếu có file mới
+      if (branchForm.imageFile) {
+        const { uploadImage } = await import("../../api/cms.api");
+        const uploadRes = await uploadImage(branchForm.imageFile, "bistro-cafe/branches");
+        imageUrl = uploadRes.data.secure_url;
+      }
+
+      // Build payload gửi BE — loại bỏ imageFile vì chỉ tồn tại ở client
+      const payload = {
+        name: branchForm.name,
+        address: branchForm.address,
+        phone: branchForm.phone,
+        email: branchForm.email,
+        lat: branchForm.lat,
+        lng: branchForm.lng,
+        openTime: branchForm.openTime,
+        closeTime: branchForm.closeTime,
+        status: branchForm.status,
+        allowLocalPricingOverride: branchForm.allowLocalPricingOverride,
+        imageUrl,
+      };
+
       if (editingBranchId) {
-        await chainApi.updateBranch(editingBranchId, branchForm);
+        await chainApi.updateBranch(editingBranchId, payload);
         setNotice("Đã cập nhật chi nhánh.");
       } else {
-        await chainApi.createBranch(branchForm);
+        await chainApi.createBranch(payload);
         setNotice("Đã tạo chi nhánh mới.");
       }
       setBranchForm(emptyBranchForm);
@@ -329,6 +356,8 @@ export function OwnerPage() {
       closeTime: branch.closeTime,
       status: branch.status,
       allowLocalPricingOverride: branch.allowLocalPricingOverride,
+      imageUrl: branch.imageUrl ?? null,
+      imageFile: null,
     });
     setIsBranchModalOpen(true);
   }

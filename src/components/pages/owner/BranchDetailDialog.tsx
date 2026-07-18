@@ -42,6 +42,11 @@ export function BranchDetailDialog({
         </DialogHeader>
 
         <div className="mt-2 space-y-2">
+          {branch.imageUrl && (
+            <div className="mb-2 overflow-hidden rounded-lg border border-line">
+              <img src={branch.imageUrl} alt={branch.name} className="h-40 w-full object-cover" />
+            </div>
+          )}
           <DetailRow label="Địa chỉ" value={branch.address} />
           <DetailRow label="Số điện thoại" value={branch.phone} />
           {branch.email ? (

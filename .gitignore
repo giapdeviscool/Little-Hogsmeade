@@ -31,3 +31,10 @@ dist-ssr
 yarn.lock
 package-lock.json
 pnpm-lock.yaml
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+
+# Vitest coverage output
+coverage/

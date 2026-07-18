@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronUp, ChevronDown, Pencil, Trash2, TriangleAlert, Plus, UtensilsCrossed } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getCategories, updateCategory, moveCategory } from '../../../api/category.api'
 import { getMenuItems } from '../../../api/menu-item.api'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -189,7 +191,7 @@ export function GlobalMenuPanel({
                 className="overflow-hidden rounded-xl border border-line bg-white shadow-sm"
               >
                 {/* Card header */}
-                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex items-center justify-between gap-3 px-4 py-3 bg-cream/50">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="text-xl leading-none">{cat.icon || '📦'}</span>
                     <span className="truncate font-semibold text-coffee">{cat.name}</span>
@@ -198,36 +200,46 @@ export function GlobalMenuPanel({
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      title="Lên trên"
-                      disabled={isFirst}
-                      onClick={() => handleMoveCategory(cat, 'up')}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee disabled:cursor-not-allowed disabled:opacity-30"
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Xuống dưới"
-                      disabled={isLast}
-                      onClick={() => handleMoveCategory(cat, 'down')}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee disabled:cursor-not-allowed disabled:opacity-30"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                    <button
-                      title="Sửa danh mục"
-                      onClick={() => openEditCategory(cat)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      title="Ẩn danh mục"
-                      onClick={() => setConfirmDeactivate(cat)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-600"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={isFirst} onClick={() => handleMoveCategory(cat, 'up')}>
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Lên trên</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={isLast} onClick={() => handleMoveCategory(cat, 'down')}>
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Xuống dưới</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => openEditCategory(cat)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Sửa danh mục</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="hover:text-red-600 hover:bg-red-50" onClick={() => setConfirmDeactivate(cat)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ẩn danh mục</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
 

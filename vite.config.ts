@@ -18,7 +18,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
-      tsconfigPaths: true,
     },
     server: {
       proxy: {

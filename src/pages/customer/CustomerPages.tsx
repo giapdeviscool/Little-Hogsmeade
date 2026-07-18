@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { BookingSection } from '../landing/components/BookingSection'
 import { EventSection } from '../landing/components/EventSection'
 import { FeaturedMenuSection } from '../landing/components/FeaturedMenuSection'
+import { FullMenuSection } from './components/FullMenuSection'
 import { StoreAndMemberSection } from '../landing/components/StoreAndMemberSection'
 import { StorySection } from '../landing/components/StorySection'
 import {
@@ -51,7 +52,12 @@ export function CustomerMenuPage() {
 
   const featuredMenuBlock = useMemo(() => getFeaturedMenuBlock(pages, banners), [pages, banners])
 
-  return <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={query} setQuery={setQuery} />
+  return (
+    <>
+      <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={query} setQuery={setQuery} />
+      <FullMenuSection />
+    </>
+  )
 }
 
 export function CustomerEventsPage() {
