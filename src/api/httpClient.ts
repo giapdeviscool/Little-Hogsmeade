@@ -25,6 +25,7 @@ export async function httpClient<T>(
   if (!response.ok) {
     const errorPayload = (await response.json().catch(() => null)) as {
       message?: string;
+      error?: string;
       errors?: Array<{ message: string }>;
     } | null;
     const validationMessage = errorPayload?.errors
@@ -33,6 +34,7 @@ export async function httpClient<T>(
     throw new Error(
       validationMessage ||
         errorPayload?.message ||
+        errorPayload?.error ||
         `Request failed: ${response.status}`,
     );
   }

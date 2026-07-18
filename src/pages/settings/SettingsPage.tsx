@@ -146,7 +146,17 @@ export function SettingsPage() {
     setQrCode('');
     setSecret('');
     setError(null);
-    localStorage.removeItem('little-hogsmeade-2fa-enabled');
+  };
+
+  // Cancel 2FA configuration flow
+  const handleCancelSetup = () => {
+    setIsSetupInitiated(false);
+    setOtp(Array(6).fill(''));
+    setQrCode('');
+    setSecret('');
+    setError(null);
+    const currentlyEnabled = localStorage.getItem('little-hogsmeade-2fa-enabled') === 'true';
+    setIsVerified(currentlyEnabled);
   };
 
   const isOtpComplete = otp.every(digit => digit !== '');
@@ -408,21 +418,32 @@ export function SettingsPage() {
                         ))}
                       </div>
 
-                      {/* Confirm Button */}
-                      <button
-                        onClick={handleVerifyOtp}
-                        disabled={!isOtpComplete || isLoading}
-                        className="w-full h-12 bg-gold hover:opacity-90 active:scale-[0.98] text-coffee rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Đang xác nhận...
-                          </>
-                        ) : (
-                          'Xác nhận & Lưu cấu hình'
-                        )}
-                      </button>
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 w-full mt-2">
+                        <button
+                          type="button"
+                          onClick={handleCancelSetup}
+                          disabled={isLoading}
+                          className="flex-1 h-12 border border-line text-coffee rounded-xl font-bold text-sm hover:bg-cream transition-all flex items-center justify-center cursor-pointer"
+                        >
+                          Hủy cấu hình
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={!isOtpComplete || isLoading}
+                          className="flex-[2] h-12 bg-gold hover:opacity-90 active:scale-[0.98] text-coffee rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              Đang xác nhận...
+                            </>
+                          ) : (
+                            'Xác nhận & Lưu cấu hình'
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

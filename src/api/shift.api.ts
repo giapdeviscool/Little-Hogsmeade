@@ -56,14 +56,29 @@ export interface RequestClosurePayload {
   actualCashCounted: number;
 }
 
+export interface RequestClosureResponse {
+  success: boolean;
+  message?: string;
+}
+
 export interface FinalizeClosurePayload {
   shiftId: string;
   actualCashCounted: number;
   code: string;
 }
 
+export interface FinalizeCashierShiftPayload {
+  actual_cash_counted: number;
+}
+
+export interface FinalizeCashierShiftResponse {
+  data: {
+    shift: Shift;
+  }
+}
+
 export function requestShiftClosure(payload: RequestClosurePayload) {
-  return httpClient<any>('/shifts/request-closure', {
+  return httpClient<RequestClosureResponse>('/shifts/request-closure', {
     method: 'POST',
     body: JSON.stringify(payload)
   });
@@ -71,6 +86,13 @@ export function requestShiftClosure(payload: RequestClosurePayload) {
 
 export function finalizeShiftClosure(payload: FinalizeClosurePayload) {
   return httpClient<any>('/shifts/finalize-closure', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function finalizeCashierShift(shiftId: string, payload: FinalizeCashierShiftPayload) {
+  return httpClient<FinalizeCashierShiftResponse>(`/cashier-shifts/${shiftId}/close`, {
     method: 'POST',
     body: JSON.stringify(payload)
   });
