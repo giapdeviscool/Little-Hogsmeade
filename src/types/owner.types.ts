@@ -1,2 +1,1 @@
-export type OwnerActiveTab = 'dashboard' | 'branches' | 'sync' | 'pricing'
-
+export type OwnerActiveTab = 'dashboard' | 'branches' | 'branch-menu' | 'pricing' | 'promotions'
