@@ -28,11 +28,6 @@ const ownerTabs: Array<{
     label: "Giá bán",
     description: "Thiết lập & tùy chỉnh giá bán",
   },
-  {
-    key: "promotions",
-    label: "Khuyến mãi",
-    description: "Quản lý các chiến lược giảm giá",
-  },
 ];
 
 export function OwnerHeader({ onRefresh }: { onRefresh: () => void }) {

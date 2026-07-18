@@ -1,98 +1,98 @@
-import type { Branch, Promotion, PromotionPayload } from '../../../types'
+﻿import type { Branch, Voucher, VoucherPayload } from '../../../types'
 import { dateToInput, formatCurrency } from '../../../utils/owner.utils'
 import { StatusBadge, ScopeBadge } from './OwnerFields'
 import { DataTable } from './DataTable'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Eye, Pencil, Power, PowerOff, Plus, Ticket, BadgeDollarSign } from 'lucide-react'
 import { ConfirmDialog } from './ConfirmDialog'
-import { PromotionDialog } from './PromotionDialog'
+import { VoucherDialog } from './VoucherDialog'
 
-type PromotionDialogMode = 'create' | 'edit' | 'view'
+type VoucherDialogMode = 'create' | 'edit' | 'view'
 
-export function PromotionsPanel({
+export function VouchersPanel({
   branches,
-  promotions,
+  Vouchers,
   form,
   saving,
   onFormChange,
   onSave,
   isModalOpen,
   dialogMode,
-  selectedPromotionId,
+  selectedVoucherId,
   onOpenModal,
   onCloseModal,
   onEdit,
   onView,
-  confirmTogglePromotionId,
-  setConfirmTogglePromotionId,
-  onTogglePromotionStatus
+  confirmToggleVoucherId,
+  setConfirmToggleVoucherId,
+  onToggleVoucherStatus
 }: {
   branches: Branch[]
-  promotions: Promotion[]
-  form: PromotionPayload
+  Vouchers: Voucher[]
+  form: VoucherPayload
   saving: boolean
-  onFormChange: (form: PromotionPayload) => void
+  onFormChange: (form: VoucherPayload) => void
   onSave: () => void
   isModalOpen: boolean
-  dialogMode: PromotionDialogMode
-  selectedPromotionId: string | null
+  dialogMode: VoucherDialogMode
+  selectedVoucherId: string | null
   onOpenModal: () => void
   onCloseModal: () => void
-  onEdit: (promotion: Promotion) => void
-  onView: (promotion: Promotion) => void
-  confirmTogglePromotionId: string | null
-  setConfirmTogglePromotionId: (id: string | null) => void
-  onTogglePromotionStatus: (id: string) => void
+  onEdit: (Voucher: Voucher) => void
+  onView: (Voucher: Voucher) => void
+  confirmToggleVoucherId: string | null
+  setConfirmToggleVoucherId: (id: string | null) => void
+  onToggleVoucherStatus: (id: string) => void
 }) {
 
-  const promotionToToggle = promotions.find(p => p.id === confirmTogglePromotionId)
-  const selectedPromotion = selectedPromotionId ? promotions.find(p => p.id === selectedPromotionId) || null : null
+  const VoucherToToggle = Vouchers.find(p => p.id === confirmToggleVoucherId)
+  const selectedVoucher = selectedVoucherId ? Vouchers.find(p => p.id === selectedVoucherId) || null : null
 
   return (
     <TooltipProvider>
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-coffee">
-            Danh sách khuyến mãi
+            Danh sách Voucher
           </h2>
           <button
             onClick={onOpenModal}
             className="flex h-9 items-center gap-2 rounded-lg bg-coffee px-4 text-sm font-semibold text-white transition-colors hover:bg-coffee/90"
           >
             <Plus className="h-4 w-4" />
-            Tạo khuyến mãi
+            Tạo Voucher
           </button>
         </div>
 
         <DataTable
-          data={promotions}
+          data={Vouchers}
           colSpan={6}
-          emptyMessage="Chưa có khuyến mãi."
+          emptyMessage="Chưa có Voucher."
           renderHeader={() => (
             <tr>
               <th className="px-4 py-3">Tên</th>
-              <th className="px-4 py-3">Thời gian khuyến mãi</th>
+              <th className="px-4 py-3">Thời gian Voucher</th>
               <th className="px-4 py-3 flex items-center gap-1">Giảm <BadgeDollarSign className="inline h-4 w-4 " /></th>
               <th className="px-4 py-3">Phạm vi</th>
               <th className="px-4 py-3">Trạng thái</th>
               <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
           )}
-          renderRow={(promotion) => {
+          renderRow={(Voucher) => {
             return (
               <tr
-                key={promotion.id}
+                key={Voucher.id}
                 className="cursor-pointer border-t border-line bg-white hover:bg-cream"
-                onClick={() => onView(promotion)}
+                onClick={() => onView(Voucher)}
               >
                 <td className="px-4 py-3 font-semibold">
                   <Ticket className="mr-1.5 inline h-4 w-4 text-coffee" />
-                  {promotion.name}
-                  {promotion.description && <div className="text-sm font-normal text-muted mt-0.5">{promotion.description}</div>}
+                  {Voucher.name}
+                  {Voucher.description && <div className="text-sm font-normal text-muted mt-0.5">{Voucher.description}</div>}
                 </td>
                 <td className="px-4 py-3 text-muted">
                   <div className="text-sm">
-                    {dateToInput(new Date(promotion.startDate))} → {dateToInput(new Date(promotion.endDate))}
+                    {dateToInput(new Date(Voucher.startDate))} → {dateToInput(new Date(Voucher.expireDate))}
                   </div>
                   {/* <div className="mt-1.5 h-1 w-full rounded-full bg-beige overflow-hidden">
                     <div
@@ -102,13 +102,13 @@ export function PromotionsPanel({
                   </div> */}
                 </td>
                 <td className="px-4 py-3 font-medium text-coffee">
-                  {promotion.discountType === 'percent' ? `${promotion.discountValue}%` : formatCurrency(promotion.discountValue)}
+                  {Voucher.discountType === 'percent' ? `${Voucher.discountValue}%` : formatCurrency(Voucher.discountValue)}
                 </td>
                 <td className="px-4 py-3">
-                  <ScopeBadge scope={promotion.scope} branchCount={promotion.appliedBranches?.length || 0} />
+                  <ScopeBadge scope={Voucher.scope} branchCount={Voucher.appliedBranches?.length || 0} />
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={promotion.isActive ? 'active' : 'inactive'} />
+                  <StatusBadge status={Voucher.isActive ? 'active' : 'inactive'} />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-1">
@@ -118,7 +118,7 @@ export function PromotionsPanel({
                           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onView(promotion);
+                            onView(Voucher);
                           }}
                         >
                           <Eye className="h-4 w-4" />
@@ -135,14 +135,14 @@ export function PromotionsPanel({
                           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-beige hover:text-coffee"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEdit(promotion);
+                            onEdit(Voucher);
                           }}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Chỉnh sửa khuyến mãi</p>
+                        <p>Chỉnh sửa Voucher</p>
                       </TooltipContent>
                     </Tooltip>
 
@@ -150,16 +150,16 @@ export function PromotionsPanel({
                       <TooltipTrigger asChild>
                         <button
                           className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                            promotion.isActive
+                            Voucher.isActive
                               ? "text-red-700 hover:bg-red-50"
                               : "text-green-700 hover:bg-green-50"
                           }`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setConfirmTogglePromotionId(promotion.id);
+                            setConfirmToggleVoucherId(Voucher.id);
                           }}
                         >
-                          {promotion.isActive ? (
+                          {Voucher.isActive ? (
                             <PowerOff className="h-4 w-4" />
                           ) : (
                             <Power className="h-4 w-4" />
@@ -168,9 +168,9 @@ export function PromotionsPanel({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          {promotion.isActive
-                            ? "Vô hiệu hóa khuyến mãi"
-                            : "Kích hoạt khuyến mãi"}
+                          {Voucher.isActive
+                            ? "Vô hiệu hóa Voucher"
+                            : "Kích hoạt Voucher"}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -181,11 +181,11 @@ export function PromotionsPanel({
           }}
         />
 
-        <PromotionDialog
+        <VoucherDialog
           isOpen={isModalOpen}
           onClose={onCloseModal}
           mode={dialogMode}
-          promotion={selectedPromotion}
+          Voucher={selectedVoucher}
           form={form}
           branches={branches}
           saving={saving}
@@ -194,20 +194,22 @@ export function PromotionsPanel({
         />
 
         <ConfirmDialog
-          isOpen={!!confirmTogglePromotionId}
-          title={promotionToToggle?.isActive ? "Vô hiệu hóa khuyến mãi này?" : "Kích hoạt lại khuyến mãi này?"}
-          description={promotionToToggle?.isActive
-            ? "Khuyến mãi sẽ không áp dụng được cho đến khi bạn kích hoạt lại."
-            : "Khuyến mãi sẽ được kích hoạt và áp dụng ngay theo thời gian cài đặt."}
+          isOpen={!!confirmToggleVoucherId}
+          title={VoucherToToggle?.isActive ? "Vô hiệu hóa Voucher này?" : "Kích hoạt lại Voucher này?"}
+          description={VoucherToToggle?.isActive
+            ? "Voucher sẽ không áp dụng được cho đến khi bạn kích hoạt lại."
+            : "Voucher sẽ được kích hoạt và áp dụng ngay theo thời gian cài đặt."}
           onConfirm={() => {
-            if (confirmTogglePromotionId) {
-              onTogglePromotionStatus(confirmTogglePromotionId);
+            if (confirmToggleVoucherId) {
+              onToggleVoucherStatus(confirmToggleVoucherId);
             }
           }}
-          onClose={() => setConfirmTogglePromotionId(null)}
+          onClose={() => setConfirmToggleVoucherId(null)}
           loading={saving}
         />
       </section>
     </TooltipProvider>
   )
 }
+
+

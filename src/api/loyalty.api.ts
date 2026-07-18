@@ -56,28 +56,28 @@ export function mapLoyaltyRewardFromApi(data: LoyaltyRewardApiRecord): LoyaltyRe
   return {
     id: data.id,
     name: data.name,
-    type: data.reward_type,
-    pointsRequired: data.required_points,
-    voucherAmount: data.discount_value ?? undefined,
-    minOrderAmount: data.min_order_value ?? undefined,
-    menuItemId: data.product_id ?? undefined,
-    menuItemName: data.product?.name ?? data.product_name ?? undefined,
+    pointsRequired: data.pointsRequired,
+    discountValue: data.discountValue,
+    discountType: data.discountType,
+    minOrderValue: data.minOrderValue,
+    expiryDays: data.expiryDays,
     description: data.description ?? undefined,
-    isActive: data.status === 'active',
-    isDeleted: data.is_deleted,
+    imageUrl: data.imageUrl ?? undefined,
+    isActive: data.isActive,
+    isDeleted: data.isDeleted,
   }
 }
 
 export function mapLoyaltyRewardToApi(payload: LoyaltyRewardPayload): LoyaltyRewardUpsertPayload {
   return {
     name: payload.name.trim(),
-    required_points: payload.pointsRequired,
-    reward_type: payload.type,
-    discount_value: payload.type === 'VOUCHER' ? payload.voucherAmount ?? 0 : null,
-    min_order_value: payload.type === 'VOUCHER' ? payload.minOrderAmount ?? 0 : null,
-    product_id: payload.type === 'FREE_PRODUCT' ? payload.menuItemId ?? null : null,
+    pointsRequired: payload.pointsRequired,
+    discountValue: payload.discountValue,
+    discountType: payload.discountType,
+    minOrderValue: payload.minOrderValue,
+    expiryDays: payload.expiryDays,
     description: payload.description?.trim() || undefined,
-    status: payload.isActive ? 'active' : 'inactive',
+    isActive: payload.isActive,
   }
 }
 
@@ -144,6 +144,18 @@ export async function getLoyaltyRewards(
   return { items, pagination }
 }
 
+export async function getCustomerLoyaltyRewards(
+  branchId?: string,
+): Promise<LoyaltyReward[]> {
+  // Using public endpoint that doesn't require admin role
+  const response = await httpClient<ApiResponse<PaginatedData<LoyaltyRewardApiRecord>>>(
+    `/customer/loyalty/rewards${buildBranchQuery(branchId)}`
+  )
+
+  const data = response.data
+  return (data?.items ?? []).map(mapLoyaltyRewardFromApi)
+}
+
 export async function createLoyaltyReward(payload: LoyaltyRewardPayload): Promise<LoyaltyReward> {
   const response = await httpClient<ApiResponse<LoyaltyRewardApiRecord>>('/admin/loyalty/rewards', {
     method: 'POST',
@@ -189,5 +201,44 @@ export async function toggleLoyaltyRewardStatus(reward: LoyaltyReward): Promise<
     menuItemId: reward.menuItemId,
     description: reward.description,
     isActive: !reward.isActive,
+  })
+}
+
+export interface MembershipTier {
+  id: string;
+  name: string;
+  minPoints: number;
+  discountPercent: number;
+  description?: string;
+}
+
+export type MembershipTierPayload = Omit<MembershipTier, 'id'>;
+
+export async function getMembershipTiers(): Promise<MembershipTier[]> {
+  const response = await httpClient<ApiResponse<MembershipTier[]>>('/admin/loyalty/tiers')
+  return response.data || []
+}
+
+export async function createMembershipTier(payload: MembershipTierPayload): Promise<MembershipTier> {
+  const response = await httpClient<ApiResponse<MembershipTier>>('/admin/loyalty/tiers', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+  if (!response.data) throw new Error('Không tạo được Hạng thẻ')
+  return response.data
+}
+
+export async function updateMembershipTier(id: string, payload: Partial<MembershipTierPayload>): Promise<MembershipTier> {
+  const response = await httpClient<ApiResponse<MembershipTier>>(`/admin/loyalty/tiers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  })
+  if (!response.data) throw new Error('Không cập nhật được Hạng thẻ')
+  return response.data
+}
+
+export async function deleteMembershipTier(id: string): Promise<void> {
+  await httpClient(`/admin/loyalty/tiers/${id}`, {
+    method: 'DELETE'
   })
 }

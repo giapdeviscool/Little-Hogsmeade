@@ -85,18 +85,18 @@ export function InlineSwitch({
   )
 }
 
-export function RewardTypeBadge({ type }: { type: 'VOUCHER' | 'FREE_PRODUCT' }) {
-  if (type === 'VOUCHER') {
+export function RewardTypeBadge({ type }: { type: 'percent' | 'fixed' | 'gift' }) {
+  if (type === 'percent' || type === 'fixed') {
     return (
       <span className="inline-flex rounded-full bg-[#dbeafe] px-2.5 py-1 text-xs font-semibold text-[#2563eb]">
-        Voucher
+        Voucher Giảm giá
       </span>
     )
   }
 
   return (
     <span className="inline-flex rounded-full bg-[#ede9fe] px-2.5 py-1 text-xs font-semibold text-[#7c3aed]">
-      Sản phẩm miễn phí
+      Sản phẩm quà tặng
     </span>
   )
 }
@@ -110,17 +110,16 @@ export function formatVndAmount(value: number) {
 }
 
 export function getRewardValueLabel(reward: {
-  type: 'VOUCHER' | 'FREE_PRODUCT'
-  voucherAmount?: number
-  menuItemName?: string
+  discountType: 'percent' | 'fixed' | 'gift'
+  discountValue: number
 }) {
-  if (reward.type === 'VOUCHER' && reward.voucherAmount) {
-    return `Giảm ${formatVndAmount(reward.voucherAmount)}`
+  if (reward.discountType === 'gift') {
+    return 'Quà tặng miễn phí'
   }
 
-  if (reward.type === 'FREE_PRODUCT' && reward.menuItemName) {
-    return reward.menuItemName
+  if (reward.discountType === 'fixed') {
+    return `Giảm ${formatVndAmount(reward.discountValue)}`
   }
 
-  return '—'
+  return `Giảm ${reward.discountValue}%`
 }
