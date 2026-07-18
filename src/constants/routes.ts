@@ -24,6 +24,7 @@ export const ROUTES = {
   cashierLogin: '/cashier-login',
   shiftOpening: '/shift-opening',
   shiftClosing: '/shift-closing',
+  shiftResume: '/shift-resume',
   pos: '/pos',
   invoices: '/invoices',
 } as const

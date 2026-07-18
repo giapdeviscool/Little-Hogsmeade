@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '../../constants/routes'
 import { getAuthSession } from '../../store/auth.store'
-import { openCashierShift } from '../../api/shift.api'
+import { openCashierShift, getActiveCashierShift } from '../../api/shift.api'
 import { setShiftId } from '../../store/shift.store'
 
 export function ShiftOpeningPage() {
@@ -16,6 +16,20 @@ export function ShiftOpeningPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [shake, setShake] = useState(false)
+
+  useEffect(() => {
+    const checkActiveShift = async () => {
+      try {
+        const response = await getActiveCashierShift()
+        if (response?.data?.active && response?.data?.shift_id) {
+          navigate(ROUTES.shiftResume, { state: { activeShift: response.data } })
+        }
+      } catch (err) {
+        console.error('Error checking active cashier shift:', err)
+      }
+    }
+    checkActiveShift()
+  }, [navigate])
 
   useEffect(() => {
     const updateClock = () => {
