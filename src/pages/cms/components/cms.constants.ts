@@ -1,7 +1,7 @@
 import type { CmsPagePayload, EventPayload } from '../../../types'
 import type { BannerDraft, ContactBlock, OpeningHoursBlock, FeaturedMenuBlock, CmsTab } from './cms.types'
 
-export const cmsTabKeys: CmsTab[] = ['landing', 'banners', 'posts', 'events', 'featured-menu']
+export const cmsTabKeys: CmsTab[] = ['landing', 'banners', 'posts', 'events']
 
 export const landingPageSlugs = {
   landingPage: 'landing-page',

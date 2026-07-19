@@ -77,7 +77,11 @@ export function HeroSection({
       onTouchEnd={isFullBanner ? handleTouchEnd : undefined}
       className={cn(
         'group relative flex items-center justify-center overflow-hidden bg-cover bg-center px-4 py-16 text-center md:px-6 transition-all duration-700 ease-in-out',
-        embedded ? 'min-h-[max(calc(100vh-80px),760px)] md:min-h-[max(calc(100vh-80px),840px)]' : 'min-h-[max(calc(100vh-80px),760px)] md:min-h-[max(calc(100vh-80px),840px)]',
+        isFullBanner
+          ? 'aspect-[4/3] md:aspect-video lg:aspect-[21/9] min-h-[320px]'
+          : embedded
+          ? 'min-h-[max(calc(100vh-80px),640px)] md:min-h-[max(calc(100vh-80px),840px)]'
+          : 'min-h-[max(calc(100vh-80px),640px)] md:min-h-[max(calc(100vh-80px),840px)]',
         isFullBanner && 'cursor-pointer'
       )}
       style={{ backgroundImage: `url('${activeHero.image}')` }}

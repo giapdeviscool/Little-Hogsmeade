@@ -100,12 +100,12 @@ export function RewardDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[560px]">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-coffee">{title}</DialogTitle>
+      <DialogContent className="w-full sm:max-w-lg p-0 gap-0 overflow-hidden bg-cream border-line">
+        <DialogHeader className="border-b border-line bg-white px-6 py-5 text-left">
+          <DialogTitle className="text-xl font-bold text-coffee">{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-4">
+        <div className="space-y-4 px-6 py-6 overflow-y-auto max-h-[80vh]">
           <TextField
             label="Tên phần thưởng"
             value={form.name}
@@ -179,7 +179,7 @@ export function RewardDialog({
             fileRef={fileRef}
           />
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="border-t border-line bg-white -mx-6 -mb-6 mt-6 px-6 py-4 flex justify-end gap-2">
             <button
               type="button"
               className="h-9 rounded-lg px-4 text-sm font-semibold text-muted transition-colors hover:bg-beige"

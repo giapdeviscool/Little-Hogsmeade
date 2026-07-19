@@ -17,7 +17,7 @@ export type CustomerListItem = {
   fullName: string
   phone: string
   avatarUrl?: string
-  tier: MembershipTierCode
+  tier: string
   totalPoints: number
   totalSpent: number
 }
@@ -26,7 +26,7 @@ export type CustomerListParams = {
   page?: number
   limit?: number
   search?: string
-  tier?: MembershipTierCode
+  tier?: string
 }
 
 export type CustomerListApiRecord = {
@@ -89,9 +89,10 @@ export type CustomerProfile = {
   avatarUrl?: string
   createdAt: string
   source: string
-  tier: MembershipTierCode
+  tier: string
   totalPoints: number
   totalSpent: number
+  rawPhone?: string
 }
 
 export type CustomerProfileApiRecord = CustomerListApiRecord & {
@@ -99,7 +100,10 @@ export type CustomerProfileApiRecord = CustomerListApiRecord & {
   birthday?: string | null
   created_at?: string
   createdAt?: string
+  joined_date?: string
   source?: string
+  registration_source?: string
+  raw_phone?: string
   customerMemberships?: CustomerMembership[]
 }
 

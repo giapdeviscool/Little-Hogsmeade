@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../../components/pages/owner/ConfirmDialog'
 import { Skeleton } from '../../../components/ui/skeleton'
 import { getMembershipTiers, createMembershipTier, updateMembershipTier, deleteMembershipTier } from '../../../api/loyalty.api'
 import type { MembershipTier, MembershipTierPayload } from '../../../api/loyalty.api'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../../components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog'
 
 export function TiersTab() {
   const [tiers, setTiers] = useState<MembershipTier[]>([])
@@ -171,12 +171,12 @@ export function TiersTab() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{editingTier ? 'Sửa hạng thành viên' : 'Thêm hạng thành viên'}</DialogTitle>
-            <DialogDescription>Thiết lập tên hạng, số điểm cần đạt và mức giảm giá ưu đãi.</DialogDescription>
+        <DialogContent className="w-full sm:max-w-lg p-0 gap-0 overflow-hidden bg-cream border-line">
+          <DialogHeader className="border-b border-line bg-white px-6 py-5 text-left">
+            <DialogTitle className="text-xl font-bold text-coffee">{editingTier ? 'Sửa hạng thành viên' : 'Thêm hạng thành viên'}</DialogTitle>
+            <DialogDescription className="text-sm text-muted">Thiết lập tên hạng, số điểm cần đạt và mức giảm giá ưu đãi.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 px-6 py-6 overflow-y-auto max-h-[80vh]">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-coffee">Tên hạng thẻ <span className="text-[#c25a5a]">*</span></label>
               <input
@@ -219,20 +219,20 @@ export function TiersTab() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <div className="border-t border-line bg-white px-6 py-4 flex justify-end gap-2">
             <button
               onClick={() => setIsDialogOpen(false)}
-              className="h-10 rounded-lg px-5 text-sm font-semibold text-muted hover:bg-cream"
+              className="h-9 rounded-lg px-4 text-sm font-semibold text-muted hover:bg-beige"
             >
               Hủy
             </button>
             <button
               onClick={handleSave}
-              className="h-10 rounded-lg bg-coffee px-5 text-sm font-semibold text-white hover:bg-coffee/90"
+              className="h-9 rounded-lg bg-coffee px-4 text-sm font-semibold text-white hover:bg-coffee/90"
             >
               Lưu thay đổi
             </button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

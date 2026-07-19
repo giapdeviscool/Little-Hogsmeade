@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent } from 'react'
 import { BookingSection } from '../landing/components/BookingSection'
 import { EventSection } from '../landing/components/EventSection'
-import { FeaturedMenuSection } from '../landing/components/FeaturedMenuSection'
 import { PublicMenuSection } from './components/PublicMenuSection'
 import { StoreAndMemberSection } from '../landing/components/StoreAndMemberSection'
 import { StorySection } from '../landing/components/StorySection'
 import {
-  getFeaturedMenuBlock,
   getOpeningHoursBlock,
   normalizeBranches,
   normalizeList,
 } from '../landing/landing.utils'
 import type { BookingDraft } from '../landing/landing.types'
-import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
+import { listEvents, listPages, listPosts } from '../../api/cms.api'
 import { checkCustomerPhone, customerLogin, getPointTransactions, getActiveVouchers, getCustomerVouchers, redeemLoyaltyRewardApi } from '../../api/customer.api'
-import { getBranches } from '../../api/chain.api'
+import { getBranchesPublic as getBranches, getTopSellingMenu } from '../../api/public-menu.api'
 import { getCustomerLoyaltyRewards } from '../../api/loyalty.api'
-import type { Banner, Branch, CmsPage, Event, Post, LoyaltyReward } from '../../types'
+import type { Branch, CmsPage, Event, Post, LoyaltyReward } from '../../types'
 import type { Customer, CustomerMembership, PointTransaction } from '../../types/customer.types'
 import { formatVnDate, formatVnDateTime } from '../../utils/date'
 import { Eye, Gift, Award, History, Ticket } from 'lucide-react'
@@ -85,27 +83,21 @@ function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: num
 
 
 export function CustomerMenuPage() {
-  const [banners, setBanners] = useState<Banner[]>([])
-  const [pages, setPages] = useState<CmsPage[]>([])
-  const [query, setQuery] = useState('')
+  const [topSellingMenu, setTopSellingMenu] = useState<any[]>([])
 
   useEffect(() => {
     let alive = true
-    Promise.all([listBanners(), listPages()]).then(([b, p]) => {
+    getTopSellingMenu().then((t) => {
       if (alive) {
-        setBanners(normalizeList<Banner>(b.data))
-        setPages(normalizeList<CmsPage>(p.data))
+        setTopSellingMenu(t.data || [])
       }
     })
     return () => { alive = false }
   }, [])
 
-  const featuredMenuBlock = useMemo(() => getFeaturedMenuBlock(pages, banners), [pages, banners])
-
   return (
     <>
-      <FeaturedMenuSection featuredMenuBlock={featuredMenuBlock} query={query} setQuery={setQuery} />
-      <PublicMenuSection />
+      <PublicMenuSection topSellingMenu={topSellingMenu} />
     </>
   )
 }

@@ -123,10 +123,6 @@
         "label": "Manage Banners",
         "description": "Add, edit, remove presentation banners (slides)"
       },
-      "featured-menu": {
-        "label": "Featured Menu",
-        "description": "Manage featured menu items displayed on Landing Page"
-      },
       "posts": {
         "label": "Posts List",
         "description": "Articles, thumbnails, display status"

@@ -6,14 +6,16 @@ import {
   Sparkles,
   UserRound,
   Wallet,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Skeleton } from '../../../components/ui/skeleton'
 import { cn } from '../../../utils/cn'
 import { formatVnDate, formatVnDateTime } from '../../../utils/date'
@@ -36,13 +38,12 @@ import type {
 import {
   CustomerTierBadge,
   formatCustomerPoints,
-  formatCustomerSource,
   formatCustomerSpent,
   formatPointTransactionLabel,
   getCustomerInitials,
 } from './CustomerSharedUI'
 
-type CustomerProfileDrawerProps = {
+type CustomerProfileModalProps = {
   customerId: string | null
   preview?: CustomerListItem | null
   onClose: () => void
@@ -260,11 +261,11 @@ function PointsTabPanel({ customerId }: { customerId: string }) {
   )
 }
 
-export function CustomerProfileDrawer({
+export function CustomerProfileModal({
   customerId,
   preview,
   onClose,
-}: CustomerProfileDrawerProps) {
+}: CustomerProfileModalProps) {
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [notFound, setNotFound] = useState(false)
@@ -282,6 +283,7 @@ export function CustomerProfileDrawer({
   const [dynamicTiers, setDynamicTiers] = useState<MembershipTier[]>([])
   const [savingMembership, setSavingMembership] = useState(false)
   const [resettingPin, setResettingPin] = useState(false)
+  const [showPhone, setShowPhone] = useState(false)
 
   useEffect(() => {
     getMembershipTiers().then(setDynamicTiers).catch(console.error)
@@ -313,7 +315,7 @@ export function CustomerProfileDrawer({
     try {
       setResettingPin(true)
       await resetCustomerPin(profile.id)
-      alert('Khôi phục mã PIN thành công. Khách hàng có thể tạo mã PIN mới ở lần đăng nhập tiếp theo.')
+      alert('Mã PIN đã được khôi phục về 000000.')
     } catch (err: any) {
       alert(err?.message || 'Có lỗi xảy ra khi khôi phục mã PIN.')
     } finally {
@@ -376,19 +378,16 @@ export function CustomerProfileDrawer({
   const displayName = profile?.fullName ?? preview?.fullName ?? 'Khách hàng'
 
   return (
-    <Sheet open={!!customerId} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto border-line bg-cream p-0 sm:max-w-[720px]"
-      >
-        <SheetHeader className="border-b border-line bg-white px-6 py-5 text-left">
-          <SheetTitle className="text-xl font-bold text-coffee">Hồ sơ khách hàng</SheetTitle>
-          <SheetDescription className="text-sm text-muted">
+    <Dialog open={!!customerId} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="w-full sm:max-w-3xl md:max-w-4xl p-0 gap-0 overflow-hidden bg-cream border-line">
+        <DialogHeader className="border-b border-line bg-white px-6 py-5 text-left">
+          <DialogTitle className="text-xl font-bold text-coffee">Hồ sơ khách hàng</DialogTitle>
+          <DialogDescription className="text-sm text-muted">
             Xem thông tin thành viên, lịch sử mua hàng và biến động điểm.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="space-y-6 px-6 py-6">
+        <div className="space-y-6 px-6 py-6 overflow-y-auto max-h-[85vh]">
           {loading ? (
             <ProfileSkeleton />
           ) : notFound ? (
@@ -445,21 +444,27 @@ export function CustomerProfileDrawer({
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <InfoRow icon={<Phone className="h-4 w-4" />} label="Số điện thoại" value={profile.phone} />
-                  <InfoRow
-                    icon={<CalendarDays className="h-4 w-4" />}
-                    label="Ngày sinh"
-                    value={formatVnDate(profile.birthday)}
-                  />
+                  <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cream text-muted">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted">Số điện thoại</p>
+                      <div
+                        className="flex cursor-pointer items-center gap-2"
+                        onClick={() => setShowPhone(!showPhone)}
+                      >
+                        <span className="font-medium text-coffee">
+                          {showPhone ? (profile.rawPhone || profile.phone) : profile.phone}
+                        </span>
+                        {showPhone ? <EyeOff className="h-4 w-4 text-muted" /> : <Eye className="h-4 w-4 text-muted" />}
+                      </div>
+                    </div>
+                  </div>
                   <InfoRow
                     icon={<CalendarDays className="h-4 w-4" />}
                     label="Ngày tham gia"
                     value={formatVnDate(profile.createdAt)}
-                  />
-                  <InfoRow
-                    icon={<UserRound className="h-4 w-4" />}
-                    label="Nguồn đăng ký"
-                    value={formatCustomerSource(profile.source)}
                   />
                 </div>
                 
@@ -580,7 +585,7 @@ export function CustomerProfileDrawer({
             </>
           ) : null}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

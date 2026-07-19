@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
-import { getBranches } from '../../api/chain.api'
+import { getBranchesPublic as getBranches, getTopSellingMenu } from '../../api/public-menu.api'
 import { createReservation } from '../../api/reservation.api'
 import type { Banner, CmsPage, Event, Post, Branch } from '../../types'
 import type { BookingDraft } from './landing.types'
@@ -41,6 +41,7 @@ export function LandingPage({
 }) {
   const [banners, setBanners] = useState<Banner[]>([])
   const [pages, setPages] = useState<CmsPage[]>([])
+  const [topSellingMenu, setTopSellingMenu] = useState<any[]>([])
   const [posts, setPosts] = useState<Post[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
@@ -59,11 +60,12 @@ export function LandingPage({
       setLoading(true)
       setError(null)
       try {
-        const [bannerResponse, pageResponse, postResponse, eventResponse] = await Promise.all([
+        const [bannerResponse, pageResponse, postResponse, eventResponse, topSellingResponse] = await Promise.all([
           listBanners(),
           listPages(),
           listPosts(),
           listEvents(),
+          getTopSellingMenu(),
         ])
         const branchResponse = await getBranches()
         if (!alive) return
@@ -77,6 +79,7 @@ export function LandingPage({
         setPosts(normalizedPosts.filter((p) => p.isPublished).slice(0, 3))
         setEvents(normalizedEvents.filter((e) => e.isPublished).slice(0, 2))
         setBranches(normalizedBranches)
+        setTopSellingMenu(topSellingResponse.data || [])
         hydrateBookingDraft(normalizedPages, setBookingDraft)
       } catch (loadError) {
         if (!alive) return
@@ -130,7 +133,7 @@ export function LandingPage({
   }, [banners])
   const contactBlock = useMemo(() => getContactBlock(pages), [pages])
   const openingHoursBlock = useMemo(() => getOpeningHoursBlock(pages), [pages])
-  const featuredMenuBlock = useMemo(() => getFeaturedMenuBlock(pages, banners), [pages, banners])
+  const featuredMenuBlock = useMemo(() => getFeaturedMenuBlock(pages, topSellingMenu), [pages, topSellingMenu])
   const publishedPosts = useMemo(() => posts.filter((post) => post.isPublished).slice(0, 4), [posts])
   const publishedEvents = useMemo(() => events.filter((event) => event.isPublished).slice(0, 4), [events])
   const landingPageContent = useMemo(() => getPageBySlug(pages, 'landing-page'), [pages])

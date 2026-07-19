@@ -1,4 +1,4 @@
-export type CmsTab = 'landing' | 'banners' | 'posts' | 'events' | 'featured-menu'
+export type CmsTab = 'landing' | 'banners' | 'posts' | 'events'
 
 export type NoticeState = {
   type: 'success' | 'error'
