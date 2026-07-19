@@ -26,7 +26,7 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient, br
     name: '',
     sku: '',
     category: CATEGORIES[0],
-    ingredientType: 'raw',
+    ingredientType: 'raw' as 'raw' | 'preparation',
     unit: 'g',
     importUnit: 'kg',
     conversionRate: 1000,
@@ -89,6 +89,17 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient, br
     }
   }
 
+  const isIngredientGroup = ['raw', 'preparation'].includes(formData.ingredientType || 'raw')
+  const mainGroupValue = isIngredientGroup ? 'nguyen_lieu' : formData.ingredientType
+
+  const handleMainGroupChange = (val: string) => {
+    if (val === 'nguyen_lieu') {
+      setFormData({ ...formData, ingredientType: 'raw' })
+    } else {
+      setFormData({ ...formData, ingredientType: val as any })
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
@@ -132,15 +143,16 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient, br
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Loại nguyên liệu *</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Phân loại danh mục *</label>
               <select
                 className="w-full rounded-lg border border-line px-4 py-2"
-                value={formData.ingredientType}
-                onChange={(e) => setFormData({ ...formData, ingredientType: e.target.value as 'raw' | 'preparation' })}
-                disabled={isEditing}
+                value={mainGroupValue}
+                onChange={(e) => handleMainGroupChange(e.target.value)}
               >
-                <option value="raw">Nguyên liệu thô</option>
-                <option value="preparation">Bán thành phẩm</option>
+                <option value="nguyen_lieu">Nguyên liệu</option>
+                <option value="consumable">Vật tư tiêu hao (Bao bì)</option>
+                <option value="equipment">Công cụ, dụng cụ (CCDC)</option>
+                <option value="chemical">Hóa chất & Văn phòng phẩm</option>
               </select>
             </div>
           </div>
@@ -156,16 +168,19 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient, br
                 placeholder="Ví dụ: CF-01"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Danh mục</label>
-              <select
-                className="w-full rounded-lg border border-line px-4 py-2"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+            {mainGroupValue === 'nguyen_lieu' ? (
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Loại nguyên liệu *</label>
+                <select
+                  className="w-full rounded-lg border border-line px-4 py-2"
+                  value={formData.ingredientType}
+                  onChange={(e) => setFormData({ ...formData, ingredientType: e.target.value as any })}
+                >
+                  <option value="raw">Nguyên liệu thô</option>
+                  <option value="preparation">Bán thành phẩm</option>
+                </select>
+              </div>
+            ) : <div></div>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

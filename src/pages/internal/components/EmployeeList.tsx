@@ -13,6 +13,8 @@ export function EmployeeList() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [selectedBranch, setSelectedBranch] = useState('')
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
@@ -22,10 +24,17 @@ export function EmployeeList() {
   const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
   const isChainAdmin = userRole.includes('chain admin')
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchEmployees = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await getEmployees({ page, limit: 10, branchId: selectedBranch || undefined })
+      const res = await getEmployees({ page, limit: 10, branchId: selectedBranch || undefined, search: debouncedSearch || undefined })
       setEmployees(res.data.items)
       setTotalPages(res.data.pagination.totalPages)
       setTotalItems(res.data.pagination.total)
@@ -34,7 +43,7 @@ export function EmployeeList() {
     } finally {
       setLoading(false)
     }
-  }, [page, selectedBranch])
+  }, [page, selectedBranch, debouncedSearch])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -112,7 +121,12 @@ export function EmployeeList() {
               ))}
             </select>
           )}
-          <input className="rounded-[14px] border border-line px-4" placeholder="Tìm tên hoặc SĐT..." />
+          <input 
+            className="rounded-[14px] border border-line px-4" 
+            placeholder="Tìm tên hoặc SĐT..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <button onClick={handleOpenCreate} className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
             + Thêm nhân viên
           </button>

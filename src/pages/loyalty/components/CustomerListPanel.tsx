@@ -6,9 +6,9 @@ import { Pagination } from '../../../components/ui/Pagination'
 import { DataTable } from '../../../components/pages/owner/DataTable'
 import { fetchCustomerList } from '../../../api/customer.api'
 import { getMembershipTiers } from '../../../api/loyalty.api'
-import type { CustomerListItem, MembershipTierCode } from '../../../types/customer.types'
+import type { CustomerListItem } from '../../../types/customer.types'
 import type { MembershipTier } from '../../../api/loyalty.api'
-import { CustomerProfileDrawer } from './CustomerProfileDrawer'
+import { CustomerProfileModal } from './CustomerProfileModal'
 import {
   CustomerTierBadge,
   formatCustomerPoints,
@@ -16,7 +16,7 @@ import {
   getCustomerInitials,
 } from './CustomerSharedUI'
 
-type TierFilter = 'all' | MembershipTierCode
+type TierFilter = 'all' | string
 
 type CustomerFilterParams = {
   page: number
@@ -150,10 +150,6 @@ export function CustomerListPanel() {
     setSelectedCustomerId(customer.id)
   }
 
-  const handleCloseProfile = () => {
-    setSelectedCustomerId(null)
-    setSelectedCustomerPreview(null)
-  }
 
   return (
     <section className="space-y-4">
@@ -260,10 +256,13 @@ export function CustomerListPanel() {
         </>
       )}
 
-      <CustomerProfileDrawer
+      <CustomerProfileModal
         customerId={selectedCustomerId}
         preview={selectedCustomerPreview}
-        onClose={handleCloseProfile}
+        onClose={() => {
+          setSelectedCustomerId(null)
+          setSelectedCustomerPreview(null)
+        }}
       />
     </section>
   )

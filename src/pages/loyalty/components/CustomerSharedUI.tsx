@@ -15,10 +15,16 @@ const tierLabels: Record<MembershipTierCode, string> = {
   VIP: 'VIP',
 }
 
-export function CustomerTierBadge({ tier }: { tier: MembershipTierCode }) {
+export function CustomerTierBadge({ tier }: { tier: string }) {
+  // If we want a dynamic color based on the name, we could do a simple hash or just use a fallback color.
+  // We'll map known tiers to specific styles, and fallback to beige for custom tiers like 'Bronze'.
+  const upperTier = tier.toUpperCase();
+  const style = tierStyles[upperTier as MembershipTierCode] || 'bg-beige text-coffee';
+  const label = tierLabels[upperTier as MembershipTierCode] || tier;
+
   return (
-    <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-semibold', tierStyles[tier])}>
-      {tierLabels[tier]}
+    <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-semibold', style)}>
+      {label}
     </span>
   )
 }
@@ -41,12 +47,17 @@ export function getCustomerInitials(name: string) {
 export function formatCustomerSource(source: string) {
   const labels: Record<string, string> = {
     'walk-in': 'Tại quầy',
-    online: 'Online',
-    app: 'Ứng dụng',
-    booking: 'Đặt bàn',
+    'online': 'Online',
+    'app': 'Ứng dụng',
+    'customer-app': 'Ứng dụng Khách hàng',
+    'customer_app': 'Ứng dụng Khách hàng',
+    'pos_in_store': 'Tại quầy',
+    'web': 'Web',
+    'booking': 'Đặt bàn',
   }
 
-  return labels[source] ?? source
+  const normalized = source.toLowerCase()
+  return labels[normalized] ?? source
 }
 
 export function formatPointTransactionLabel(

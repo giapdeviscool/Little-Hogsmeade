@@ -248,9 +248,13 @@ export function RewardsCatalogTab() {
               <tr key={reward.id} className="border-t border-line bg-white">
                 <td className="px-4 py-3">
                   <div className="flex items-start gap-3">
-                    <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-beige text-coffee">
-                      {reward.discountType === 'gift' ? <Gift className="h-4 w-4" /> : <Ticket className="h-4 w-4" />}
-                    </span>
+                    {reward.imageUrl ? (
+                      <img src={reward.imageUrl} alt={reward.name} className="mt-0.5 h-9 w-9 rounded-xl object-cover" />
+                    ) : (
+                      <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-beige text-coffee">
+                        {reward.discountType === 'gift' ? <Gift className="h-4 w-4" /> : <Ticket className="h-4 w-4" />}
+                      </span>
+                    )}
                     <div>
                       <p className="font-semibold text-coffee">{reward.name}</p>
                       {reward.description ? <p className="mt-0.5 text-xs text-muted">{reward.description}</p> : null}
