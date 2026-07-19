@@ -1,4 +1,4 @@
-export type CmsTab = 'landing' | 'posts' | 'events' | 'featured-menu' | 'promotions'
+export type CmsTab = 'landing' | 'banners' | 'posts' | 'events'
 
 export type NoticeState = {
   type: 'success' | 'error'
@@ -8,12 +8,13 @@ export type NoticeState = {
 export type BannerDraft = {
   id?: string
   title: string
-  description: string
+  subtitle: string
   imageUrl: string
-  ctaLabel: string
-  ctaHref: string
-  sortOrder: number
+  ctaUrl: string
+  displayOrder: number
   isActive: boolean
+  startDate?: string
+  endDate?: string
 }
 
 export type ContactBlock = {

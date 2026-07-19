@@ -1,5 +1,4 @@
 import type { NavItem } from '../types'
-import { ROUTES } from './routes'
 
 export type { TabKey } from '../types'
 

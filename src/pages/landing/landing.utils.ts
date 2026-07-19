@@ -1,5 +1,6 @@
-import type { CmsPage, Banner, Branch } from '../../types'
+import type { CmsPage, Branch } from '../../types'
 import { fallbackContact, fallbackHours, fallbackMenu, fallbackBooking } from './landing.constants'
+import type { PublicMenuItem } from '../../api/public-menu.api'
 import type { ContactBlock, OpeningHoursBlock, FeaturedMenuBlock, BookingDraft } from './landing.types'
 
 export function safeParse<T>(value: string | null | undefined, fallback: T): T {
@@ -53,15 +54,15 @@ export function getOpeningHoursBlock(pages: CmsPage[]) {
   return safeParse<OpeningHoursBlock>(getPageBySlug(pages, 'landing-opening-hours')?.content, fallbackHours)
 }
 
-export function getFeaturedMenuBlock(pages: CmsPage[], banners: Banner[]) {
-  return safeParse<FeaturedMenuBlock>(getPageBySlug(pages, 'landing-featured-menu')?.content, {
-    ...fallbackMenu,
-    items: banners.filter((banner) => banner.isActive).slice(0, 4).map((banner, index) => ({
-      name: banner.title,
-      description: banner.description ?? '',
-      price: 65000 + index * 25000,
-      imageUrl: banner.imageUrl,
-      badge: banner.ctaLabel ?? 'Featured',
+export function getFeaturedMenuBlock(pages: CmsPage[], topSellingMenu: PublicMenuItem[]) {
+  const parsed = safeParse<FeaturedMenuBlock>(getPageBySlug(pages, 'landing-featured-menu')?.content, fallbackMenu)
+  return {
+    ...parsed,
+    items: topSellingMenu.map((item) => ({
+      name: item.name,
+      description: item.description || '',
+      price: item.basePrice,
+      imageUrl: item.imageUrl || '',
     })),
-  })
+  }
 }

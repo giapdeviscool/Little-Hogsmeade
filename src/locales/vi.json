@@ -119,9 +119,9 @@
         "label": "Landing Page Editor",
         "description": "Banner, liên hệ, giờ mở cửa, món nổi bật"
       },
-      "featured-menu": {
-        "label": "Món nổi bật",
-        "description": "Quản lý món nổi bật hiển thị ở Landing Page"
+      "banners": {
+        "label": "Quản lý Banner",
+        "description": "Thêm sửa xoá các banner trình chiếu (slides)"
       },
       "posts": {
         "label": "Posts List",

@@ -26,7 +26,7 @@ export function IngredientFormModal({ isOpen, onClose, onSuccess, ingredient, br
     name: '',
     sku: '',
     category: CATEGORIES[0],
-    ingredientType: 'raw',
+    ingredientType: 'raw' as 'raw' | 'preparation',
     unit: 'g',
     importUnit: 'kg',
     conversionRate: 1000,
