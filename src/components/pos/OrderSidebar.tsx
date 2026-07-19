@@ -19,6 +19,7 @@ interface OrderSidebarProps {
   onClearOrder: () => void;
   onUpdateItem: (itemId: string, delta: number) => void;
   onRemoveItem: (itemId: string) => void;
+  onCustomizeItem: (itemId: string) => void;
 }
 
 export function OrderSidebar({
@@ -34,7 +35,8 @@ export function OrderSidebar({
   onUpdateDeliveryInfo,
   onClearOrder,
   onUpdateItem,
-  onRemoveItem
+  onRemoveItem,
+  onCustomizeItem
 }: OrderSidebarProps) {
   return (
     <aside className="w-full bg-white flex flex-col h-full relative">
@@ -147,20 +149,31 @@ export function OrderSidebar({
             </div>
           </div>
         )}
-        {activeOrder.cartItems.map((item) => (
-          
-        <CartItem
-          key={item.id}
-          id={item.id}
-          name={item.name}
-          note={item.note}
-          price={item.price}
-          quantity={item.quantity}
-          onIncrease={() => onUpdateItem(item.id, 1)}
-          onDecrease={() => onUpdateItem(item.id, -1)}
-          onRemove={() => onRemoveItem(item.id)}
-        />
-      ))}
+        {activeOrder.cartItems.map((item) => {
+          const parsePrice = (priceStr: string) => {
+            return parseInt(priceStr.replace(/\D/g, ''), 10) || 0;
+          };
+          const basePrice = parsePrice(item.price);
+          const toppingsPrice = (item.toppings || []).reduce((sum, t) => sum + t.extraPrice * t.quantity, 0);
+          const totalPrice = (basePrice + toppingsPrice) * item.quantity;
+          const displayPrice = `₫${totalPrice.toLocaleString('vi-VN')}`;
+
+          return (
+            <CartItem
+              key={item.id}
+              id={item.id}
+              name={item.name}
+              note={item.note}
+              price={displayPrice}
+              quantity={item.quantity}
+              toppings={item.toppings}
+              onIncrease={() => onUpdateItem(item.id, 1)}
+              onDecrease={() => onUpdateItem(item.id, -1)}
+              onRemove={() => onRemoveItem(item.id)}
+              onCustomize={() => onCustomizeItem(item.id)}
+            />
+          );
+        })}
       {activeOrder.cartItems.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center text-muted mt-20">
           <p className="text-sm">Chưa có món nào được chọn</p>

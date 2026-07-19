@@ -14,6 +14,8 @@ export type AuthUser = {
   roleId?: string
   roleName?: string | null
   branchId?: string
+  branchName?: string
+  branch?: string
 }
 
 export type AuthResponse = {

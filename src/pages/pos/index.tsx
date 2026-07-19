@@ -8,6 +8,8 @@ import { OrderSidebar } from '@/components/pos/OrderSidebar';
 import { Plus, ShoppingCart } from 'lucide-react';
 import type { MenuItem } from '@/types/menu.types';
 import type { Customer } from '@/types/customer.types';
+import { ToppingSelectionModal } from '@/components/pos/ToppingSelectionModal';
+import type { SelectedTopping } from '@/components/pos/ToppingSelectionModal';
 
 export interface CartItemType {
   id: string;
@@ -15,6 +17,7 @@ export interface CartItemType {
   note: string;
   price: string;
   quantity: number;
+  toppings?: SelectedTopping[];
 }
 
 export interface OrderType {
@@ -48,6 +51,11 @@ export function PosPage() {
     { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }
   ]);
   const [activeOrderId, setActiveOrderId] = useState<string>('1');
+  const [customizingItem, setCustomizingItem] = useState<{
+    itemId: string;
+    itemName: string;
+    initialToppings: SelectedTopping[];
+  } | null>(null);
 
   const activeOrder = orders.find(o => o.id === activeOrderId) || orders[0];
 
@@ -203,6 +211,16 @@ export function PosPage() {
               onClearOrder={handleClearOrder}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}
+              onCustomizeItem={(itemId) => {
+                const item = activeOrder.cartItems.find(i => i.id === itemId);
+                if (item) {
+                  setCustomizingItem({
+                    itemId: item.id,
+                    itemName: item.name,
+                    initialToppings: item.toppings || []
+                  });
+                }
+              }}
             />
           ) : (
             <div className="flex flex-col gap-2.5 mt-3 items-center">
@@ -229,6 +247,26 @@ export function PosPage() {
           )}
         </div>
       </div>
+      {customizingItem && (
+        <ToppingSelectionModal
+          isOpen={true}
+          onClose={() => setCustomizingItem(null)}
+          menuItemId={customizingItem.itemId}
+          menuItemName={customizingItem.itemName}
+          initialToppings={customizingItem.initialToppings}
+          onConfirm={(selectedToppings) => {
+            setOrders(prev => prev.map(order => {
+              if (order.id !== activeOrderId) return order;
+              const updatedItems = order.cartItems.map(item =>
+                item.id === customizingItem.itemId
+                  ? { ...item, toppings: selectedToppings }
+                  : item
+              );
+              return { ...order, cartItems: updatedItems };
+            }));
+          }}
+        />
+      )}
     </PosLayout>
   );
 }

@@ -8,7 +8,7 @@ const NAV_LINKS = [
   { name: 'Thu Ngân', link: ROUTES.pos, exact: true },
   { name: 'Hóa Đơn', link: ROUTES.invoices, exact: false },
   // { name: 'Inventory', link: '#', exact: false },
-  { name: 'Tổng Quan', link: '#', exact: false },
+  { name: 'Tổng Quan', link: ROUTES.shiftOverview, exact: false },
 ];
 
 export function PosHeader() {
