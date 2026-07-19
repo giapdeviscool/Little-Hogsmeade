@@ -4,6 +4,7 @@ import { createMenuItem } from '../../../api/menu-item.api'
 import { getBranches } from '../../../api/chain.api'
 import type { Category, Branch } from '../../../types'
 import { CurrencyInput } from '../../../components/ui/CurrencyInput'
+import { getAuthSession } from '../../../store/auth.store'
 
 interface AddMenuItemModalProps {
   isOpen: boolean
@@ -18,13 +19,18 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [branches, setBranches] = useState<Branch[]>([])
 
+  const authSession = getAuthSession()
+  const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
+  const isChainAdmin = userRole.includes('chain admin')
+  const defaultBranchId = isChainAdmin ? (authSession?.user?.branchId || '') : ''
+
   const [formData, setFormData] = useState({
     name: '',
     categoryId: '',
     basePrice: '',
     description: '',
-    scope: 'global' as 'global' | 'specific',
-    branchId: '',
+    scope: isChainAdmin ? ('specific' as const) : ('global' as const),
+    branchId: defaultBranchId,
   })
 
   useEffect(() => {
@@ -134,46 +140,48 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
               ></textarea>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">Phạm vi <span className="text-red-500">*</span></label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="global"
-                    checked={formData.scope === 'global'}
-                    onChange={() => setFormData({ ...formData, scope: 'global', branchId: '' })}
-                    className="h-4 w-4 accent-coffee"
-                  />
-                  <span className="text-sm text-gray-700">Toàn chuỗi</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="specific"
-                    checked={formData.scope === 'specific'}
-                    onChange={() => setFormData({ ...formData, scope: 'specific' })}
-                    className="h-4 w-4 accent-coffee"
-                  />
-                  <span className="text-sm text-gray-700">Riêng 1 chi nhánh</span>
-                </label>
+            {!isChainAdmin && (
+              <div>
+                <label className="mb-2 block text-sm font-medium">Phạm vi <span className="text-red-500">*</span></label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="scope"
+                      value="global"
+                      checked={formData.scope === 'global'}
+                      onChange={() => setFormData({ ...formData, scope: 'global', branchId: '' })}
+                      className="h-4 w-4 accent-coffee"
+                    />
+                    <span className="text-sm text-gray-700">Toàn chuỗi</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="scope"
+                      value="specific"
+                      checked={formData.scope === 'specific'}
+                      onChange={() => setFormData({ ...formData, scope: 'specific' })}
+                      className="h-4 w-4 accent-coffee"
+                    />
+                    <span className="text-sm text-gray-700">Riêng 1 chi nhánh</span>
+                  </label>
+                </div>
+                {formData.scope === 'specific' && (
+                  <select
+                    required
+                    className="mt-2 w-full rounded-lg border border-line px-3 py-2 bg-white"
+                    value={formData.branchId}
+                    onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+                  >
+                    <option value="" disabled>Chọn chi nhánh</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
-              {formData.scope === 'specific' && (
-                <select
-                  required
-                  className="mt-2 w-full rounded-lg border border-line px-3 py-2 bg-white"
-                  value={formData.branchId}
-                  onChange={e => setFormData({ ...formData, branchId: e.target.value })}
-                >
-                  <option value="" disabled>Chọn chi nhánh</option>
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+            )}
 
             <div>
               <label className="mb-1 block text-sm font-medium">Hình ảnh</label>

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import * as payrollApi from '../../../api/payroll.api'
 import * as employeeApi from '../../../api/employee.api'
+import { getExpenseCategories, createExpenseCategory, createExpense } from '../../../api/expense.api'
 import { getAuthSession } from '../../../store/auth.store'
 import type { PayrollSummary, Branch } from '../../../types'
+import { TimesheetModal } from './TimesheetModal'
 
 function getCurrentMonth(): string {
   const now = new Date()
@@ -22,6 +24,13 @@ export function PayrollView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  
+  // Phân trang
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  // Trạng thái thanh toán
+  const [isPaying, setIsPaying] = useState(false)
 
   useEffect(() => {
     loadBranches()
@@ -62,6 +71,72 @@ export function PayrollView() {
 
   const totalSalary = payroll.reduce((sum, p) => sum + p.estimatedSalary, 0)
   const totalHours = payroll.reduce((sum, p) => sum + p.totalWorkedHours, 0)
+
+  // Tính lương Part-time theo branch
+  const partTimePayroll = payroll.filter(p => p.employeeType === 'part_time' || p.roleName?.toLowerCase().includes('part-time') || p.roleName?.toLowerCase().includes('bán thời gian'))
+  const partTimeTotalSalary = partTimePayroll.reduce((sum, p) => sum + p.estimatedSalary, 0)
+
+  const handlePayPartTime = async () => {
+    if (partTimeTotalSalary <= 0) {
+      alert('Không có lương nhân viên part-time để thanh toán trong tháng này.')
+      return
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn thanh toán tổng cộng ${formatCurrency(partTimeTotalSalary)} cho nhân viên part-time?`)) {
+      return
+    }
+
+    setIsPaying(true)
+    try {
+      // Nhóm theo chi nhánh
+      const branchTotals = partTimePayroll.reduce((acc, p) => {
+        acc[p.branchId] = (acc[p.branchId] || 0) + p.estimatedSalary
+        return acc
+      }, {} as Record<string, number>)
+
+      // Gọi API lấy categories
+      const categories = await getExpenseCategories()
+
+      for (const branchId of Object.keys(branchTotals)) {
+        let cat = categories.find(c => c.name.toLowerCase().includes('lương nhân viên part-time') && (c.branchId === branchId || !c.branchId))
+        if (!cat) {
+          cat = await createExpenseCategory({
+            name: 'Lương nhân viên part-time',
+            costType: 'VARIABLE',
+            isSystem: false,
+            branchId
+          })
+          categories.push(cat)
+        }
+
+        await createExpense({
+          branchId,
+          expenseCategoryId: cat.id,
+          amount: branchTotals[branchId],
+          description: `Thanh toán lương Part-time tháng ${selectedMonth}`,
+          date: new Date().toISOString(),
+          employeeId: authSession?.user?.id || ''
+        })
+      }
+
+      alert('Thanh toán lương Part-time thành công!')
+    } catch (err: any) {
+      alert('Lỗi khi thanh toán: ' + (err.message || 'Unknown error'))
+    } finally {
+      setIsPaying(false)
+    }
+  }
+
+  // Phân trang
+  const totalPages = Math.ceil(payroll.length / itemsPerPage)
+  const paginatedPayroll = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return payroll.slice(start, start + itemsPerPage)
+  }, [payroll, currentPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedBranch, selectedMonth, payroll.length])
 
   return (
     <div className="space-y-4">
@@ -134,55 +209,85 @@ export function PayrollView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {payroll.map((p) => (
-                <>
-                  <tr key={p.employeeId} className="hover:bg-surface-alt/50 transition-colors">
-                    <td className="px-4 py-3 font-medium">{p.employeeName}</td>
-                    {!isChainAdmin && <td className="px-4 py-3">{p.branchName ?? '—'}</td>}
-                    <td className="px-4 py-3">{p.roleName ?? '—'}</td>
-                    <td className="px-4 py-3 text-right">{formatCurrency(p.baseSalary)}</td>
-                    <td className="px-4 py-3 text-right">{p.totalWorkedHours.toFixed(1)}h</td>
-                    <td className="px-4 py-3 text-right">{p.totalDays}</td>
-                    <td className="px-4 py-3 text-right">
-                      {p.lateArrivals > 0 ? (
-                        <span className="text-orange-500 font-bold">{p.lateArrivals}</span>
-                      ) : '0'}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-green-600">{formatCurrency(p.estimatedSalary)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => setExpandedId(expandedId === p.employeeId ? null : p.employeeId)}
-                        className="text-coffee hover:underline text-xs font-bold">
-                        {expandedId === p.employeeId ? 'Thu gọn' : 'Xem'}
-                      </button>
-                    </td>
-                  </tr>
-                  {expandedId === p.employeeId && p.dailyDetails.length > 0 && (
-                    <tr key={`${p.employeeId}-detail`}>
-                      <td colSpan={isChainAdmin ? 8 : 9} className="px-4 py-3 bg-surface-alt/30">
-                        <div className="text-xs font-bold text-muted mb-2">Chi tiết chấm công hàng ngày:</div>
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
-                          {p.dailyDetails.map((d, idx) => (
-                            <div key={idx} className="rounded border border-line bg-surface px-3 py-2 text-xs">
-                              <span className="font-medium">{new Date(d.date).toLocaleDateString('vi-VN')}</span>
-                              {' — '}
-                              <span>{d.checkIn ? new Date(d.checkIn).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '?'}</span>
-                              {' → '}
-                              <span>{d.checkOut ? new Date(d.checkOut).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'chưa ra'}</span>
-                              <span className="text-muted ml-1">({d.workedHours}h)</span>
-                              {d.shiftName && <span className="ml-1 text-coffee">[{d.shiftName}]</span>}
-                              {d.note && <span className="ml-1 text-orange-500">⚠ {d.note}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
+              {paginatedPayroll.map((p) => (
+                <tr key={p.employeeId} className="hover:bg-surface-alt/50 transition-colors">
+                  <td className="px-4 py-3 font-medium">{p.employeeName}</td>
+                  {!isChainAdmin && <td className="px-4 py-3">{p.branchName ?? '—'}</td>}
+                  <td className="px-4 py-3">
+                    {p.roleName ?? '—'}
+                    {p.employeeType === 'part_time' && <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">Part-time</span>}
+                  </td>
+                  <td className="px-4 py-3 text-right">{formatCurrency(p.baseSalary)}</td>
+                  <td className="px-4 py-3 text-right">{p.totalWorkedHours.toFixed(1)}h</td>
+                  <td className="px-4 py-3 text-right">{p.totalDays}</td>
+                  <td className="px-4 py-3 text-right">
+                    {p.lateArrivals > 0 ? (
+                      <span className="text-orange-500 font-bold">{p.lateArrivals}</span>
+                    ) : '0'}
+                  </td>
+                  <td className="px-4 py-3 text-right font-bold text-green-600">{formatCurrency(p.estimatedSalary)}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => setExpandedId(p.employeeId)}
+                      className="text-coffee hover:underline text-xs font-bold">
+                      Chi tiết
+                    </button>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      {!loading && payroll.length > itemsPerPage && (
+        <div className="flex items-center justify-between border-t border-line pt-4 mt-4">
+          <div className="text-sm text-muted">
+            Hiển thị <span className="font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> đến <span className="font-bold">{Math.min(currentPage * itemsPerPage, payroll.length)}</span> trong <span className="font-bold">{payroll.length}</span> nhân viên
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border border-line bg-white text-sm disabled:opacity-50 hover:bg-cream transition-colors"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded border border-line bg-white text-sm disabled:opacity-50 hover:bg-cream transition-colors"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Action */}
+      {(isChainOwner || isChainAdmin) && partTimePayroll.length > 0 && (
+        <div className="mt-8 p-6 bg-coffee/5 border border-coffee/20 rounded-xl flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-coffee text-lg">Thanh toán lương Part-time</h3>
+            <p className="text-sm text-muted mt-1">
+              Có <strong className="text-foreground">{partTimePayroll.length}</strong> nhân viên part-time. Tổng lương cần thanh toán: <strong className="text-green-600">{formatCurrency(partTimeTotalSalary)}</strong>
+            </p>
+          </div>
+          <button
+            onClick={handlePayPartTime}
+            disabled={isPaying}
+            className="px-6 py-2.5 bg-coffee text-white font-bold rounded-xl shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
+            {isPaying ? 'Đang xử lý...' : 'Tạo phiếu chi tự động'}
+          </button>
+        </div>
+      )}
+
+      <TimesheetModal 
+        isOpen={!!expandedId} 
+        onClose={() => setExpandedId(null)} 
+        payroll={payroll.find(p => p.employeeId === expandedId) || null} 
+      />
     </div>
   )
 }

@@ -146,12 +146,27 @@ export function GoodsIssueModal({ isOpen, onClose, onSuccess, branchId }: GoodsI
                         value={item.ingredientId}
                         onChange={(e) => handleItemChange(item.id, 'ingredientId', e.target.value)}
                       >
-                        <option value="" disabled>Chọn nguyên liệu</option>
-                        {ingredients.map(ing => (
-                          <option key={ing.id} value={ing.id}>
-                            {ing.name} ({ing.sku || 'N/A'})
-                          </option>
-                        ))}
+                        <option value="" disabled>Chọn vật tư / nguyên liệu</option>
+                        <optgroup label="Nguyên liệu thô">
+                          {ingredients.filter(ing => ing.ingredientType === 'raw').map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name} ({ing.sku || 'N/A'})</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Vật tư tiêu hao (Bao bì)">
+                          {ingredients.filter(ing => ing.ingredientType === 'consumable').map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name} ({ing.sku || 'N/A'})</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Công cụ, dụng cụ (CCDC)">
+                          {ingredients.filter(ing => ing.ingredientType === 'equipment').map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name} ({ing.sku || 'N/A'})</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Hóa chất & Văn phòng phẩm">
+                          {ingredients.filter(ing => ing.ingredientType === 'chemical').map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name} ({ing.sku || 'N/A'})</option>
+                          ))}
+                        </optgroup>
                       </select>
                       <div className="text-[10px] text-transparent mt-1 select-none">
                         placeholder

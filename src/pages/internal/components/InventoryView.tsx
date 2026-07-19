@@ -145,18 +145,23 @@ export function InventoryView() {
               onChange={(e) => setFilterType(e.target.value)}
             >
               <option value="all">Tất cả loại</option>
-              <option value="raw">Nguyên liệu thô</option>
-              <option value="preparation">Bán thành phẩm</option>
+              <optgroup label="Nguyên liệu">
+                <option value="raw">Nguyên liệu thô</option>
+                <option value="preparation">Bán thành phẩm</option>
+              </optgroup>
+              <option value="consumable">Vật tư tiêu hao (Bao bì)</option>
+              <option value="equipment">Công cụ, dụng cụ (CCDC)</option>
+              <option value="chemical">Hóa chất & Văn phòng phẩm</option>
             </select>
           </div>
         </div>
         <table className="w-full text-left text-sm">
-          <thead><tr>{['Mã NVL', 'Tên nguyên liệu', 'Loại', 'Danh mục', 'Số lượng', 'Định mức', 'Trạng thái', 'Thao tác'].map((h) => <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>)}</tr></thead>
+          <thead><tr>{['Mã NVL', 'Tên nguyên liệu', 'Loại', 'Số lượng', 'Định mức', 'Trạng thái', 'Thao tác'].map((h) => <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>)}</tr></thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="py-8 text-center">Đang tải...</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center">Đang tải...</td></tr>
             ) : ingredients.length === 0 ? (
-              <tr><td colSpan={8} className="py-8 text-center text-muted">Không có nguyên liệu nào.</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center text-muted">Không có nguyên liệu nào.</td></tr>
             ) : (
               ingredients.map((item) => {
                 const isSafe = item.currentStock > item.minStockLevel
@@ -165,11 +170,22 @@ export function InventoryView() {
                     <td className="border-b border-line px-4 py-4">{item.sku || `NVL-${item.id.slice(-4).toUpperCase()}`}</td>
                     <td className="border-b border-line px-4 py-4 font-semibold">{item.name}</td>
                     <td className="border-b border-line px-4 py-4">
-                      <span className={cn('rounded px-2 py-1 text-xs', item.ingredientType === 'preparation' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700')}>
-                        {item.ingredientType === 'preparation' ? 'Bán thành phẩm' : 'Nguyên liệu thô'}
-                      </span>
+                      {(() => {
+                        const typeMap: Record<string, { label: string, className: string }> = {
+                          raw: { label: 'Nguyên liệu thô', className: 'bg-gray-100 text-gray-700' },
+                          preparation: { label: 'Bán thành phẩm', className: 'bg-purple-100 text-purple-700' },
+                          consumable: { label: 'Vật tư (Bao bì)', className: 'bg-amber-100 text-amber-700' },
+                          equipment: { label: 'Công cụ, Dụng cụ', className: 'bg-blue-100 text-blue-700' },
+                          chemical: { label: 'Hóa chất & VPP', className: 'bg-rose-100 text-rose-700' },
+                        }
+                        const typeInfo = typeMap[item.ingredientType] || typeMap.raw;
+                        return (
+                          <span className={cn('rounded px-2 py-1 text-xs font-semibold whitespace-nowrap', typeInfo.className)}>
+                            {typeInfo.label}
+                          </span>
+                        )
+                      })()}
                     </td>
-                    <td className="border-b border-line px-4 py-4">{item.category || 'Khác'}</td>
                     <td className="border-b border-line px-4 py-4">{item.currentStock} {item.unit}</td>
                     <td className="border-b border-line px-4 py-4">{item.minStockLevel} {item.unit}</td>
                     <td className="border-b border-line px-4 py-4">

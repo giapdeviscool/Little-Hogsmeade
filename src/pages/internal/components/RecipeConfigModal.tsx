@@ -148,7 +148,12 @@ export function RecipeConfigModal({ isOpen, onClose, onSuccess, menuItemId, menu
                           ))}
                         </optgroup>
                         <optgroup label="Nguyên liệu thô">
-                          {ingredients.filter(i => i.ingredientType !== 'preparation').map(ing => (
+                          {ingredients.filter(i => i.ingredientType === 'raw').map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Vật tư tiêu hao (Bao bì)">
+                          {ingredients.filter(i => i.ingredientType === 'consumable').map(ing => (
                             <option key={ing.id} value={ing.id}>{ing.name}</option>
                           ))}
                         </optgroup>
