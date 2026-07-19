@@ -34,63 +34,67 @@ export function BranchDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="flex h-[85vh] max-h-[900px] w-[95vw] max-w-[1100px] flex-col overflow-hidden p-0 sm:max-w-[1100px]">
+        <DialogHeader className="shrink-0 border-b border-line px-6 py-4">
           <DialogTitle className="text-lg font-semibold text-coffee">
             {branch.name}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-2">
-          {branch.imageUrl && (
-            <div className="mb-2 overflow-hidden rounded-lg border border-line">
-              <img src={branch.imageUrl} alt={branch.name} className="h-40 w-full object-cover" />
-            </div>
-          )}
-          <DetailRow label="Địa chỉ" value={branch.address} />
-          <DetailRow label="Số điện thoại" value={branch.phone} />
-          {branch.email ? (
-            <DetailRow label="Email" value={branch.email} />
-          ) : null}
-          <DetailRow
-            label="Giờ hoạt động"
-            value={`${isoToTime(branch.openTime)} - ${isoToTime(branch.closeTime)}`}
-          />
-          <DetailRow label="Trạng thái" value={<StatusBadge status={branch.status} />} />
-          <DetailRow
-            label="Tự sửa giá"
-            value={branch.allowLocalPricingOverride ? "Có" : "Không"}
-          />
-          <DetailRow
-            label="Tọa độ"
-            value={`${branch.lat.toFixed(4)}, ${branch.lng.toFixed(4)}`}
-          />
-
-          <div className="h-48 w-full overflow-hidden rounded-lg border border-line mt-4">
-            <MapContainer
-              center={[branch.lat || 10.7769, branch.lng || 106.7009]}
-              zoom={15}
-              style={{ height: "100%", width: "100%" }}
-              key={`${branch.lat}-${branch.lng}`}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {branch.lat && branch.lng ? (
-                <Marker position={[branch.lat, branch.lng]} />
+        <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2">
+          {/* Left column: details */}
+          <div className="min-h-0 overflow-y-auto px-6 py-5">
+            <div className="space-y-2">
+              {branch.imageUrl && (
+                <div className="mb-2 overflow-hidden rounded-lg border border-line">
+                  <img src={branch.imageUrl} alt={branch.name} className="h-40 w-full object-cover" />
+                </div>
+              )}
+              <DetailRow label="Địa chỉ" value={branch.address} />
+              <DetailRow label="Số điện thoại" value={branch.phone} />
+              {branch.email ? (
+                <DetailRow label="Email" value={branch.email} />
               ) : null}
-            </MapContainer>
+              <DetailRow
+                label="Giờ hoạt động"
+                value={`${isoToTime(branch.openTime)} - ${isoToTime(branch.closeTime)}`}
+              />
+              <DetailRow label="Trạng thái" value={<StatusBadge status={branch.status} />} />
+              <DetailRow
+                label="Tọa độ"
+                value={`${branch.lat.toFixed(4)}, ${branch.lng.toFixed(4)}`}
+              />
+            </div>
           </div>
 
-          <div className="flex justify-end pt-4">
-            <button
-              className="h-9 rounded-lg px-4 text-sm font-semibold text-muted transition-colors hover:bg-beige"
-              onClick={onClose}
-            >
-              Đóng
-            </button>
+          {/* Right column: map, full height */}
+          <div className="min-h-0 border-t border-line md:border-l md:border-t-0">
+            <div className="h-64 w-full md:h-full">
+              <MapContainer
+                center={[branch.lat || 10.7769, branch.lng || 106.7009]}
+                zoom={15}
+                style={{ height: "100%", width: "100%" }}
+                key={`${branch.lat}-${branch.lng}`}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {branch.lat && branch.lng ? (
+                  <Marker position={[branch.lat, branch.lng]} />
+                ) : null}
+              </MapContainer>
+            </div>
           </div>
+        </div>
+
+        <div className="flex shrink-0 justify-end border-t border-line px-6 py-4">
+          <button
+            className="h-9 rounded-lg px-4 text-sm font-semibold text-muted transition-colors hover:bg-beige"
+            onClick={onClose}
+          >
+            Đóng
+          </button>
         </div>
       </DialogContent>
     </Dialog>

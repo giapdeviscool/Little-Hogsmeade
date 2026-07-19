@@ -15,7 +15,6 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
 
   const [formData, setFormData] = useState({
     name: '',
-    icon: '',
     isActive: true,
   })
 
@@ -26,7 +25,6 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
     if (category) {
       setFormData({
         name: category.name,
-        icon: category.icon || '',
         isActive: category.isActive,
       })
     }
@@ -86,19 +84,6 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
               onChange={handleChange}
               className="h-10 w-full rounded-lg border border-line bg-white px-3 text-sm text-coffee placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-coffee/20"
               placeholder="VD: Cà phê pha máy..."
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-coffee">
-              Icon (Text/Emoji)
-            </label>
-            <input
-              name="icon"
-              value={formData.icon}
-              onChange={handleChange}
-              className="h-10 w-full rounded-lg border border-line bg-white px-3 text-sm text-coffee placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-coffee/20"
-              placeholder="VD: ☕, 🍰, 🍹..."
             />
           </div>
 
