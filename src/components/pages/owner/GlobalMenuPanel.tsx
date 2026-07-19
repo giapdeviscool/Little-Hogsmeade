@@ -47,7 +47,7 @@ export function GlobalMenuPanel({
     try {
       const [catRes, itemRes] = await Promise.all([
         getCategories({ limit: 100, status: 'active' }),
-        getMenuItems({ limit: 200, isActive: true }),
+        getMenuItems({ limit: 200 }),
       ])
 
       const cats: Category[] = catRes.data?.items ?? catRes.data ?? []
@@ -57,7 +57,7 @@ export function GlobalMenuPanel({
       setCategories(globalCats)
 
       const items: MenuItem[] = itemRes.data?.items ?? itemRes.data ?? []
-      const globalItems = items.filter((i: MenuItem) => !i.branchId && i.isActive)
+      const globalItems = items.filter((i: MenuItem) => !i.branchId)
       setAllMenuItems(globalItems)
     } catch (err) {
       console.error('Failed to fetch global menu data', err)
@@ -351,6 +351,7 @@ export function GlobalMenuPanel({
           }}
         />
       )}
+
     </div>
   )
 }

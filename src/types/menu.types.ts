@@ -39,26 +39,3 @@ export interface ToppingGroupAssignment {
   isAssigned: boolean
 }
 
-export interface BranchCategory {
-  id: string
-  branchId: string
-  categoryId: string
-  isActive: boolean
-  displayOrder?: number
-  category?: Category
-}
-
-export interface BranchMenuItem {
-  id: string
-  branchId: string
-  menuItemId: string
-  isActive: boolean
-  basePrice?: number
-  menuItem?: MenuItem
-}
-
-export interface BranchMenuView {
-  categories: any[]
-  menuItems: any[]
-}
-
