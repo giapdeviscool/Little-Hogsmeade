@@ -5,8 +5,9 @@ import { Settings, ClipboardList, Store, ChevronLeft, ChevronRight } from 'lucid
 import { GlobalMenuPanel } from './GlobalMenuPanel'
 import { BranchMenuEditor } from './BranchMenuEditor'
 import { EditableLoyaltyEarnField, PricingToggleSection } from './SyncPanel'
-import { getBranchMenu, updateBranchCategories, updateBranchMenuItems } from '../../../api/branch-menu.api'
-import type { Branch, ChainConfig, BranchMenuView } from '../../../types'
+import { getBranchMenu, updateBranchMenuItems } from '../../../api/branch-menu.api'
+import { getCategories } from '../../../api/category.api'
+import type { Branch, ChainConfig, Category } from '../../../types'
 
 interface BranchMenuPanelProps {
   branches: Branch[]
@@ -27,8 +28,9 @@ export function BranchMenuPanel({
 }: BranchMenuPanelProps) {
   const [activeOuterTab, setActiveOuterTab] = useState('config')
   const [activeBranchTab, setActiveBranchTab] = useState('base')
-  const [branchMenus, setBranchMenus] = useState<Record<string, BranchMenuView>>({})
+  const [branchMenus, setBranchMenus] = useState<Record<string, any>>({})
   const [loadingBranch, setLoadingBranch] = useState(false)
+  const [allCategories, setAllCategories] = useState<Category[]>([])
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -38,8 +40,9 @@ export function BranchMenuPanel({
   const checkScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
-    setCanScrollLeft(el.scrollLeft > 4)
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+    const hasOverflow = el.scrollWidth > el.clientWidth
+    setCanScrollLeft(hasOverflow && el.scrollLeft > 4)
+    setCanScrollRight(hasOverflow && el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
   }, [])
 
   useEffect(() => {
@@ -55,12 +58,20 @@ export function BranchMenuPanel({
   const scrollTabs = (dir: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
-    const amount = 200
-    el.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' })
+    el.scrollBy({ left: dir === 'left' ? -200 : 200, behavior: 'smooth' })
   }
 
   useEffect(() => {
-    if (activeBranchTab === 'base' || branchMenus[activeBranchTab]) return
+    getCategories({ limit: 100, status: 'active' })
+      .then((res) => {
+        const data = res.data?.items ?? res.data ?? []
+        setAllCategories(data)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeBranchTab === 'base') return
     let cancelled = false
     setLoadingBranch(true)
     getBranchMenu(activeBranchTab)
@@ -70,12 +81,11 @@ export function BranchMenuPanel({
       .catch((err) => { if (!cancelled) console.error(err) })
       .finally(() => { if (!cancelled) setLoadingBranch(false) })
     return () => { cancelled = true }
-  }, [activeBranchTab, branchMenus])
+  }, [activeBranchTab])
 
-  const handleSaveBranchMenu = useCallback(async (branchId: string, catChanges: any[], itemChanges: any[]) => {
+  const handleSaveBranchMenu = useCallback(async (branchId: string, items: any[]) => {
     try {
-      if (catChanges.length > 0) await updateBranchCategories(branchId, catChanges)
-      if (itemChanges.length > 0) await updateBranchMenuItems(branchId, itemChanges)
+      if (items.length > 0) await updateBranchMenuItems(branchId, items)
       const res = await getBranchMenu(branchId)
       setBranchMenus((prev) => ({ ...prev, [branchId]: res.data ?? { categories: [], menuItems: [] } }))
     } catch (err) { console.error(err) }
@@ -98,7 +108,7 @@ export function BranchMenuPanel({
     'relative px-1 py-3 text-sm font-semibold rounded-none border-0 bg-transparent data-active:bg-transparent data-active:text-coffee data-active:shadow-none text-muted transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-coffee after:opacity-0 data-active:after:opacity-100 hover:text-coffee'
 
   const BranchTabTriggerStyle =
-    'relative px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-none border-0 bg-transparent data-active:bg-beige data-active:text-coffee text-muted transition-colors hover:text-coffee hover:bg-beige/50'
+    'relative px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-tl-lg rounded-tr-lg border-0 bg-transparent data-active:bg-beige data-active:text-coffee text-muted transition-colors hover:text-coffee hover:bg-beige/50'
 
   return (
     <Tabs value={activeOuterTab} onValueChange={setActiveOuterTab} className="w-full">
@@ -116,7 +126,7 @@ export function BranchMenuPanel({
         </TabsList>
       </div>
 
-      {/* ===== Cấu hình chung ===== */}
+      {/* TAB: Cấu hình chung */}
       <TabsContent value="config" className="mt-6 space-y-10">
         <section>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Chính sách</p>
@@ -136,7 +146,7 @@ export function BranchMenuPanel({
         </section>
       </TabsContent>
 
-      {/* ===== Menu ===== */}
+      {/* TAB: Menu */}
       <TabsContent value="menu" className="mt-0">
         <Tabs value={activeBranchTab} onValueChange={setActiveBranchTab} className="w-full">
           {/* Inner tab bar with scroll arrows */}
@@ -146,7 +156,7 @@ export function BranchMenuPanel({
                 <button
                   type="button"
                   onClick={() => scrollTabs('left')}
-                  className="shrink-0 flex items-center justify-center h-9 w-7 -ml-1 text-muted hover:text-coffee transition-colors"
+                  className="shrink-0 flex items-center justify-center h-9 w-7 -ml-1 text-muted hover:text-coffee transition-colors z-10"
                   aria-label="Cuộn trái"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -155,14 +165,13 @@ export function BranchMenuPanel({
               <div
                 ref={scrollRef}
                 className="overflow-x-auto scrollbar-none flex-1 -mb-px"
-                onScroll={checkScroll}
               >
                 <TabsList className="h-auto gap-0 bg-transparent min-w-max px-0">
-                  <TabsTrigger className={BranchTabTriggerStyle} value="base">
+                  <TabsTrigger value="base" className={BranchTabTriggerStyle}>
                     <ClipboardList className="mr-1.5 h-3.5 w-3.5" />Base Menu
                   </TabsTrigger>
                   {branchTabs.map((bt) => (
-                    <TabsTrigger className={BranchTabTriggerStyle} key={bt.id} value={bt.id}>
+                    <TabsTrigger key={bt.id} value={bt.id} className={BranchTabTriggerStyle}>
                       <Store className="mr-1.5 h-3.5 w-3.5" />{bt.name}
                     </TabsTrigger>
                   ))}
@@ -172,7 +181,7 @@ export function BranchMenuPanel({
                 <button
                   type="button"
                   onClick={() => scrollTabs('right')}
-                  className="shrink-0 flex items-center justify-center h-9 w-7 -mr-1 text-muted hover:text-coffee transition-colors"
+                  className="shrink-0 flex items-center justify-center h-9 w-7 -mr-1 text-muted hover:text-coffee transition-colors z-10"
                   aria-label="Cuộn phải"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -190,7 +199,11 @@ export function BranchMenuPanel({
                 </div>
               </div>
               <Card className="p-5">
-                <GlobalMenuPanel overrideBranchesCount={overrideBranchesCount} saving={saving} onSync={onSync} />
+                <GlobalMenuPanel
+                  overrideBranchesCount={overrideBranchesCount}
+                  saving={saving}
+                  onSync={onSync}
+                />
               </Card>
             </section>
           </TabsContent>
@@ -204,14 +217,14 @@ export function BranchMenuPanel({
                 </div>
               ) : branchMenus[bt.id] ? (
                 <BranchMenuEditor
-                  branchId={bt.id}
                   branchName={bt.name}
-                  globalPricingEnabled={config?.globalPricingEnabled ?? true}
-                  allowLocalPricingOverride={bt.allowLocalPricingOverride}
-                  saving={saving}
+                  branchId={bt.id}
                   menuData={branchMenus[bt.id]}
-                  onSave={(catChanges, itemChanges) => void handleSaveBranchMenu(bt.id, catChanges, itemChanges)}
+                  onSave={(items) => void handleSaveBranchMenu(bt.id, items)}
                   onReset={() => void handleResetBranchMenu(bt.id)}
+                  saving={saving}
+                  categories={allCategories}
+                  branches={activeBranches}
                 />
               ) : (
                 <div className="rounded-xl border border-dashed border-line py-16 text-center">
