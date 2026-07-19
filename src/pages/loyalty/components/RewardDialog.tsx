@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/dialog'
 import { Field, NumberField, TextField } from '../../../components/pages/owner/OwnerFields'
 import type { LoyaltyReward, LoyaltyRewardPayload, RewardDialogMode, RewardFormErrors } from '../loyalty.types'
+import { ImageField } from '../../cms/components/CmsSharedUI'
+import { uploadImage } from '../../../api/cms.api'
 
 const emptyForm: LoyaltyRewardPayload = {
   name: '',
@@ -54,6 +56,16 @@ export function RewardDialog({
 }) {
   const [form, setForm] = useState<LoyaltyRewardPayload>(emptyForm)
   const [errors, setErrors] = useState<RewardFormErrors>({})
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleUploadImage = async (file: File) => {
+    try {
+      const res = await uploadImage(file, 'rewards')
+      setForm((prev) => ({ ...prev, imageUrl: res.data?.secure_url || '' }))
+    } catch (error) {
+      alert('Có lỗi xảy ra khi tải ảnh lên')
+    }
+  }
 
   useEffect(() => {
     if (!isOpen) return
@@ -67,6 +79,7 @@ export function RewardDialog({
         minOrderValue: reward.minOrderValue ?? 0,
         expiryDays: reward.expiryDays ?? 30,
         description: reward.description ?? '',
+        imageUrl: reward.imageUrl,
         isActive: reward.isActive,
       })
     } else {
@@ -157,6 +170,14 @@ export function RewardDialog({
               placeholder="Ghi chú điều kiện áp dụng..."
             />
           </label>
+
+          <ImageField
+            label="Ảnh minh họa"
+            value={form.imageUrl ?? ''}
+            onChange={(val) => setForm(prev => ({ ...prev, imageUrl: val }))}
+            onUpload={handleUploadImage}
+            fileRef={fileRef}
+          />
 
           <div className="flex justify-end gap-2 pt-2">
             <button

@@ -21,7 +21,8 @@ import {
   fetchCustomerOrders,
   fetchCustomerPointTransactions,
   fetchCustomerProfile,
-  updateCustomerMembershipApi
+  updateCustomerMembershipApi,
+  resetCustomerPin
 } from '../../../api/customer.api'
 import { getMembershipTiers } from '../../../api/loyalty.api'
 import type { MembershipTier } from '../../../api/loyalty.api'
@@ -280,6 +281,7 @@ export function CustomerProfileDrawer({
   const [editTierId, setEditTierId] = useState<string>('')
   const [dynamicTiers, setDynamicTiers] = useState<MembershipTier[]>([])
   const [savingMembership, setSavingMembership] = useState(false)
+  const [resettingPin, setResettingPin] = useState(false)
 
   useEffect(() => {
     getMembershipTiers().then(setDynamicTiers).catch(console.error)
@@ -301,6 +303,21 @@ export function CustomerProfileDrawer({
       alert(err.message || 'Lỗi khi cập nhật hạng thẻ.')
     } finally {
       setSavingMembership(false)
+    }
+  }
+
+  async function handleResetPin() {
+    if (!profile) return
+    if (!window.confirm('Bạn có chắc chắn muốn khôi phục mã PIN của khách hàng này không?')) return
+    
+    try {
+      setResettingPin(true)
+      await resetCustomerPin(profile.id)
+      alert('Khôi phục mã PIN thành công. Khách hàng có thể tạo mã PIN mới ở lần đăng nhập tiếp theo.')
+    } catch (err: any) {
+      alert(err?.message || 'Có lỗi xảy ra khi khôi phục mã PIN.')
+    } finally {
+      setResettingPin(false)
     }
   }
 
@@ -413,7 +430,7 @@ export function CustomerProfileDrawer({
                       <button 
                         onClick={() => {
                           setEditTotalPoints(profile.totalPoints)
-                          setEditTierId(profile.tier?.id || (dynamicTiers[0]?.id ?? ''))
+                          setEditTierId((profile.tier as any)?.id || dynamicTiers.find(t => t.name === profile.tier || t.name.toUpperCase() === profile.tier)?.id || dynamicTiers[0]?.id || '')
                           setIsEditMode(!isEditMode)
                         }}
                         className="text-sm font-semibold text-muted hover:text-coffee px-3 py-1.5 rounded-lg border border-line"
@@ -444,6 +461,16 @@ export function CustomerProfileDrawer({
                     label="Nguồn đăng ký"
                     value={formatCustomerSource(profile.source)}
                   />
+                </div>
+                
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={handleResetPin}
+                    disabled={resettingPin}
+                    className="text-sm font-semibold text-[#c25a5a] hover:underline disabled:opacity-50"
+                  >
+                    {resettingPin ? 'Đang khôi phục...' : 'Khôi phục mã PIN (Reset PIN)'}
+                  </button>
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">

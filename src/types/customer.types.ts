@@ -100,6 +100,7 @@ export type CustomerProfileApiRecord = CustomerListApiRecord & {
   created_at?: string
   createdAt?: string
   source?: string
+  customerMemberships?: CustomerMembership[]
 }
 
 export type CustomerOrderHistoryItem = {

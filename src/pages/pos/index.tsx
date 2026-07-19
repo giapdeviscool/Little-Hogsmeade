@@ -23,6 +23,8 @@ export interface OrderType {
   customer: Customer | null;
   cartItems: CartItemType[];
   orderType: 'dine-in' | 'takeaway' | 'delivery';
+  voucherCode?: string;
+  discountAmount?: number;
   deliveryInfo?: {
     receiverName: string;
     receiverPhone: string;
@@ -45,7 +47,7 @@ export function PosPage() {
 
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [orders, setOrders] = useState<OrderType[]>([
-    { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }
+    { id: '1', title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in', discountAmount: 0 }
   ]);
   const [activeOrderId, setActiveOrderId] = useState<string>('1');
 
@@ -111,7 +113,8 @@ export function PosPage() {
       title: `Đơn mới #${orders.length + 1}`,
       customer: null,
       cartItems: [],
-      orderType: 'dine-in'
+      orderType: 'dine-in',
+      discountAmount: 0
     };
     setOrders(prev => [...prev, newOrder]);
     setActiveOrderId(newId);
@@ -124,7 +127,7 @@ export function PosPage() {
       if (filtered.length === 0) {
         const newId = Date.now().toString();
         setActiveOrderId(newId);
-        return [{ id: newId, title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in' }];
+        return [{ id: newId, title: 'Đơn mới #1', customer: null, cartItems: [], orderType: 'dine-in', discountAmount: 0 }];
       }
       if (activeOrderId === id) {
         setActiveOrderId(filtered[filtered.length - 1].id);
@@ -136,7 +139,7 @@ export function PosPage() {
   const handleClearOrder = () => {
     setOrders(prev => prev.map(o => 
       o.id === activeOrderId 
-        ? { ...o, cartItems: [], customer: o.customer?.isNew ? null : o.customer } 
+        ? { ...o, cartItems: [], customer: o.customer?.isNew ? null : o.customer, voucherCode: undefined, discountAmount: 0 } 
         : o
     ));
   };
@@ -174,6 +177,12 @@ export function PosPage() {
     }));
   };
 
+  const handleSetVoucher = (voucherCode?: string, discountAmount: number = 0) => {
+    setOrders(prev => prev.map(o => 
+      o.id === activeOrderId ? { ...o, voucherCode, discountAmount } : o
+    ));
+  };
+
   return (
     <PosLayout>
       <div className="flex w-full h-full overflow-hidden bg-beige">
@@ -203,6 +212,7 @@ export function PosPage() {
               onClearOrder={handleClearOrder}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}
+              onSetVoucher={handleSetVoucher}
             />
           ) : (
             <div className="flex flex-col gap-2.5 mt-3 items-center">

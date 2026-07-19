@@ -118,7 +118,7 @@ function buildRewardsQuery(params: LoyaltyRewardListParams = {}) {
   if (params.page) query.set('page', String(params.page))
   if (params.limit) query.set('limit', String(params.limit))
   if (params.search?.trim()) query.set('search', params.search.trim())
-  if (params.reward_type) query.set('reward_type', params.reward_type)
+  if (params.discount_type) query.set('discount_type', params.discount_type)
   if (params.status) query.set('status', params.status)
 
   const base = query.toString() ? `?${query.toString()}` : ''
@@ -194,12 +194,13 @@ export async function deleteLoyaltyReward(id: string): Promise<void> {
 export async function toggleLoyaltyRewardStatus(reward: LoyaltyReward): Promise<LoyaltyReward> {
   return updateLoyaltyReward(reward.id, {
     name: reward.name,
-    type: reward.type,
     pointsRequired: reward.pointsRequired,
-    voucherAmount: reward.voucherAmount,
-    minOrderAmount: reward.minOrderAmount,
-    menuItemId: reward.menuItemId,
+    discountValue: reward.discountValue,
+    discountType: reward.discountType,
+    minOrderValue: reward.minOrderValue,
+    expiryDays: reward.expiryDays,
     description: reward.description,
+    imageUrl: reward.imageUrl,
     isActive: !reward.isActive,
   })
 }

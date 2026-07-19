@@ -19,6 +19,7 @@ interface OrderSidebarProps {
   onClearOrder: () => void;
   onUpdateItem: (itemId: string, delta: number) => void;
   onRemoveItem: (itemId: string) => void;
+  onSetVoucher: (voucherCode?: string, discountAmount?: number) => void;
 }
 
 export function OrderSidebar({
@@ -34,7 +35,8 @@ export function OrderSidebar({
   onUpdateDeliveryInfo,
   onClearOrder,
   onUpdateItem,
-  onRemoveItem
+  onRemoveItem,
+  onSetVoucher
 }: OrderSidebarProps) {
   return (
     <aside className="w-full bg-white flex flex-col h-full relative">
@@ -172,6 +174,9 @@ export function OrderSidebar({
         orderType={activeOrder.orderType} 
         customerId={activeOrder.customer?.id || null}
         deliveryInfo={activeOrder.deliveryInfo}
+        voucherCode={activeOrder.voucherCode}
+        discountAmount={activeOrder.discountAmount}
+        onSetVoucher={onSetVoucher}
         onClear={onClearOrder} 
       />
     </aside>

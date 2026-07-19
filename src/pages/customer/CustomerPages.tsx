@@ -13,10 +13,10 @@ import {
 } from '../landing/landing.utils'
 import type { BookingDraft } from '../landing/landing.types'
 import { listBanners, listEvents, listPages, listPosts } from '../../api/cms.api'
-import { checkCustomerPhone, customerLogin, searchCustomerByPhone, getCustomerMemberships, getPointTransactions, getActiveVouchers, getCustomerVouchers, redeemLoyaltyRewardApi } from '../../api/customer.api'
+import { checkCustomerPhone, customerLogin, getPointTransactions, getActiveVouchers, getCustomerVouchers, redeemLoyaltyRewardApi } from '../../api/customer.api'
 import { getBranches } from '../../api/chain.api'
 import { getCustomerLoyaltyRewards } from '../../api/loyalty.api'
-import type { Banner, Branch, CmsPage, Event, Post, Promotion, LoyaltyReward } from '../../types'
+import type { Banner, Branch, CmsPage, Event, Post, LoyaltyReward } from '../../types'
 import type { Customer, CustomerMembership, PointTransaction } from '../../types/customer.types'
 import { formatVnDate, formatVnDateTime } from '../../utils/date'
 import { Eye, Gift, Award, History, Ticket } from 'lucide-react'
@@ -56,7 +56,7 @@ function PinOtpInput({ value, onChange, disabled }: { value: string; onChange: (
       {Array.from({ length: 6 }).map((_, i) => (
         <input
           key={i}
-          ref={(el) => (inputs.current[i] = el)}
+          ref={(el) => { inputs.current[i] = el; }}
           type="password"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -132,16 +132,19 @@ export function CustomerEventsPage() {
 
 export function CustomerPromotionsPage() {
   const [activeTab, setActiveTab] = useState<'vouchers' | 'rewards' | 'my_vouchers'>('vouchers')
-  const [vouchers, setvouchers] = useState<Promotion[]>([])
-  const [myVouchers, setMyVouchers] = useState<Promotion[]>([])
+  const [vouchers, setvouchers] = useState<any[]>([])
+  const [myVouchers, setMyVouchers] = useState<any[]>([])
   const [rewards, setRewards] = useState<LoyaltyReward[]>([])
   const [loading, setLoading] = useState(true)
   const [phone, setPhone] = useState('')
   const [authStep, setAuthStep] = useState<'phone' | 'pin'>('phone')
-  const [authStatus, setAuthStatus] = useState<'not_found' | 'no_pin' | 'has_pin'>('has_pin')
+  const [authStatus, setAuthStatus] = useState<'not_found' | 'no_pin' | 'has_pin' | 'locked'>('has_pin')
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [pin, setPin] = useState('')
   const [fullName, setFullName] = useState('')
+  const [isChangingPin, setIsChangingPin] = useState(false)
+  const [oldPin, setOldPin] = useState('')
+  const [newPin, setNewPin] = useState('')
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [membership, setMembership] = useState<CustomerMembership | null>(null)
   const [redeemingId, setRedeemingId] = useState<string | null>(null)
@@ -179,7 +182,11 @@ export function CustomerPromotionsPage() {
       if (res.customer?.fullName) {
         setFullName(res.customer.fullName)
       }
-      setAuthStep('pin')
+      if (res.status === 'locked') {
+        setNotice({ type: 'error', msg: 'Tài khoản của bạn đã bị khóa mã PIN. Vui lòng đến cửa hàng để được hỗ trợ.' })
+      } else {
+        setAuthStep('pin')
+      }
     } catch {
       setNotice({ type: 'error', msg: 'Lỗi khi kiểm tra số điện thoại.' })
     } finally {
@@ -199,7 +206,7 @@ export function CustomerPromotionsPage() {
     try {
       const res = await customerLogin({ phone, pin, fullName: authStatus === 'not_found' ? fullName : undefined })
       if (res.data) {
-        const fullProfile = res.data
+        const fullProfile = res.data as any
         setCustomer(fullProfile)
         
         if (fullProfile.customerMemberships && fullProfile.customerMemberships.length > 0) {
@@ -212,6 +219,24 @@ export function CustomerPromotionsPage() {
       }
     } catch (error: any) {
       setNotice({ type: 'error', msg: error?.message || 'Lỗi đăng nhập. Vui lòng kiểm tra lại.' })
+    } finally {
+      setIsAuthenticating(false)
+    }
+  }
+
+  async function handleChangePin(e: FormEvent) {
+    e.preventDefault()
+    if (oldPin.length < 6 || newPin.length < 6) return
+    setIsAuthenticating(true)
+    try {
+      const { changeCustomerPin } = await import('../../api/customer.api')
+      await changeCustomerPin({ oldPin, newPin })
+      setNotice({ type: 'success', msg: 'Đổi mã PIN thành công!' })
+      setIsChangingPin(false)
+      setOldPin('')
+      setNewPin('')
+    } catch (error: any) {
+      setNotice({ type: 'error', msg: error?.message || 'Lỗi khi đổi mã PIN.' })
     } finally {
       setIsAuthenticating(false)
     }
@@ -303,6 +328,17 @@ export function CustomerPromotionsPage() {
                   <button type="submit" disabled={isAuthenticating || pin.length < 6} className="h-[48px] w-full max-w-[340px] mx-auto rounded-xl bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50 mt-2">
                     {isAuthenticating ? 'Đang xử lý...' : 'Xác nhận'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep('phone')
+                      setPin('')
+                      setNotice(null)
+                    }}
+                    className="text-sm font-semibold text-muted hover:text-coffee"
+                  >
+                    Quay lại
+                  </button>
                 </div>
               </form>
             )}
@@ -319,6 +355,49 @@ export function CustomerPromotionsPage() {
           <div className={cn("mb-8 rounded-xl p-4 text-center text-sm font-semibold border", notice.type === 'success' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200")}>
             {notice.msg}
           </div>
+        )}
+
+        {customer && !isChangingPin && (
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setIsChangingPin(true)}
+              className="text-sm font-bold text-coffee underline hover:text-opacity-80"
+            >
+              Đổi mã PIN
+            </button>
+          </div>
+        )}
+
+        {isChangingPin && (
+          <form onSubmit={handleChangePin} className="bg-white p-6 rounded-2xl border border-line mb-8 shadow-sm">
+            <h3 className="font-bold text-lg mb-4 text-center">Đổi mã PIN</h3>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-full">
+                <p className="text-sm font-semibold mb-2 text-center">Mã PIN hiện tại</p>
+                <PinOtpInput value={oldPin} onChange={setOldPin} disabled={isAuthenticating} />
+              </div>
+              <div className="w-full">
+                <p className="text-sm font-semibold mb-2 text-center">Mã PIN mới</p>
+                <PinOtpInput value={newPin} onChange={setNewPin} disabled={isAuthenticating} />
+              </div>
+              <div className="flex gap-4 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsChangingPin(false)}
+                  className="px-6 py-2 rounded-xl border border-line text-sm font-semibold hover:bg-surface"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAuthenticating || oldPin.length < 6 || newPin.length < 6}
+                  className="px-6 py-2 rounded-xl bg-coffee text-white text-sm font-bold hover:bg-opacity-90 disabled:opacity-50"
+                >
+                  Xác nhận đổi
+                </button>
+              </div>
+            </div>
+          </form>
         )}
 
         <div className="flex justify-center mb-8">
@@ -447,8 +526,13 @@ export function CustomerPromotionsPage() {
               rewards.map(reward => (
                 <div key={reward.id} className="group overflow-hidden rounded-[24px] bg-white border border-line shadow-soft transition hover:-translate-y-1 hover:shadow-hover flex flex-col">
                   <div className="h-[140px] bg-gold p-6 text-white flex flex-col justify-center relative overflow-hidden">
-                    <div className="absolute right-[-20px] top-[-20px] h-[100px] w-[100px] rounded-full bg-white/20" />
-                    <Gift className="h-8 w-8 mb-2 text-white" />
+                    {reward.imageUrl ? (
+                      <img src={reward.imageUrl} alt={reward.name} className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <div className="absolute right-[-20px] top-[-20px] h-[100px] w-[100px] rounded-full bg-white/20" />
+                    )}
+                    <div className="absolute inset-0 bg-black/20" />
+                    <Gift className="h-8 w-8 mb-2 text-white relative z-10" />
                     <h3 className="font-bold text-xl relative z-10 leading-tight truncate">{reward.name}</h3>
                   </div>
                   
@@ -733,9 +817,12 @@ export function CustomerMembershipPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [authStep, setAuthStep] = useState<'phone' | 'pin'>('phone')
-  const [authStatus, setAuthStatus] = useState<'not_found' | 'no_pin' | 'has_pin'>('has_pin')
+  const [authStatus, setAuthStatus] = useState<'not_found' | 'no_pin' | 'has_pin' | 'locked'>('has_pin')
   const [pin, setPin] = useState('')
   const [fullName, setFullName] = useState('')
+  const [isChangingPin, setIsChangingPin] = useState(false)
+  const [oldPin, setOldPin] = useState('')
+  const [newPin, setNewPin] = useState('')
   
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [membership, setMembership] = useState<CustomerMembership | null>(null)
@@ -760,7 +847,11 @@ export function CustomerMembershipPage() {
       if (res.customer?.fullName) {
         setFullName(res.customer.fullName)
       }
-      setAuthStep('pin')
+      if (res.status === 'locked') {
+        setError('Tài khoản của bạn đã bị khóa mã PIN. Vui lòng đến cửa hàng để được hỗ trợ.')
+      } else {
+        setAuthStep('pin')
+      }
     } catch {
       setError('Đã xảy ra lỗi khi kiểm tra số điện thoại.')
     } finally {
@@ -781,7 +872,7 @@ export function CustomerMembershipPage() {
     try {
       const res = await customerLogin({ phone, pin, fullName: authStatus === 'not_found' ? fullName : undefined })
       if (res.data) {
-        const fullProfile = res.data
+        const fullProfile = res.data as any
         setCustomer(fullProfile)
         
         if (fullProfile.customerMemberships && fullProfile.customerMemberships.length > 0) {
@@ -796,6 +887,25 @@ export function CustomerMembershipPage() {
       }
     } catch (err: any) {
       setError(err?.message || 'Lỗi đăng nhập. Vui lòng kiểm tra lại.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleChangePin(e: FormEvent) {
+    e.preventDefault()
+    if (oldPin.length < 6 || newPin.length < 6) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { changeCustomerPin } = await import('../../api/customer.api')
+      await changeCustomerPin({ oldPin, newPin })
+      setError('Đổi mã PIN thành công!') // using error state as notice for simplicity here
+      setIsChangingPin(false)
+      setOldPin('')
+      setNewPin('')
+    } catch (err: any) {
+      setError(err?.message || 'Lỗi khi đổi mã PIN.')
     } finally {
       setLoading(false)
     }
@@ -829,7 +939,7 @@ export function CustomerMembershipPage() {
         ) : !customer ? (
           <form onSubmit={handleLogin} className="mx-auto max-w-[500px] mb-12 space-y-4">
             <p className="text-sm font-semibold text-coffee mb-1 text-center">
-              {authStatus === 'not_found' ? 'Tạo tài khoản thành viên mới' : authStatus === 'no_pin' ? 'Thiết lập mã PIN bảo mật' : 'Nhập mã PIN để tra cứu'}
+              {authStatus === 'not_found' ? 'Tạo tài khoản thành viên mới' : authStatus === 'no_pin' ? 'Thiết lập mã PIN bảo mật' : authStatus === 'locked' ? 'Tài khoản bị khóa' : 'Nhập mã PIN để tra cứu'}
             </p>
             {authStatus === 'not_found' && (
               <input 
@@ -841,13 +951,24 @@ export function CustomerMembershipPage() {
               />
             )}
             <div className="flex flex-col items-center gap-6 mt-6">
-              <PinOtpInput value={pin} onChange={setPin} disabled={loading} />
+              {authStatus !== 'locked' && (
+                <>
+                  <PinOtpInput value={pin} onChange={setPin} disabled={loading} />
+                  <button 
+                    type="submit" 
+                    disabled={loading || pin.length < 6}
+                    className="h-[60px] w-full max-w-[340px] rounded-full bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50 shadow-soft"
+                  >
+                    {loading ? 'Đang xử lý...' : 'Xác nhận'}
+                  </button>
+                </>
+              )}
               <button 
-                type="submit" 
-                disabled={loading || pin.length < 6}
-                className="h-[60px] w-full max-w-[340px] rounded-full bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50 shadow-soft"
+                type="button"
+                onClick={() => setAuthStep('phone')}
+                className="h-[60px] w-full max-w-[340px] rounded-full border-2 border-line bg-white px-6 font-bold text-coffee transition hover:bg-surface-alt shadow-soft"
               >
-                {loading ? 'Đang xử lý...' : 'Xác nhận'}
+                Quay lại
               </button>
             </div>
           </form>
@@ -855,10 +976,47 @@ export function CustomerMembershipPage() {
 
         {customer && (
           <div className="text-center mb-8">
-            <button onClick={() => { setCustomer(null); setMembership(null); setPhone(''); setPin(''); setAuthStep('phone'); }} className="text-sm text-muted hover:text-coffee font-semibold underline">
+            <button onClick={() => { setCustomer(null); setMembership(null); setPhone(''); setPin(''); setAuthStep('phone'); }} className="text-sm text-muted hover:text-coffee font-semibold underline mr-4">
               Tra cứu số điện thoại khác
             </button>
+            {!isChangingPin && (
+              <button onClick={() => setIsChangingPin(true)} className="text-sm text-coffee hover:text-opacity-80 font-semibold underline">
+                Đổi mã PIN
+              </button>
+            )}
           </div>
+        )}
+
+        {isChangingPin && (
+          <form onSubmit={handleChangePin} className="bg-white p-6 md:p-8 rounded-[32px] border border-line mb-10 shadow-soft max-w-[600px] mx-auto">
+            <h3 className="font-bold text-xl mb-6 text-center text-coffee">Đổi mã PIN</h3>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-full">
+                <p className="text-sm font-semibold mb-2 text-center">Mã PIN hiện tại</p>
+                <PinOtpInput value={oldPin} onChange={setOldPin} disabled={loading} />
+              </div>
+              <div className="w-full">
+                <p className="text-sm font-semibold mb-2 text-center">Mã PIN mới</p>
+                <PinOtpInput value={newPin} onChange={setNewPin} disabled={loading} />
+              </div>
+              <div className="flex gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsChangingPin(false)}
+                  className="px-8 py-3 rounded-full border-2 border-line text-sm font-bold hover:bg-surface"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || oldPin.length < 6 || newPin.length < 6}
+                  className="px-8 py-3 rounded-full bg-coffee text-white text-sm font-bold hover:bg-opacity-90 disabled:opacity-50 shadow-soft"
+                >
+                  Xác nhận đổi
+                </button>
+              </div>
+            </div>
+          </form>
         )}
 
         {error && (

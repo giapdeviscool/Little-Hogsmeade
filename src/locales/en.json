@@ -99,7 +99,8 @@
     "internal": "Internal Management",
     "owner": "Chain Management (Owner)",
     "cms": "CMS (Landing Page)",
-    "customers": "Customers"
+    "customers": "Customers",
+    "loyalty": "Loyalty"
   },
   "pages": {
     "dashboardTitle": "Little Hogsmeade Chain Overview",
