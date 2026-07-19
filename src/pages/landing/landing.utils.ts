@@ -57,11 +57,11 @@ export function getFeaturedMenuBlock(pages: CmsPage[], banners: Banner[]) {
   return safeParse<FeaturedMenuBlock>(getPageBySlug(pages, 'landing-featured-menu')?.content, {
     ...fallbackMenu,
     items: banners.filter((banner) => banner.isActive).slice(0, 4).map((banner, index) => ({
-      name: banner.title,
-      description: banner.description ?? '',
+      name: banner.title || 'Món nổi bật',
+      description: banner.subtitle || '',
       price: 65000 + index * 25000,
       imageUrl: banner.imageUrl,
-      badge: banner.ctaLabel ?? 'Featured',
+      badge: 'Featured',
     })),
   })
 }

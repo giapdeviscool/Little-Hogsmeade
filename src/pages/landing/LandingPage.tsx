@@ -116,9 +116,17 @@ export function LandingPage({
       })
   }, [branches, storeQuery, userLocation])
 
-  const activeHero = useMemo(() => {
+  const activeBanners = useMemo(() => {
     const bannerList = Array.isArray(banners) ? banners : []
-    return bannerList.find((banner) => banner.isActive) ?? bannerList[0]
+    const now = new Date()
+    return bannerList
+      .filter((banner) => {
+        if (!banner.isActive) return false
+        if (banner.startDate && new Date(banner.startDate) > now) return false
+        if (banner.endDate && new Date(banner.endDate) < now) return false
+        return true
+      })
+      .sort((a, b) => a.displayOrder - b.displayOrder)
   }, [banners])
   const contactBlock = useMemo(() => getContactBlock(pages), [pages])
   const openingHoursBlock = useMemo(() => getOpeningHoursBlock(pages), [pages])
@@ -127,29 +135,23 @@ export function LandingPage({
   const publishedEvents = useMemo(() => events.filter((event) => event.isPublished).slice(0, 4), [events])
   const landingPageContent = useMemo(() => getPageBySlug(pages, 'landing-page'), [pages])
 
-  const hero = landingPageContent && (landingPageContent.title || landingPageContent.imageUrl)
-    ? {
-      title: landingPageContent.title || defaultHero.title,
-      subtitle: landingPageContent.content || defaultHero.subtitle,
-      image: landingPageContent.imageUrl || activeHero?.imageUrl || defaultHero.image,
-      ctaLabel: activeHero?.ctaLabel || 'Khám phá ngay',
-      ctaHref: activeHero?.ctaHref || '#landing-menu',
-    }
-    : activeHero
-      ? {
-        title: activeHero.title,
-        subtitle: activeHero.description || defaultHero.subtitle,
-        image: activeHero.imageUrl || defaultHero.image,
-        ctaLabel: activeHero.ctaLabel || 'Khám phá ngay',
-        ctaHref: activeHero.ctaHref || '#landing-menu',
-      }
-      : {
-        title: defaultHero.title,
-        subtitle: defaultHero.subtitle,
-        image: defaultHero.image,
-        ctaLabel: 'Khám phá ngay',
-        ctaHref: '#landing-menu',
-      }
+  const isFullBanner = activeBanners.length > 0
+
+  const mappedBanners = activeBanners.map(b => ({
+    title: b.title || '',
+    subtitle: b.subtitle || '',
+    image: b.imageUrl || defaultHero.image,
+    ctaLabel: '',
+    ctaHref: b.ctaUrl || '/menu',
+  }))
+
+  const fallbackHero = {
+    title: landingPageContent?.title || defaultHero.title,
+    subtitle: landingPageContent?.content || defaultHero.subtitle,
+    image: landingPageContent?.imageUrl || defaultHero.image,
+    ctaLabel: 'Khám phá ngay',
+    ctaHref: '/menu',
+  }
 
   function scrollToSection(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -224,10 +226,12 @@ export function LandingPage({
         <main>
           {!hideBrowserChrome && (
             <HeroSection
-              hero={hero}
+              banners={mappedBanners}
+              fallbackHero={fallbackHero}
               onPrimaryAction={() => scrollToSection('landing-menu')}
-              onSecondaryAction={() => scrollToSection('landing-booking')}
+              onSecondaryAction={() => document.getElementById('booking-trigger')?.click()}
               embedded={embedded}
+              isFullBanner={isFullBanner}
             />
           )}
           {hideBrowserChrome && (
@@ -235,8 +239,8 @@ export function LandingPage({
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold">Preview</p>
-                  <h1 className="mt-1 text-[28px] font-bold tracking-[-0.04em]">{hero.title}</h1>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{hero.subtitle}</p>
+                  <h1 className="mt-1 text-[28px] font-bold tracking-[-0.04em]">{mappedBanners[0]?.title || fallbackHero.title}</h1>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{mappedBanners[0]?.subtitle || fallbackHero.subtitle}</p>
                 </div>
                 <div className="text-right text-xs text-muted">
                   <p>Landing Page preview</p>
@@ -266,7 +270,7 @@ export function LandingPage({
           {hideBrowserChrome && (
             <div className="space-y-8 p-6">
               <MiniBlock title="About Us" description="Ảnh hero, câu chuyện thương hiệu và vibe không gian.">
-                <p className="text-sm leading-6 text-muted">{hero.subtitle}</p>
+                <p className="text-sm leading-6 text-muted">{mappedBanners[0]?.subtitle || fallbackHero.subtitle}</p>
               </MiniBlock>
               <MiniBlock title="Menu & Khuyến mãi" description="Card món rõ giá, ảnh và mô tả ngắn.">
                 <div className="grid gap-3 sm:grid-cols-2">

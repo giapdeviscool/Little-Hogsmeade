@@ -1,7 +1,7 @@
 import type { CmsPagePayload, EventPayload } from '../../../types'
 import type { BannerDraft, ContactBlock, OpeningHoursBlock, FeaturedMenuBlock, CmsTab } from './cms.types'
 
-export const cmsTabKeys: CmsTab[] = ['landing', 'posts', 'events', 'featured-menu'] //promotions 
+export const cmsTabKeys: CmsTab[] = ['landing', 'banners', 'posts', 'events', 'featured-menu']
 
 export const landingPageSlugs = {
   landingPage: 'landing-page',
@@ -57,12 +57,13 @@ export const defaultFeaturedMenuBlock: FeaturedMenuBlock = {
 
 export const defaultBannerDraft: BannerDraft = {
   title: 'Mùa mới tại Little Hogsmeade',
-  description: 'Bữa sáng, cà phê và cocktail trong không gian ấm cúng.',
+  subtitle: 'Bữa sáng, cà phê và cocktail trong không gian ấm cúng.',
   imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1400&q=90',
-  ctaLabel: 'Khám phá ngay',
-  ctaHref: '/menu',
-  sortOrder: 1,
+  ctaUrl: '/menu',
+  displayOrder: 1,
   isActive: true,
+  startDate: '',
+  endDate: '',
 }
 
 export const emptyEventDraft: EventPayload = {

@@ -119,6 +119,10 @@
         "label": "Landing Page Editor",
         "description": "Banner, contact, opening hours, featured menu"
       },
+      "banners": {
+        "label": "Manage Banners",
+        "description": "Add, edit, remove presentation banners (slides)"
+      },
       "featured-menu": {
         "label": "Featured Menu",
         "description": "Manage featured menu items displayed on Landing Page"

@@ -6,6 +6,7 @@ import { useLocale } from '../../hooks/useLocale'
 import type { CmsTab } from './components/cms.types'
 import { cmsTabKeys } from './components/cms.constants'
 import { LandingEditor } from './components/LandingEditor'
+import { BannersPanel } from './components/BannersPanel'
 import { FeaturedMenuEditor } from './components/FeaturedMenuEditor'
 import { PostsPanel } from './components/PostsPanel'
 import { EventsPanel } from './components/EventsPanel'
@@ -52,6 +53,7 @@ export function CMSPage() {
 
       <div className="mt-7 space-y-6">
         {activeTab === 'landing' && <LandingEditor />}
+        {activeTab === 'banners' && <BannersPanel />}
         {activeTab === 'featured-menu' && <FeaturedMenuEditor />}
         {activeTab === 'posts' && <PostsPanel />}
         {activeTab === 'events' && <EventsPanel />}
