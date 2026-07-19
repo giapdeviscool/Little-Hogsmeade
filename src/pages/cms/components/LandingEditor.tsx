@@ -50,7 +50,7 @@ export function LandingEditor() {
         const [bannerResponse, pageResponse] = await Promise.all([listBanners(), listPages()])
         if (!alive) return
 
-        const sortedBanners = normalizeList<Banner>(bannerResponse.data).sort((a, b) => a.sortOrder - b.sortOrder)
+        const sortedBanners = normalizeList<Banner>(bannerResponse.data).sort((a, b) => a.displayOrder - b.displayOrder)
         setBanners(sortedBanners)
         const normalizedPages = normalizeList<CmsPage>(pageResponse.data)
         setPages(normalizedPages)

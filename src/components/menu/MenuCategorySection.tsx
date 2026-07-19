@@ -4,9 +4,11 @@ import { MenuItemCard } from "./MenuItemCard"
 export function MenuCategorySection({
   category,
   items,
+  topSellingIds,
 }: {
   category: PublicCategory
   items: PublicMenuItem[]
+  topSellingIds?: Set<string>
 }) {
   if (items.length === 0) return null
 
@@ -23,10 +25,8 @@ export function MenuCategorySection({
         {items.map((item) => (
           <MenuItemCard
             key={item.id}
-            name={item.name}
-            description={item.description}
-            imageUrl={item.imageUrl}
-            basePrice={item.basePrice}
+            item={item}
+            isTopSelling={topSellingIds?.has(item.id)}
           />
         ))}
       </div>

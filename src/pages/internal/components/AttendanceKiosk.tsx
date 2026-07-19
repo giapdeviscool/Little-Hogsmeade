@@ -2,7 +2,7 @@ import { useState } from 'react'
 import * as attendanceApi from '../../../api/attendance.api'
 import type { AttendanceResult } from '../../../types'
 
-export function AttendanceKiosk() {
+export function AttendanceKiosk({ branchId = 'default-branch-id' }: { branchId?: string }) {
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AttendanceResult | null>(null)

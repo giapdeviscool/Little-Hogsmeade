@@ -36,14 +36,14 @@ export function VoucherDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-coffee">
+      <DialogContent className="w-full sm:max-w-lg p-0 gap-0 overflow-hidden bg-cream border-line">
+        <DialogHeader className="border-b border-line bg-white px-6 py-5 text-left">
+          <DialogTitle className="text-xl font-bold text-coffee">
             {title}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-4">
+        <div className="space-y-4 px-6 py-6 overflow-y-auto max-h-[80vh]">
           {isViewMode && voucher ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4">
@@ -201,26 +201,27 @@ export function VoucherDialog({
             </>
           )}
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="border-t border-line bg-white -mx-6 -mb-6 mt-6 px-6 py-4 flex justify-end gap-2">
             <button
+              type="button"
               className="h-9 rounded-lg px-4 text-sm font-semibold text-muted transition-colors hover:bg-beige"
               onClick={onClose}
             >
               {isViewMode ? "Đóng" : "Hủy"}
             </button>
-            {!isViewMode ? (
+            {!isViewMode && (
               <button
+                type="button"
                 className="h-9 rounded-lg bg-coffee px-4 text-sm font-semibold text-white transition-colors hover:bg-coffee/90 disabled:opacity-50"
                 disabled={saving}
                 onClick={onSave}
               >
-                {mode === "create" ? "Tạo Voucher" : "Lưu"}
+                {mode === "create" ? "Tạo mới" : "Xác nhận"}
               </button>
-            ) : null}
+            )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-

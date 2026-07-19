@@ -17,12 +17,13 @@ import type { Voucher } from '../types/chain.types'
 
 const TIER_CODES: MembershipTierCode[] = ['MEMBER', 'SILVER', 'GOLD', 'VIP']
 
-function normalizeTier(value?: string | null): MembershipTierCode {
-  const normalized = (value ?? 'MEMBER').toUpperCase()
+function normalizeTier(value?: string | null): string {
+  if (!value) return 'MEMBER'
+  const normalized = value.toUpperCase()
   if (TIER_CODES.includes(normalized as MembershipTierCode)) {
-    return normalized as MembershipTierCode
+    return normalized
   }
-  return 'MEMBER'
+  return value // Return original string for dynamic tiers like 'Bronze'
 }
 
 function normalizeTransactionType(value?: string | null): PointTransactionType {
@@ -64,8 +65,9 @@ export function mapCustomerProfileFromApi(data: CustomerProfileApiRecord): Custo
     ...listItem,
     email: data.email ?? undefined,
     birthday: data.birthday ?? null,
-    createdAt: data.createdAt ?? data.created_at ?? new Date().toISOString(),
-    source: data.source ?? 'walk-in',
+    createdAt: data.createdAt ?? data.created_at ?? data.joined_date ?? new Date().toISOString(),
+    source: data.source ?? data.registration_source ?? 'walk-in',
+    rawPhone: data.raw_phone,
   }
 }
 
@@ -195,13 +197,26 @@ export function searchCustomerByPhone(phone: string) {
 }
 
 export function checkCustomerPhone(phone: string) {
-  return httpClient<{ status: 'not_found' | 'no_pin' | 'has_pin', customer?: { id: string, fullName: string } }>(`/customers/auth/check-phone?phone=${phone}`)
+  return httpClient<{ status: 'not_found' | 'no_pin' | 'has_pin' | 'locked', customer?: { id: string, fullName: string } }>(`/customers/auth/check-phone?phone=${phone}`)
 }
 
 export function customerLogin(payload: { phone: string, pin: string, fullName?: string }) {
   return httpClient<ApiResponse<CustomerProfileApiRecord>>('/customers/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload)
+  })
+}
+
+export function changeCustomerPin(payload: { oldPin: string, newPin: string }) {
+  return httpClient<ApiResponse<null>>('/customers/auth/change-pin', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export function resetCustomerPin(customerId: string) {
+  return httpClient<ApiResponse<null>>(`/customers/${customerId}/reset-pin`, {
+    method: 'POST'
   })
 }
 

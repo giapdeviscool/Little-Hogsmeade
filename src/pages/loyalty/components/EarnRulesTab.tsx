@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
 import { Skeleton } from '../../../components/ui/skeleton'
@@ -6,7 +6,7 @@ import { cn } from '../../../utils/cn'
 import { getLoyaltyConfig, saveLoyaltyConfig } from '../../../api/loyalty.api'
 import type { EarnConfigErrors, LoyaltyEarnConfig } from '../loyalty.types'
 import { defaultLoyaltyEarnConfig } from '../loyalty.constants'
-import { LoyaltyToggle, formatVndAmount } from './LoyaltySharedUI'
+import { LoyaltyToggle } from './LoyaltySharedUI'
 
 function validateConfig(config: LoyaltyEarnConfig): EarnConfigErrors {
   const errors: EarnConfigErrors = {}
