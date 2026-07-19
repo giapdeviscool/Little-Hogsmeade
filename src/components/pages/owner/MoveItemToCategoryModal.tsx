@@ -68,7 +68,6 @@ export function MoveItemToCategoryModal({
           <DialogTitle className="text-lg font-semibold text-coffee">
             Chuyển món vào{' '}
             <span>
-              {category.icon && <span className="mr-1">{category.icon}</span>}
               {category.name}
             </span>
           </DialogTitle>

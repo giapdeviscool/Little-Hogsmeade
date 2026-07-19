@@ -103,7 +103,6 @@ export function BranchMenuEditor({
             return (
               <div key={cat.id} className="overflow-hidden rounded-xl border border-line bg-white shadow-sm">
                 <div className="flex items-center gap-2 bg-cream/50 px-4 py-3 border-b border-line">
-                  <span className="text-xl leading-none">{cat.icon || '📦'}</span>
                   <span className="font-semibold text-coffee">{cat.name}</span>
                   <span className="rounded-full bg-beige px-2 py-0.5 text-xs font-medium text-muted">
                     {catItems.length} món

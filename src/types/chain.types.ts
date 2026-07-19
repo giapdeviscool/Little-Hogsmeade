@@ -11,7 +11,6 @@ export type Branch = {
   openTime: string
   closeTime: string
   status: BranchStatus
-  allowLocalPricingOverride: boolean
   imageUrl?: string | null
 }
 
@@ -25,7 +24,6 @@ export type BranchPayload = {
   openTime: string
   closeTime: string
   status: BranchStatus
-  allowLocalPricingOverride: boolean
   imageUrl: string | null
   imageFile: File | null
 }

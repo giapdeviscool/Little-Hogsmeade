@@ -94,7 +94,7 @@ export function AttendanceKiosk({ branchId = 'default-branch-id' }: { branchId?:
 
   return (
     <div className="mx-auto max-w-sm space-y-6">
-      <h2 className="text-center text-lg font-bold text-foreground">Chấm công (UC61)</h2>
+      <h2 className="text-center text-lg font-bold text-foreground">Chấm công</h2>
 
       {/* PIN display */}
       <div className="rounded-xl border bg-card p-4 text-center">
