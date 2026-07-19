@@ -33,7 +33,11 @@ export function CartSummary({
     return parseInt(priceStr.replace(/\D/g, ''), 10) || 0;
   };
 
-  const subtotal = cartItems.reduce((acc, item) => acc + (parsePrice(item.price) * item.quantity), 0);
+  const subtotal = cartItems.reduce((acc, item) => {
+    const base = parsePrice(item.price);
+    const toppingsTotal = (item.toppings || []).reduce((sum, t) => sum + t.extraPrice * t.quantity, 0);
+    return acc + (base + toppingsTotal) * item.quantity;
+  }, 0);
   const discount = 0;
   const shippingFee = orderType === 'delivery' ? (deliveryInfo?.deliveryFee || 0) : 0;
   const total = subtotal - discount + shippingFee;
@@ -51,7 +55,11 @@ export function CartSummary({
       menuItemId: ci.id,
       unitPrice: parsePrice(ci.price),
       quantity: ci.quantity,
-      toppings: [] as any[],
+      toppings: (ci.toppings || []).map((t) => ({
+        toppingId: t.toppingId,
+        quantity: t.quantity,
+        extraPrice: t.extraPrice,
+      })),
     }));
     
     const payload = {

@@ -5,10 +5,9 @@ import { ROUTES } from '../../constants/routes';
 import { getShiftId, clearShiftId } from '../../store/shift.store';
 import { getAuthSession } from '../../store/auth.store';
 import {
-  requestShiftClosure,
   finalizeCashierShift,
   getActiveCashierShift,
-  getShiftReconciliation
+  getCashierShiftCloseRequest
 } from '../../api/shift.api';
 import { OtpSuccessModal } from '../../components/ui/OtpSuccessModal';
 import { OtpFailureModal } from '../../components/ui/OtpFailureModal';
@@ -104,7 +103,7 @@ export function ShiftClosingPage() {
         }
 
         // 2. Pre-fetch shift reconciliation data
-        const totalsRes = await getShiftReconciliation(activeShiftId);
+        const totalsRes = await getCashierShiftCloseRequest(activeShiftId);
         if (totalsRes?.data) {
           setExpectedCash(totalsRes.data.expected_cash_system ?? totalsRes.data.expectedCashSystem ?? 0);
           setCashSales(totalsRes.data.cash_sales ?? totalsRes.data.cashSales ?? 0);
@@ -172,11 +171,9 @@ export function ShiftClosingPage() {
     setErrorMessage('');
 
     try {
-      const res = await requestShiftClosure({ shiftId, actualCashCounted });
-      if (res.success) {
-        setStep(2);
-        setTimeLeft(60);
-      }
+      await getCashierShiftCloseRequest(shiftId);
+      setStep(2);
+      setTimeLeft(60);
     } catch (err: any) {
       const errorMsg = err.error || err.message || 'Lỗi yêu cầu đóng ca.';
       setErrorMessage(errorMsg);

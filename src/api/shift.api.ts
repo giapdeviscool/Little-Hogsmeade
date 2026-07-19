@@ -102,7 +102,7 @@ export function getActiveCashierShift() {
   return httpClient<any>('/cashier-shifts/active');
 }
 
-export function getShiftCloseRequest(shiftId: string) {
+export function getCashierShiftCloseRequest(shiftId: string) {
   return httpClient<any>(`/cashier-shifts/${shiftId}/close-request`, {
     method: 'POST'
   });

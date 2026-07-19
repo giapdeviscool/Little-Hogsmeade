@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { cn } from '../../utils/cn';
 import { LedgerInvoiceDetail } from './LedgerInvoiceDetail';
+import { getAuthSession } from '@/store/auth.store';
 
 interface LedgerRowProps {
   invoice: any;
@@ -17,9 +18,11 @@ export function LedgerRow({
   formatCurrency,
   formatDate
 }: LedgerRowProps) {
+  const session = getAuthSession();
   const invoiceId = invoice.id || (invoice as any)._id || '';
   const displayId = invoiceId ? `#...${invoiceId.substring(invoiceId.length - 6)}` : '';
   const method = invoice.paymentMethod || invoice.payments?.[0]?.method;
+  const branchName = session?.user.branchName || 'Hogsmeade';
 
   // Color codes border-l of expanded row based on status
   let borderLeftColor = "border-l-transparent hover:bg-cream";
@@ -37,7 +40,7 @@ export function LedgerRow({
       >
         <td className="px-2 py-3 text-sm">{formatDate(invoice.createdAt)}</td>
         <td className="px-2 py-3 text-sm font-bold text-gold">{displayId}</td>
-        <td className="px-2 py-3 text-sm">Hogsmeade Central</td>
+        <td className="px-2 py-3 text-sm">{branchName}</td>
         <td className="px-2 py-3 text-sm">{invoice.cashierId?.name || "Hệ thống"}</td>
         <td className="px-2 py-3 text-sm flex items-center gap-2">
           {method === 'vietqr' ? (

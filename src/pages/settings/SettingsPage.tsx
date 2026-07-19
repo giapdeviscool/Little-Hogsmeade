@@ -19,6 +19,7 @@ import {
 
 export function SettingsPage() {
   const authSession = getAuthSession();
+  const branchName = authSession?.user.branchName || 'Hogsmeade';
   const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase();
   // Role check: supports various chain admin/owner formats
   const isChainAdmin = userRole.includes('chain admin') || userRole.includes('owner') || userRole.includes('chain_admin');
@@ -214,7 +215,7 @@ export function SettingsPage() {
               </h3>
               <p className="text-xs text-muted mb-3">Thông tin chi nhánh liên kết của phiên làm việc.</p>
               <p className="text-sm font-bold text-coffee bg-white px-3 py-2 rounded-lg border border-line/40 inline-block">
-                Hogsmeade Central
+                {branchName}
               </p>
             </div>
 
