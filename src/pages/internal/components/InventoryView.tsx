@@ -194,13 +194,15 @@ export function InventoryView() {
                       </span>
                     </td>
                     <td className="border-b border-line px-4 py-4 space-x-3 whitespace-nowrap">
-                      <button 
-                        onClick={() => { setEditingItem(item); setIsModalOpen(true); }}
-                        className="text-coffee font-bold hover:underline"
-                      >
-                        Sửa
-                      </button>
-                      {item.ingredientType === 'preparation' && (
+                      {item.globalIngredientId === null && (
+                        <button 
+                          onClick={() => { setEditingItem(item); setIsModalOpen(true); }}
+                          className="text-coffee font-bold hover:underline"
+                        >
+                          Sửa
+                        </button>
+                      )}
+                      {item.ingredientType === 'preparation' && item.globalIngredientId === null && (
                         <button
                           onClick={() => { setConfigPrepItem(item); setIsPrepConfigOpen(true); }}
                           className="text-blue-600 font-bold hover:underline"
@@ -247,6 +249,7 @@ export function InventoryView() {
           preparationName={configPrepItem.name}
           yieldUnit={configPrepItem.unit}
           branchId={configPrepItem.branchId || selectedBranch}
+          isReadOnly={!!configPrepItem.globalIngredientId}
         />
       )}
 

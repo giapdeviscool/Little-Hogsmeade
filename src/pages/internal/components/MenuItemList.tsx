@@ -316,6 +316,8 @@ export function MenuItemList() {
         }}
         menuItemId={recipeModalState.item?.id || null}
         menuItemName={recipeModalState.item?.name || ''}
+        isGlobal={!recipeModalState.item?.branchId}
+        branchId={recipeModalState.item?.branchId || null}
       />
 
       {alertMessage && (
