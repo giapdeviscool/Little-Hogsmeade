@@ -154,10 +154,12 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           {error && <p className="rounded-[12px] bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
         </form>
 
-        <p className="mt-7 flex justify-center gap-2 text-sm font-medium text-muted">
-          {isForgot ? t.auth.rememberedPassword : isLogin ? t.auth.noAccount : t.auth.hasAccount}
-          <button type="button" onClick={() => navigate(isForgot || isRegister ? '/login' : '/register')} className="font-bold text-coffee hover:underline">{isForgot || isRegister ? t.auth.login : t.auth.register}</button>
-        </p>
+        {isForgot && (
+          <p className="mt-7 flex justify-center gap-2 text-sm font-medium text-muted">
+            {t.auth.rememberedPassword}
+            <button type="button" onClick={() => navigate('/login')} className="font-bold text-coffee hover:underline">{t.auth.login}</button>
+          </p>
+        )}
       </section>
     </main>
   )

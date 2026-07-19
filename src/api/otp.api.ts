@@ -7,12 +7,13 @@ export interface Setup2FAResponse {
 
 export interface Verify2FAResponse {
   success: boolean;
+  message: string;
 }
 
 // Setup 2FA - requires authenticated chain_admin
 export function setup2FA() {
   return httpClient<Setup2FAResponse>('/otp/setup', {
-    method: 'GET'
+    method: 'POST'
   });
 }
 

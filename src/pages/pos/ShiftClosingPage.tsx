@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 import { ROUTES } from '../../constants/routes';
 import { getShiftId, clearShiftId } from '../../store/shift.store';
-import { clearAuthSession, getAuthSession } from '../../store/auth.store';
-import { 
-  requestShiftClosure, 
-  finalizeShiftClosure, 
-  getActiveCashierShift, 
+import { getAuthSession } from '../../store/auth.store';
+import {
+  requestShiftClosure,
+  finalizeCashierShift,
+  getActiveCashierShift,
   getShiftReconciliation
 } from '../../api/shift.api';
 import { OtpSuccessModal } from '../../components/ui/OtpSuccessModal';
 import { OtpFailureModal } from '../../components/ui/OtpFailureModal';
+import { verify2FA } from '../../api/otp.api';
 
 export function ShiftClosingPage() {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ export function ShiftClosingPage() {
   const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(''));
   const [timeLeft, setTimeLeft] = useState(60);
   const [shake, setShake] = useState(false);
-  const [eodReport, setEodReport] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showFailureModal, setShowFailureModal] = useState(false);
 
@@ -82,7 +82,7 @@ export function ShiftClosingPage() {
           } else if (activeRes.data.openedAt) {
             setOpenedAt(activeRes.data.openedAt);
           }
-          
+
           const employee = activeRes.data.employee;
           if (employee) {
             setCashierName(employee.fullName || employee.name || '');
@@ -109,7 +109,7 @@ export function ShiftClosingPage() {
           setExpectedCash(totalsRes.data.expected_cash_system ?? totalsRes.data.expectedCashSystem ?? 0);
           setCashSales(totalsRes.data.cash_sales ?? totalsRes.data.cashSales ?? 0);
           setCashRefunds(totalsRes.data.cash_refunds ?? totalsRes.data.cashRefunds ?? 0);
-          
+
           setTotalInvoices(totalsRes.data.total_invoices ?? totalsRes.data.totalInvoices ?? 0);
           setRefundedInvoices(totalsRes.data.refunded_invoices ?? totalsRes.data.refundedInvoices ?? 0);
         }
@@ -226,10 +226,14 @@ export function ShiftClosingPage() {
     setErrorMessage('');
 
     try {
-      const res = await finalizeShiftClosure({ shiftId, actualCashCounted, code });
-      if (res.success && res.data) {
-        setEodReport(res.data);
-        setShowSuccessModal(true);
+      const otpRes = await verify2FA(code);
+      if (!otpRes || !otpRes.success) {
+        throw new Error('Mã xác thực không hợp lệ.');
+      }
+      const res = await finalizeCashierShift(shiftId, { actual_cash_counted: actualCashCounted });
+      if (res && res.data) {
+        clearShiftId();
+        navigate(ROUTES.shiftOpening);
       }
     } catch (err: any) {
       const errorMsg = err.error || err.message || 'Xác thực OTP thất bại. Vui lòng kiểm tra lại.';
@@ -245,9 +249,9 @@ export function ShiftClosingPage() {
   const handleSuccessPrimary = () => {
     setShowSuccessModal(false);
     setStep(3);
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    // setTimeout(() => {
+    //   window.print();
+    // }, 100);
   };
 
   const handleSuccessSecondary = () => {
@@ -263,17 +267,9 @@ export function ShiftClosingPage() {
     }, 50);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
 
-  const handleFinish = () => {
-    clearShiftId();
-    clearAuthSession();
-    navigate(ROUTES.cashierLogin);
-  };
 
-  const discrepancy = actualCashInput 
+  const discrepancy = actualCashInput
     ? parseInt(actualCashInput.replace(/\./g, ''), 10) - expectedCash
     : 0;
 
@@ -334,7 +330,7 @@ export function ShiftClosingPage() {
             <span className="material-symbols-outlined text-base">schedule</span>
             <span>Ca Thu Ngân</span>
           </div>
-          <button 
+          <button
             onClick={() => navigate(ROUTES.pos)}
             className="border border-line bg-white text-coffee px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-cream transition-colors cursor-pointer"
           >
@@ -384,7 +380,7 @@ export function ShiftClosingPage() {
                     </h3>
                     <span className="bg-latte/15 text-coffee text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md font-bold">Auto-Generated</span>
                   </div>
-                  
+
                   <div className="space-y-4 text-sm text-coffee">
                     <div className="flex justify-between items-center py-2.5 border-b border-dashed border-line">
                       <span className="text-muted font-medium">Tiền mặt đầu ca</span>
@@ -458,10 +454,10 @@ export function ShiftClosingPage() {
                   <div className={`mb-6 ${shake && step === 1 ? 'animate-shake' : ''}`}>
                     <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Số tiền mặt thực tế tại két</label>
                     <div className="relative">
-                      <input 
+                      <input
                         className="w-full text-xl font-bold bg-[#FAF8F5] border border-line rounded-xl h-14 px-4 text-right pr-16 focus:ring-1 focus:ring-coffee focus:border-coffee outline-none transition-all"
-                        placeholder="0" 
-                        type="text" 
+                        placeholder="0"
+                        type="text"
                         inputMode="numeric"
                         value={actualCashInput}
                         onChange={handleCashInputChange}
@@ -472,7 +468,7 @@ export function ShiftClosingPage() {
                   </div>
 
                   {step === 1 && (
-                    <button 
+                    <button
                       onClick={handleRequestClosure}
                       disabled={loading}
                       className="w-full h-12 bg-coffee text-white font-bold rounded-xl hover:bg-[#3f2d20] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
@@ -492,86 +488,7 @@ export function ShiftClosingPage() {
                   )}
                 </div>
 
-                {/* Step 2 Panel (Verification & Discrepancy Alert) */}
-                {step === 2 && (
-                  <div className="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-md unbalanced-glow flex flex-col gap-5">
-                    <div className="flex items-start gap-3">
-                      <span className="material-symbols-outlined text-red-600 text-3xl mt-0.5">warning</span>
-                      <div>
-                        <p className="font-bold uppercase text-[9px] tracking-widest text-red-600 mb-0.5">Alert: Discrepancy Verification Required</p>
-                        <h4 className="font-bold text-coffee text-base">
-                          {discrepancy !== 0 ? (
-                            `CẢNH BÁO: Lệch két tiền ${discrepancy < 0 ? '-' : '+'}${formatCurrency(Math.abs(discrepancy))}`
-                          ) : (
-                            'Xác nhận đóng ca từ Quản lý'
-                          )}
-                        </h4>
-                      </div>
-                    </div>
 
-                    <div className="bg-white/70 p-5 rounded-xl border border-red-200/50 flex flex-col items-center">
-                      <p className="text-xs text-coffee font-medium text-center mb-4 leading-relaxed">
-                        Chênh lệch hoặc đóng ca yêu cầu mã **Google Authenticator (TOTP)** từ **Quản lý**.
-                      </p>
-                      
-                      <div className="flex justify-center gap-2 mb-4">
-                        {otpCode.map((digit, idx) => (
-                          <input 
-                            key={idx}
-                            id={`otp-${idx}`}
-                            className="otp-input w-10 h-12 bg-white border border-line rounded-lg text-center font-mono font-bold text-xl text-coffee focus:border-coffee"
-                            maxLength={1} 
-                            type="text"
-                            pattern="[0-9]*"
-                            inputMode="numeric"
-                            value={digit}
-                            onChange={(e) => handleOtpChange(e.target.value, idx)}
-                            onKeyDown={(e) => handleOtpKeyDown(e, idx)}
-                            disabled={loading}
-                          />
-                        ))}
-                      </div>
-
-                      {timeLeft > 0 ? (
-                        <p className="text-center text-xs text-muted">
-                          Thời gian mã lực: <span className="font-bold text-coffee tabular-nums">{timeLeft}s</span>
-                        </p>
-                      ) : (
-                        <button 
-                          onClick={() => {
-                            setTimeLeft(60);
-                            setOtpCode(Array(6).fill(''));
-                          }}
-                          className="text-xs text-gold font-bold hover:underline cursor-pointer"
-                        >
-                          Làm mới OTP
-                        </button>
-                      )}
-                    </div>
-
-                    <button 
-                      onClick={handleFinalizeClosure}
-                      disabled={loading || otpCode.join('').length < 6}
-                      className="w-full h-12 bg-[#4A3525] text-white font-bold rounded-xl hover:bg-black active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? (
-                        <>
-                          <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
-                          Đang xác thực...
-                        </>
-                      ) : (
-                        <>
-                          <span className="material-symbols-outlined text-lg">print</span>
-                          Chốt ca & In báo cáo tài chính (EOD)
-                        </>
-                      )}
-                    </button>
-                    
-                    <p className="text-center text-[10px] uppercase text-muted tracking-widest font-bold">
-                      Requires Manager Level Authorization
-                    </p>
-                  </div>
-                )}
 
                 {/* Error Banner */}
                 {errorMessage && (
@@ -585,101 +502,7 @@ export function ShiftClosingPage() {
               </div>
             </div>
           </>
-        ) : (
-          /* Step 3: Success EOD Report */
-          <div className="max-w-2xl mx-auto bg-white border border-line rounded-3xl shadow-lg overflow-hidden animate-in fade-in zoom-in duration-300" id="printableReport">
-            {/* Receipt Header */}
-            <div className="bg-[#FAF8F5] border-b border-line p-8 text-center relative">
-              <span className="material-symbols-outlined text-green-600 text-5xl mb-2">check_circle</span>
-              <h2 className="font-display text-2xl font-bold text-coffee">BÁO CÁO KẾT THÚC CA (EOD)</h2>
-              <p className="text-xs text-muted font-bold uppercase tracking-wider mt-1">Little Hogsmeade Central</p>
-              
-              <button 
-                onClick={handlePrint}
-                className="absolute top-4 right-4 p-2 hover:bg-cream rounded-full transition-colors text-coffee print:hidden cursor-pointer"
-                title="In báo cáo"
-              >
-                <span className="material-symbols-outlined text-xl">print</span>
-              </button>
-            </div>
-
-            {/* Receipt Body */}
-            <div className="p-8 space-y-6 text-sm text-coffee">
-              {/* Meta information */}
-              <div className="grid grid-cols-2 gap-4 border-b border-line pb-4 text-xs">
-                <div>
-                  <span className="text-muted font-bold uppercase block tracking-wider text-[10px]">Mã ca trực</span>
-                  <span className="font-mono text-coffee font-semibold">{eodReport?.shift?.id}</span>
-                </div>
-                <div>
-                  <span className="text-muted font-bold uppercase block tracking-wider text-[10px]">Thời gian chốt</span>
-                  <span className="text-coffee font-semibold">{new Date(eodReport?.summary?.closedAt).toLocaleString('vi-VN')}</span>
-                </div>
-                <div>
-                  <span className="text-muted font-bold uppercase block tracking-wider text-[10px]">Thu ngân</span>
-                  <span className="text-coffee font-semibold">{eodReport?.shift?.employee?.fullName}</span>
-                </div>
-                <div>
-                  <span className="text-muted font-bold uppercase block tracking-wider text-[10px]">Quản lý xác thực</span>
-                  <span className="text-coffee font-semibold">{eodReport?.shift?.authorizedAdmin?.fullName || 'Hệ thống'}</span>
-                </div>
-              </div>
-
-              {/* Financial calculations */}
-              <div className="space-y-3">
-                <h4 className="font-bold uppercase tracking-widest text-xs text-muted mb-2">Tóm tắt két tiền mặt</h4>
-                <div className="flex justify-between py-1 border-b border-dashed border-line/60">
-                  <span className="text-muted">Tiền mặt đầu ca</span>
-                  <span className="font-mono font-medium">{formatCurrency(eodReport?.summary?.startingFloat || 0)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-line/60">
-                  <span className="text-muted">Tổng doanh thu tiền mặt</span>
-                  <span className="font-mono font-medium">{formatCurrency(cashSales)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-line/60 text-red-600">
-                  <span className="text-red-600">Tổng hoàn tiền mặt</span>
-                  <span className="font-mono font-medium">-{formatCurrency(cashRefunds)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-line/60">
-                  <span className="text-muted">Số dư hệ thống mong đợi</span>
-                  <span className="font-mono font-bold text-[#735c00]">{formatCurrency(eodReport?.summary?.expectedCashSystem || 0)}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-line bg-cream px-3 rounded-lg">
-                  <span className="font-bold">Tiền mặt thực tế kiểm đếm</span>
-                  <span className="font-mono font-bold text-lg">{formatCurrency(eodReport?.summary?.actualCashCounted || 0)}</span>
-                </div>
-              </div>
-
-              {/* Discrepancy indicator */}
-              <div className={`p-4 rounded-xl border flex items-center justify-between ${eodReport?.summary?.discrepancyAmount !== 0 ? 'bg-red-50 border-red-200 text-red-600' : 'bg-green-50 border-green-200 text-green-600'}`}>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined">{eodReport?.summary?.discrepancyAmount !== 0 ? 'warning' : 'check_circle'}</span>
-                  <span className="font-bold text-xs uppercase tracking-wider">Chênh lệch két (Variance)</span>
-                </div>
-                <span className="font-mono font-bold text-base">
-                  {eodReport?.summary?.discrepancyAmount === 0 ? 'KHỚP KÉT (0 ₫)' : `${eodReport?.summary?.discrepancyAmount > 0 ? '+' : ''}${formatCurrency(eodReport?.summary?.discrepancyAmount)}`}
-                </span>
-              </div>
-
-              {/* Sales analytics info */}
-              <div className="space-y-2 border-t border-line/60 pt-4 text-xs">
-                <p>Tổng số đơn hàng phục vụ: <span className="font-bold">{eodReport?.orders?.length || 0} đơn</span></p>
-                <p>Tổng số hóa đơn phát sinh: <span className="font-bold">{eodReport?.invoices?.length || 0} hóa đơn</span></p>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex flex-col gap-3 pt-6 print:hidden">
-                <button 
-                  onClick={handleFinish}
-                  className="w-full h-12 bg-coffee text-white font-bold rounded-xl hover:bg-[#3f2d20] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-lg">logout</span>
-                  Hoàn tất & Đăng xuất
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        ) : null}
 
         {/* Atmospheric Visual Element */}
         <div className="mt-12 border-t border-line pt-12 flex justify-center items-center gap-12 grayscale opacity-30 print:hidden">
@@ -696,6 +519,124 @@ export function ShiftClosingPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider mt-2">Shift Logs</span>
           </div>
         </div>
+
+        {/* Verification Modal for Manager Approval */}
+        {step === 2 && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-coffee/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-line overflow-hidden animate-in zoom-in duration-300 flex flex-col">
+
+              {/* Modal Header */}
+              <div className="bg-cream border-b border-line px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-coffee font-bold">
+                  <span className="material-symbols-outlined text-xl text-gold">lock_person</span>
+                  <span className="font-bold text-sm uppercase tracking-wider">Xác nhận đóng ca từ Quản lý</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setStep(1);
+                    setOtpCode(Array(6).fill(''));
+                    setErrorMessage('');
+                  }}
+                  className="text-muted hover:text-coffee transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 flex flex-col gap-5">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-coffee text-base">
+                    {discrepancy !== 0 ? (
+                      `CẢNH BÁO: Lệch két tiền ${discrepancy < 0 ? '-' : '+'}${formatCurrency(Math.abs(discrepancy))}`
+                    ) : (
+                      'Xác nhận đóng ca từ Quản lý'
+                    )}
+                  </h4>
+                  <p className="text-xs text-muted">
+                    Yêu cầu mã **Google Authenticator (TOTP)** từ **Quản lý** để tiếp tục đóng ca.
+                  </p>
+                </div>
+
+                <div className={`bg-cream p-4 rounded-xl border border-line/60 flex flex-col items-center ${shake ? 'animate-shake' : ''}`}>
+                  <div className="flex justify-center gap-2 mb-3">
+                    {otpCode.map((digit, idx) => (
+                      <input
+                        key={idx}
+                        id={`otp-${idx}`}
+                        className="otp-input w-10 h-12 bg-white border border-line rounded-lg text-center font-mono font-bold text-xl text-coffee focus:border-coffee"
+                        maxLength={1}
+                        type="text"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
+                        value={digit}
+                        onChange={(e) => handleOtpChange(e.target.value, idx)}
+                        onKeyDown={(e) => handleOtpKeyDown(e, idx)}
+                        disabled={loading}
+                      />
+                    ))}
+                  </div>
+
+                  {timeLeft > 0 ? (
+                    <p className="text-center text-xs text-muted">
+                      Thời gian mã lực: <span className="font-bold text-coffee tabular-nums">{timeLeft}s</span>
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setTimeLeft(60);
+                        setOtpCode(Array(6).fill(''));
+                      }}
+                      className="text-xs text-gold font-bold hover:underline cursor-pointer"
+                    >
+                      Làm mới OTP
+                    </button>
+                  )}
+                </div>
+
+                {errorMessage && (
+                  <div className="bg-red-50 border border-red-200 p-3 rounded-lg flex items-start gap-2 animate-in fade-in duration-200">
+                    <span className="material-symbols-outlined text-red-600 shrink-0 text-sm mt-0.5">error</span>
+                    <div className="flex-1 text-xs font-semibold text-red-600 leading-normal">
+                      {errorMessage}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setStep(1);
+                      setOtpCode(Array(6).fill(''));
+                      setErrorMessage('');
+                    }}
+                    disabled={loading}
+                    className="flex-1 h-12 border border-line text-coffee rounded-xl font-bold text-sm hover:bg-cream transition-all flex items-center justify-center cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    onClick={handleFinalizeClosure}
+                    disabled={loading || otpCode.join('').length < 6}
+                    className="flex-[2] h-12 bg-[#4A3525] text-white font-bold rounded-xl hover:bg-black active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                        Đang xác thực...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-lg">print</span>
+                        Chốt ca & In báo cáo (EOD)
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <OtpSuccessModal
           isOpen={showSuccessModal}
