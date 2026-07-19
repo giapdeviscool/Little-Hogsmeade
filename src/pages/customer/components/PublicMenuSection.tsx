@@ -186,20 +186,27 @@ export function PublicMenuSection({ topSellingMenu = [] }: { topSellingMenu?: an
             </div>
           </div>
 
-        {/* Category nav */}
-        <div className="sticky top-[136px] z-40 -mx-4 mb-10 overflow-x-auto bg-white/95 px-4 backdrop-blur md:-mx-8 md:px-8 lg:-mx-14 lg:px-14">
-          <div className="flex gap-2 border-b border-line py-3">
-            {categoriesWithItems.map(({ category }) => (
-              <a
-                key={category.id}
-                href={`#cat-${category.id}`}
-                className="shrink-0 rounded-full border border-line px-4 py-1.5 text-sm font-medium text-muted transition-colors hover:border-coffee hover:text-coffee"
-              >
-                {category.name}
-              </a>
-            ))}
+          {/* Category nav Sidebar (Middle Left) */}
+          <div className="w-full lg:w-[180px] xl:w-[200px] shrink-0 sticky top-[130px] lg:top-24 z-40 lg:z-40 bg-white/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none -mt-4 lg:mt-0 mb-4 lg:mb-0">
+            <h3 className="hidden lg:block text-lg font-bold text-coffee mb-4">Danh mục</h3>
+            <div className="flex lg:flex-col gap-2 lg:gap-1 overflow-x-auto scrollbar-none pb-3 lg:pb-0 border-b border-line lg:border-none -mx-4 px-4 lg:mx-0 lg:px-0">
+              {state.status === "loading" ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="shrink-0 w-[100px] lg:w-full h-10 rounded-full lg:rounded-xl bg-beige animate-pulse" />
+                ))
+              ) : (
+                categoriesWithItems.map(({ category }) => (
+                  <a
+                    key={category.id}
+                    href={`#cat-${category.id}`}
+                    className="shrink-0 rounded-full lg:rounded-xl border border-line lg:border-transparent px-4 py-2 text-sm font-medium text-muted transition-all hover:bg-cream hover:text-coffee lg:w-full lg:text-left flex items-center"
+                  >
+                    <span className="truncate">{category.name}</span>
+                  </a>
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
           {/* Content */}
           {renderContent()}
