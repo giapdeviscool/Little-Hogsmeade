@@ -22,6 +22,9 @@ export const navItems: NavItem[] = [
       { key: 'toppingGroups', label: 'Nhóm Topping' },
       { key: 'recipes', label: 'Công thức BOM' },
       { key: 'stock-conversion', label: 'Chế biến TP' },
+      { key: 'expenses', label: 'Quản lý Phiếu chi' },
+      { key: 'finance', label: 'Báo cáo Tài chính' },
+      { key: 'what-if', label: 'Mô phỏng What-if' },
     ]
   },
   { key: 'owner', icon: 'building' },

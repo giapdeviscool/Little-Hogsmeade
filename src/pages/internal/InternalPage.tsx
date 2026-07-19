@@ -10,7 +10,9 @@ import { MenuItemList } from './components/MenuItemList'
 import { ToppingGroups } from './components/ToppingGroups'
 import { RecipesList } from './components/RecipesList'
 import { StockConversion } from './components/StockConversion'
-//import { StockConversion } from './components/StockConversion'
+import { ExpenseManagement } from './components/ExpenseManagement'
+import { FinancialDashboard } from './components/FinancialDashboard'
+import { WhatIfSimulator } from './components/WhatIfSimulator'
 
 export function InternalPage() {
   const [searchParams] = useSearchParams()
@@ -30,7 +32,9 @@ export function InternalPage() {
         { activeTab === 'toppingGroups' && <ToppingGroups /> }
         { activeTab === 'recipes' && <RecipesList /> }
         { activeTab === 'stock-conversion' && <StockConversion /> }
-        {/* { activeTab === 'stock-conversion' && <StockConversion /> } */}
+        { activeTab === 'expenses' && <ExpenseManagement /> }
+        { activeTab === 'finance' && <FinancialDashboard /> }
+        { activeTab === 'what-if' && <WhatIfSimulator /> }
       </div>
     </div>
   )
