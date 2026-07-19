@@ -134,7 +134,7 @@ export function CategoryList() {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr>
-                    {[ 'Tên danh mục', 'Icon', 'Số lượng món', 'Trạng thái', 'Thao tác'].map((h) => (
+                    {[ 'Tên danh mục', 'Số lượng món', 'Trạng thái', 'Thao tác'].map((h) => (
                       <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>
                     ))} 
                   </tr>
@@ -143,7 +143,6 @@ export function CategoryList() {
                   {categories.map((cat) => (
                     <tr key={cat.id} className="hover:bg-gray-50">
                       <td className="border-b border-line px-4 py-4 font-semibold">{cat.name}</td>
-                      <td className="border-b border-line px-4 py-4 text-xl">{cat.icon || '📦'}</td>
                       <td className="border-b border-line px-4 py-4">{cat._count?.menuItems || 0} món</td>
                       <td className="border-b border-line px-4 py-4">{renderStatus(cat.isActive)}</td>
                       <td className="border-b border-line px-4 py-4">

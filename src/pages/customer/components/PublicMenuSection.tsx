@@ -182,7 +182,6 @@ export function PublicMenuSection() {
                 href={`#cat-${category.id}`}
                 className="shrink-0 rounded-full border border-line px-4 py-1.5 text-sm font-medium text-muted transition-colors hover:border-coffee hover:text-coffee"
               >
-                {category.icon && <span className="mr-1">{category.icon}</span>}
                 {category.name}
               </a>
             ))}

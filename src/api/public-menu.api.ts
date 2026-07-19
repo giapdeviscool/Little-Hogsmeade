@@ -5,7 +5,6 @@ import type { BranchMenuView } from '../types/menu.types'
 export interface PublicCategory {
   id: string
   name: string
-  icon?: string
   displayOrder: number
 }
 

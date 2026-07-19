@@ -51,10 +51,9 @@ export function GlobalMenuPanel({
       ])
 
       const cats: Category[] = catRes.data?.items ?? catRes.data ?? []
-      const globalCats = cats
-        .filter((c: Category) => !c.branchId)
-        .sort((a: Category, b: Category) => a.displayOrder - b.displayOrder)
-      setCategories(globalCats)
+      // Chỉ lấy category không có branchId (global). Các bản sao cũ có branchId bị loại
+      const globalOnly = cats.filter((c: any) => !c.branchId).sort((a: Category, b: Category) => a.displayOrder - b.displayOrder)
+      setCategories(globalOnly)
 
       const items: MenuItem[] = itemRes.data?.items ?? itemRes.data ?? []
       const globalItems = items.filter((i: MenuItem) => !i.branchId)
@@ -193,7 +192,6 @@ export function GlobalMenuPanel({
                 {/* Card header */}
                 <div className="flex items-center justify-between gap-3 px-4 py-3 bg-cream/50">
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="text-xl leading-none">{cat.icon || '📦'}</span>
                     <span className="truncate font-semibold text-coffee">{cat.name}</span>
                     <span className="shrink-0 rounded-full bg-beige px-2 py-0.5 text-xs font-medium text-muted">
                       {items.length} món

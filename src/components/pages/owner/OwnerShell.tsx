@@ -9,11 +9,6 @@ const ownerTabs: Array<{
   description: string;
 }> = [
   {
-    key: "dashboard",
-    label: "Dashboard",
-    description: "Tổng quan doanh thu - hiệu suất",
-  },
-  {
     key: "branches",
     label: "Chi nhánh",
     description: "Quản lý thông tin chi nhánh",
@@ -103,18 +98,18 @@ export function OwnerTabs({
             onClick={() => onChange(tab.key)}
             className={cn(
               "flex-1 min-w-[200px] rounded-[16px] p-4 text-left transition",
-              isActive 
-                ? "bg-white text-coffee shadow-soft" 
-                : "text-muted hover:bg-white/70"
+              isActive
+                ? "bg-white text-coffee shadow-soft"
+                : "text-muted hover:bg-white/70",
             )}
           >
-            <span className="block text-[15px] font-semibold">
-              {tab.label}
-            </span>
-            <span className={cn(
-              "mt-1 block text-xs leading-5",
-              isActive ? "text-coffee/80" : "text-muted/70"
-            )}>
+            <span className="block text-[15px] font-semibold">{tab.label}</span>
+            <span
+              className={cn(
+                "mt-1 block text-xs leading-5",
+                isActive ? "text-coffee/80" : "text-muted/70",
+              )}
+            >
               {tab.description}
             </span>
           </button>

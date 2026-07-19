@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import * as chainApi from "../../api/chain.api";
 import { BranchesPanel } from "../../components/pages/owner/BranchesPanel";
-import { DashboardPanel } from "../../components/pages/owner/DashboardPanel";
 import {
   OwnerAlert,
   OwnerHeader,
@@ -10,17 +9,11 @@ import {
 } from "../../components/pages/owner/OwnerShell";
 import { PricingPanel } from "../../components/pages/owner/PricingPanel";
 import { BranchMenuPanel } from "../../components/pages/owner/BranchMenuPanel";
-import {
-  addDays,
-  dateToInput,
-  getErrorMessage,
-  timeToIso,
-} from "../../utils/owner.utils";
+import { getErrorMessage, timeToIso } from "../../utils/owner.utils";
 import type {
   Branch,
   BranchPayload,
   ChainConfig,
-  ChainDashboard,
   MenuSyncPreview,
   OwnerActiveTab,
 } from "../../types";
@@ -35,25 +28,19 @@ const emptyBranchForm: BranchPayload = {
   openTime: timeToIso("07:00"),
   closeTime: timeToIso("22:00"),
   status: "active",
-  allowLocalPricingOverride: false,
   imageUrl: null,
   imageFile: null,
 };
 
 export function OwnerPage() {
-  const [activeTab, setActiveTab] = useState<OwnerActiveTab>("dashboard");
+  const [activeTab, setActiveTab] = useState<OwnerActiveTab>("branches");
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [dashboard, setDashboard] = useState<ChainDashboard | null>(null);
   const [config, setConfig] = useState<ChainConfig | null>(null);
   const [menuPreview, setMenuPreview] = useState<MenuSyncPreview>({
     categories: [],
     menuItems: [],
   });
-  const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [startDate, setStartDate] = useState(
-    dateToInput(addDays(new Date(), -30)),
-  );
-  const [endDate, setEndDate] = useState(dateToInput(new Date()));
+
   const [branchForm, setBranchForm] = useState<BranchPayload>(emptyBranchForm);
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
@@ -68,31 +55,21 @@ export function OwnerPage() {
   const activeBranches = branches.filter(
     (branch) => branch.status === "active",
   );
-  const overrideBranches = activeBranches.filter(
-    (branch) => branch.allowLocalPricingOverride,
-  );
 
   useEffect(() => {
     void loadModule();
   }, []);
 
-  useEffect(() => {
-    void loadDashboard();
-  }, [selectedBranchId, startDate, endDate]);
-
   async function loadModule() {
     try {
       setLoading(true);
       setError("");
-      const [
-        branchResponse,
-        configResponse,
-        previewResponse,
-      ] = await Promise.all([
-        chainApi.getBranches(),
-        chainApi.getChainConfig(),
-        chainApi.getMenuSyncPreview(),
-      ]);
+      const [branchResponse, configResponse, previewResponse] =
+        await Promise.all([
+          chainApi.getBranches(),
+          chainApi.getChainConfig(),
+          chainApi.getMenuSyncPreview(),
+        ]);
 
       setBranches(branchResponse.data?.items || []);
       setConfig(configResponse.data || null);
@@ -101,19 +78,6 @@ export function OwnerPage() {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function loadDashboard() {
-    try {
-      const response = await chainApi.getChainDashboard({
-        branchId: selectedBranchId || undefined,
-        startDate,
-        endDate,
-      });
-      setDashboard(response.data || null);
-    } catch (err) {
-      setError(getErrorMessage(err));
     }
   }
 
@@ -127,7 +91,10 @@ export function OwnerPage() {
       // Upload ảnh trước nếu có file mới
       if (branchForm.imageFile) {
         const { uploadImage } = await import("../../api/cms.api");
-        const uploadRes = await uploadImage(branchForm.imageFile, "bistro-cafe/branches");
+        const uploadRes = await uploadImage(
+          branchForm.imageFile,
+          "bistro-cafe/branches",
+        );
         if (uploadRes?.data?.secure_url) {
           imageUrl = uploadRes.data.secure_url;
         }
@@ -144,7 +111,6 @@ export function OwnerPage() {
         openTime: branchForm.openTime,
         closeTime: branchForm.closeTime,
         status: branchForm.status,
-        allowLocalPricingOverride: branchForm.allowLocalPricingOverride,
         imageUrl,
         imageFile: null, // Always null when sending to API
       };
@@ -251,7 +217,6 @@ export function OwnerPage() {
       openTime: branch.openTime,
       closeTime: branch.closeTime,
       status: branch.status,
-      allowLocalPricingOverride: branch.allowLocalPricingOverride,
       imageUrl: branch.imageUrl ?? null,
       imageFile: null,
     });
@@ -283,20 +248,8 @@ export function OwnerPage() {
       />
       <OwnerTabs activeTab={activeTab} onChange={setActiveTab} />
 
-
       {loading ? <OwnerLoading /> : null}
-      {!loading && activeTab === "dashboard" ? (
-        <DashboardPanel
-          dashboard={dashboard}
-          branches={branches}
-          selectedBranchId={selectedBranchId}
-          startDate={startDate}
-          endDate={endDate}
-          onBranchChange={setSelectedBranchId}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-        />
-      ) : null}
+
       {!loading && activeTab === "branches" ? (
         <BranchesPanel
           branches={branches}
@@ -317,7 +270,7 @@ export function OwnerPage() {
           branches={activeBranches}
           config={config}
           saving={saving}
-          overrideBranchesCount={overrideBranches.length}
+          overrideBranchesCount={0}
           onSync={() => void runSyncMenu()}
           onSaveConfig={(nextConfig) => void saveConfig(nextConfig)}
         />
