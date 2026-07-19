@@ -9,6 +9,7 @@ export function ShiftOpeningPage() {
   const navigate = useNavigate()
   const session = getAuthSession()
   const cashierName = session?.user?.fullName || session?.user?.name || session?.user?.phone || 'Nhân viên trực ca'
+  const branchName = session?.user.branchName || 'Hogsmeade';
 
   const [realTimeClock, setRealTimeClock] = useState('--/--/---- - --:--')
   const [floatValue, setFloatValue] = useState('')
@@ -158,7 +159,7 @@ export function ShiftOpeningPage() {
                   <span className="text-[10px] font-bold text-muted block uppercase tracking-[0.12em]">Chi nhánh</span>
                   <div className="flex items-center gap-1 text-coffee">
                     <span className="material-symbols-outlined text-sm sm:text-base">store</span>
-                    <span className="text-xs sm:text-sm font-bold">Hogsmeade Central</span>
+                    <span className="text-xs sm:text-sm font-bold">{branchName}</span>
                   </div>
                 </div>
                 <div className="space-y-0.5">

@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../../components/pages/owner/ConfirmDialog'
 import { Skeleton } from '../../../components/ui/skeleton'
 import { getMembershipTiers, createMembershipTier, updateMembershipTier, deleteMembershipTier } from '../../../api/loyalty.api'
 import type { MembershipTier, MembershipTierPayload } from '../../../api/loyalty.api'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../../components/ui/Dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog'
 
 export function TiersTab() {
   const [tiers, setTiers] = useState<MembershipTier[]>([])
@@ -17,8 +17,25 @@ export function TiersTab() {
   const [editingTier, setEditingTier] = useState<MembershipTier | null>(null)
   const [formData, setFormData] = useState<MembershipTierPayload>({ name: '', minPoints: 0, discountPercent: 0, description: '' })
   
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmLabel: string;
+    cancelLabel: string;
+    loading: boolean;
+    onConfirm: () => void;
+    onClose: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmLabel: '',
+    cancelLabel: '',
+    loading: false,
+    onConfirm: () => {},
+    onClose: () => {}
+  })
 
   const loadTiers = async () => {
     try {
@@ -62,18 +79,28 @@ export function TiersTab() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!deleteId) return
-    try {
-      setIsDeleting(true)
-      await deleteMembershipTier(deleteId)
-      setDeleteId(null)
-      loadTiers()
-    } catch (err: any) {
-      alert(err.message || 'Có lỗi xảy ra')
-    } finally {
-      setIsDeleting(false)
-    }
+  const handleDelete = async (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: 'Xóa hạng thẻ',
+      description: 'Bạn có chắc chắn muốn xóa hạng thẻ này? (Sẽ không thể xóa nếu đang có khách hàng thuộc hạng này)',
+      confirmLabel: 'Xóa',
+      cancelLabel: 'Hủy',
+      loading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteConfirm(prev => ({ ...prev, loading: true }))
+          await deleteMembershipTier(id)
+          setDeleteConfirm(prev => ({ ...prev, isOpen: false }))
+          loadTiers()
+        } catch (err: any) {
+          alert(err.message || 'Có lỗi xảy ra')
+        } finally {
+          setDeleteConfirm(prev => ({ ...prev, loading: false }))
+        }
+      },
+      onClose: () => setDeleteConfirm(prev => ({ ...prev, isOpen: false }))
+    })
   }
 
   return (
@@ -130,7 +157,7 @@ export function TiersTab() {
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => setDeleteId(tier.id)}
+                      onClick={() => handleDelete(tier.id)}
                       className="grid h-8 w-8 place-items-center rounded-lg bg-cream text-[#c25a5a] hover:bg-[#c25a5a] hover:text-white transition"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -144,12 +171,12 @@ export function TiersTab() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{editingTier ? 'Sửa hạng thành viên' : 'Thêm hạng thành viên'}</DialogTitle>
-            <DialogDescription>Thiết lập tên hạng, số điểm cần đạt và mức giảm giá ưu đãi.</DialogDescription>
+        <DialogContent className="w-full sm:max-w-lg p-0 gap-0 overflow-hidden bg-cream border-line">
+          <DialogHeader className="border-b border-line bg-white px-6 py-5 text-left">
+            <DialogTitle className="text-xl font-bold text-coffee">{editingTier ? 'Sửa hạng thành viên' : 'Thêm hạng thành viên'}</DialogTitle>
+            <DialogDescription className="text-sm text-muted">Thiết lập tên hạng, số điểm cần đạt và mức giảm giá ưu đãi.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 px-6 py-6 overflow-y-auto max-h-[80vh]">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-coffee">Tên hạng thẻ <span className="text-[#c25a5a]">*</span></label>
               <input
@@ -192,33 +219,32 @@ export function TiersTab() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <div className="border-t border-line bg-white px-6 py-4 flex justify-end gap-2">
             <button
               onClick={() => setIsDialogOpen(false)}
-              className="h-10 rounded-lg px-5 text-sm font-semibold text-muted hover:bg-cream"
+              className="h-9 rounded-lg px-4 text-sm font-semibold text-muted hover:bg-beige"
             >
               Hủy
             </button>
             <button
               onClick={handleSave}
-              className="h-10 rounded-lg bg-coffee px-5 text-sm font-semibold text-white hover:bg-coffee/90"
+              className="h-9 rounded-lg bg-coffee px-4 text-sm font-semibold text-white hover:bg-coffee/90"
             >
               Lưu thay đổi
             </button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       <ConfirmDialog
-        isOpen={!!deleteId}
-        title="Xóa hạng thẻ"
-        message="Bạn có chắc chắn muốn xóa hạng thẻ này? (Sẽ không thể xóa nếu đang có khách hàng thuộc hạng này)"
-        confirmText="Xóa"
-        cancelText="Hủy"
-        type="danger"
-        isLoading={isDeleting}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteId(null)}
+        isOpen={deleteConfirm.isOpen}
+        title={deleteConfirm.title}
+        description={deleteConfirm.description}
+        confirmLabel={deleteConfirm.confirmLabel}
+        cancelLabel={deleteConfirm.cancelLabel}
+        loading={deleteConfirm.loading}
+        onConfirm={deleteConfirm.onConfirm}
+        onClose={deleteConfirm.onClose}
       />
     </section>
   )

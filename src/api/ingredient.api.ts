@@ -12,7 +12,8 @@ export interface Ingredient {
   minStockLevel: number
   currentStock: number
   isActive: boolean
-  ingredientType: 'raw' | 'preparation'
+  ingredientType: 'raw' | 'preparation' | 'consumable' | 'equipment' | 'chemical'
+  globalIngredientId: string | null
 }
 
 export function getIngredients(params?: { search?: string, branchId?: string }) {

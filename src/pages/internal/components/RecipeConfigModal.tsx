@@ -8,6 +8,8 @@ interface RecipeConfigModalProps {
   onSuccess: () => void
   menuItemId: string | null
   menuItemName: string
+  isGlobal?: boolean
+  branchId?: string | null
 }
 
 interface RecipeRow {
@@ -15,7 +17,7 @@ interface RecipeRow {
   quantityRequired: number
 }
 
-export function RecipeConfigModal({ isOpen, onClose, onSuccess, menuItemId, menuItemName }: RecipeConfigModalProps) {
+export function RecipeConfigModal({ isOpen, onClose, onSuccess, menuItemId, menuItemName, isGlobal, branchId }: RecipeConfigModalProps) {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -24,7 +26,7 @@ export function RecipeConfigModal({ isOpen, onClose, onSuccess, menuItemId, menu
 
   useEffect(() => {
     if (isOpen) {
-      getIngredients().then(res => setIngredients(res.data)).catch(console.error)
+      getIngredients({ branchId: isGlobal ? 'global' : (branchId || undefined) }).then(res => setIngredients(res.data)).catch(console.error)
       if (menuItemId) {
         setLoading(true)
         getRecipes({ search: menuItemName, limit: 100 })
@@ -148,7 +150,12 @@ export function RecipeConfigModal({ isOpen, onClose, onSuccess, menuItemId, menu
                           ))}
                         </optgroup>
                         <optgroup label="Nguyên liệu thô">
-                          {ingredients.filter(i => i.ingredientType !== 'preparation').map(ing => (
+                          {ingredients.filter(i => i.ingredientType === 'raw').map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Vật tư tiêu hao (Bao bì)">
+                          {ingredients.filter(i => i.ingredientType === 'consumable').map(ing => (
                             <option key={ing.id} value={ing.id}>{ing.name}</option>
                           ))}
                         </optgroup>

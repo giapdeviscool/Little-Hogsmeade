@@ -1,8 +1,8 @@
 import type { CartItemType } from '@/pages/pos/index';
 import { createOrder } from '@/api/order.api';
-import { createDeliveryOrder } from '@/api/delivery.api';
 import { useState } from 'react';
 import { PaymentModal } from './PaymentModal';
+import { VoucherInput } from './VoucherInput';
 
 interface CartSummaryProps {
   cartItems?: CartItemType[];
@@ -16,6 +16,9 @@ interface CartSummaryProps {
     distance?: number;
     note?: string;
   };
+  voucherCode?: string;
+  discountAmount?: number;
+  onSetVoucher?: (code?: string, amount?: number) => void;
   onClear?: () => void;
 }
 
@@ -24,19 +27,26 @@ export function CartSummary({
   orderType = 'dine-in',
   customerId = null,
   deliveryInfo,
+  voucherCode,
+  discountAmount = 0,
+  onSetVoucher,
   onClear,
 }: CartSummaryProps) {
   const [loading, setLoading] = useState(false);
-  const [paymentModalData, setPaymentModalData] = useState<{isOpen: boolean, orderId: string, invoiceId: string, total: number} | null>(null);
+  const [paymentModalData, setPaymentModalData] = useState<{ isOpen: boolean, orderId: string, invoiceId: string, total: number } | null>(null);
 
   const parsePrice = (priceStr: string) => {
     return parseInt(priceStr.replace(/\D/g, ''), 10) || 0;
   };
 
-  const subtotal = cartItems.reduce((acc, item) => acc + (parsePrice(item.price) * item.quantity), 0);
+  const subtotal = cartItems.reduce((acc, item) => {
+    const base = parsePrice(item.price);
+    const toppingsTotal = (item.toppings || []).reduce((sum, t) => sum + t.extraPrice * t.quantity, 0);
+    return acc + (base + toppingsTotal) * item.quantity;
+  }, 0);
   const discount = 0;
   const shippingFee = orderType === 'delivery' ? (deliveryInfo?.deliveryFee || 0) : 0;
-  const total = subtotal - discount + shippingFee;
+  const total = subtotal - discountAmount + shippingFee;
 
   const formatPrice = (val: number) => `₫${Math.round(val).toLocaleString('vi-VN')}`;
 
@@ -45,24 +55,29 @@ export function CartSummary({
       alert('Giỏ hàng trống, không thể thanh toán');
       return;
     }
-    
+
     setLoading(true);
     const items = cartItems.map((ci) => ({
       menuItemId: ci.id,
       unitPrice: parsePrice(ci.price),
       quantity: ci.quantity,
-      toppings: [] as any[],
+      toppings: (ci.toppings || []).map((t) => ({
+        toppingId: t.toppingId,
+        quantity: t.quantity,
+        extraPrice: t.extraPrice,
+      })),
     }));
-    
+
     const payload = {
       branchId: 'default-branch-id',
       customerId: customerId || null,
-      discountAmount: 0,
+      discountAmount,
+      voucherCode,
       taxAmount: 0,
       orderType,
       items,
     };
-    
+
     try {
       const res = await createOrder(payload) as any;
       if (res && res.success) {
@@ -92,16 +107,24 @@ export function CartSummary({
 
   return (
     <div className="p-3 bg-cream border-t border-line mt-auto">
+      <VoucherInput
+        orderSubtotal={subtotal}
+        customerId={customerId}
+        voucherCode={voucherCode}
+        onApplyVoucher={(code, amount) => {
+          if (onSetVoucher) onSetVoucher(code, amount || 0);
+        }}
+      />
       <div className="flex flex-col gap-1 mb-2">
         <div className="flex justify-between text-xs text-muted font-medium">
           <span>Tạm tính</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
 
-        {discount > 0 && (
+        {discountAmount > 0 && (
           <div className="flex justify-between text-xs text-red-600 font-bold">
-            <span>Giảm giá</span>
-            <span>-{formatPrice(discount)}</span>
+            <span>Giảm giá {voucherCode ? `(${voucherCode})` : ''}</span>
+            <span>-{formatPrice(discountAmount)}</span>
           </div>
         )}
         <div className="flex justify-between items-end mt-1.5 pt-1.5 border-t border-dashed border-coffee/10">
@@ -119,7 +142,7 @@ export function CartSummary({
       </button>
 
 
-      <PaymentModal 
+      <PaymentModal
         isOpen={!!paymentModalData?.isOpen}
         onClose={() => setPaymentModalData(null)}
         orderId={paymentModalData?.orderId || ''}

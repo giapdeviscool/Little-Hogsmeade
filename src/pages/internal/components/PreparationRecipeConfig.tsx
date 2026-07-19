@@ -10,6 +10,7 @@ interface PreparationRecipeConfigProps {
   preparationName: string
   yieldUnit: string
   branchId?: string
+  isReadOnly?: boolean
 }
 
 interface RecipeRow {
@@ -17,7 +18,7 @@ interface RecipeRow {
   quantityRequired: number
 }
 
-export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparationId, preparationName, yieldUnit, branchId }: PreparationRecipeConfigProps) {
+export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparationId, preparationName, yieldUnit, branchId, isReadOnly }: PreparationRecipeConfigProps) {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -150,11 +151,12 @@ export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparatio
               <div className="relative">
                 <input
                   type="number"
-                  step="0.01"
-                  required
-                  className="w-full rounded border border-line px-3 py-2 pr-12"
+                  min="0.1"
+                  step="0.1"
+                  className="w-full rounded-lg border border-line px-3 py-1.5"
                   value={yieldQuantity}
-                  onChange={e => setYieldQuantity(parseFloat(e.target.value))}
+                  onChange={(e) => setYieldQuantity(parseFloat(e.target.value) || 1)}
+                  disabled={isReadOnly}
                 />
                 <span className="absolute right-3 top-2 text-sm text-muted">{yieldUnit}</span>
               </div>
@@ -164,13 +166,15 @@ export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparatio
           <div className="space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-line">
               <h3 className="font-semibold">Thành phần Nguyên liệu thô</h3>
-              <button
-                type="button"
-                onClick={handleAddRow}
-                className="text-sm font-semibold text-coffee hover:underline"
-              >
-                + Thêm nguyên liệu
-              </button>
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={handleAddRow}
+                  className="mt-4 font-bold text-coffee hover:underline"
+                >
+                  + Thêm nguyên liệu con
+                </button>
+              )}
             </div>
 
             {rows.length === 0 ? (
@@ -183,10 +187,10 @@ export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparatio
                   <div key={index} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg border border-line">
                     <div className="flex-1">
                       <select
-                        className="w-full rounded border border-line px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-line px-3 py-1.5"
                         value={row.rawIngredientId}
                         onChange={(e) => handleChange(index, 'rawIngredientId', e.target.value)}
-                        required
+                        disabled={isReadOnly}
                       >
                         <option value="">-- Chọn nguyên liệu thô --</option>
                         {ingredients.map(ing => (
@@ -197,26 +201,31 @@ export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparatio
                     <div className="w-48">
                       <div className="relative">
                         <input
-                          type="number"
-                          step="0.01"
-                          className="w-full rounded border border-line px-3 py-2 pr-12 text-sm"
-                          value={row.quantityRequired}
-                          onChange={(e) => handleChange(index, 'quantityRequired', parseFloat(e.target.value))}
-                          required
-                        />
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        className="w-32 rounded-lg border border-line px-3 py-1.5"
+                        value={row.quantityRequired}
+                        onChange={(e) => handleChange(index, 'quantityRequired', parseFloat(e.target.value) || 0)}
+                        disabled={isReadOnly}
+                      />
                         <span className="absolute right-3 top-2 text-sm text-muted pointer-events-none">
                           {getUnit(row.rawIngredientId)}
                         </span>
                       </div>
                     </div>
                     <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRow(index)}
-                        className="text-red-500 hover:text-red-700 font-bold px-2 py-1 text-sm"
-                      >
-                        ✕
-                      </button>
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(index)}
+                          className="rounded-lg p-1.5 text-red-500 hover:bg-red-50"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -227,30 +236,45 @@ export function PreparationRecipeConfig({ isOpen, onClose, onSuccess, preparatio
           <div className="mt-4">
             <label className="block text-sm font-semibold text-gray-700 mb-1">Hướng dẫn chế biến</label>
             <textarea
-              className="w-full rounded border border-line px-3 py-2 text-sm"
-              rows={3}
+              className="w-full rounded-lg border border-line p-3 h-24 resize-none"
+              placeholder="Ví dụ: Rửa sạch, cắt nhỏ, đun sôi trong 10 phút..."
               value={instructions}
-              onChange={e => setInstructions(e.target.value)}
-              placeholder="Ví dụ: Ủ trong 90 độ C trong 15 phút..."
-            ></textarea>
+              onChange={(e) => setInstructions(e.target.value)}
+              disabled={isReadOnly}
+            />
           </div>
 
-          <div className="mt-8 flex justify-end gap-3 border-t border-line pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg px-4 py-2 font-semibold text-muted hover:bg-gray-100"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-coffee px-4 py-2 font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {loading ? 'Đang lưu...' : 'Lưu công thức'}
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex justify-end gap-3 rounded-b-xl border-t border-line p-6 bg-gray-50">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg px-6 py-2.5 font-bold text-gray-500 hover:bg-gray-100"
+                disabled={loading}
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                className="rounded-lg bg-coffee px-6 py-2.5 font-bold text-white hover:opacity-90 disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? 'Đang lưu...' : 'Lưu công thức'}
+              </button>
+            </div>
+          )}
+          {isReadOnly && (
+            <div className="flex justify-between items-center rounded-b-xl border-t border-line p-6 bg-gray-50">
+              <span className="text-sm text-amber-600 font-medium">⚠️ Đây là cấu hình BOM của Nguyên liệu Toàn chuỗi, chỉ được xem và không thể sửa tại chi nhánh.</span>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg px-6 py-2.5 font-bold bg-coffee text-white hover:opacity-90"
+              >
+                Đóng
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

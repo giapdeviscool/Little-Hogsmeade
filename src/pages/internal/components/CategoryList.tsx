@@ -3,9 +3,7 @@ import { Card } from '../../../components/ui/Card'
 import type { Category } from '../../../types'
 import { getCategories, deleteCategory } from '../../../api/category.api'
 import { CategoryModal } from './CategoryModal'
-import { getAuthSession } from '../../../store/auth.store'
-import { getBranches } from '../../../api/employee.api'
-import type { Branch } from '../../../types'
+
 
 export function CategoryList() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -14,11 +12,7 @@ export function CategoryList() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [search, setSearch] = useState('')
-  const [selectedBranch, setSelectedBranch] = useState('')
-  const [branches, setBranches] = useState<Branch[]>([])
-
-  const authSession = getAuthSession()
-  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const [selectedBranch] = useState('')
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -42,12 +36,6 @@ export function CategoryList() {
     fetchCategories()
   }, [fetchCategories])
 
-  useEffect(() => {
-    getBranches().then(res => {
-      const data = res.data
-      setBranches(Array.isArray(data) ? data : (data as any)?.items || [])
-    }).catch(console.error)
-  }, [])
 
   const renderStatus = (isActive: boolean) => {
     if (isActive) {

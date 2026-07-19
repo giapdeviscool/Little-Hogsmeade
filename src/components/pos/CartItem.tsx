@@ -1,24 +1,55 @@
 import { Trash2 } from 'lucide-react';
 
+export interface CartItemToppingType {
+  toppingId: string;
+  quantity: number;
+  extraPrice: number;
+  name: string;
+}
+
 interface CartItemProps {
   id: string;
   name: string;
   note: string;
   price: string;
   quantity: number;
+  toppings?: CartItemToppingType[];
   onIncrease: () => void;
   onDecrease: () => void;
   onRemove: () => void;
+  onCustomize?: () => void;
 }
 
-export function CartItem({ name, note, price, quantity, onIncrease, onDecrease, onRemove }: CartItemProps) {
+export function CartItem({ 
+  name, 
+  note, 
+  price, 
+  quantity, 
+  toppings = [],
+  onIncrease, 
+  onDecrease, 
+  onRemove,
+  onCustomize
+}: CartItemProps) {
   return (
     <>
       <div className="group">
         <div className="flex justify-between items-start mb-1.5">
           <div>
             <h4 className="font-bold text-coffee text-sm">{name}</h4>
-            <p className="text-[10px] text-muted italic">{note}</p>
+            {note && <p className="text-[10px] text-muted italic">{note}</p>}
+            {toppings.length > 0 && (
+              <div className="text-[10px] text-muted mt-1 space-y-0.5">
+                {toppings.map((t) => (
+                  <div key={t.toppingId} className="flex items-center gap-1 leading-none">
+                    <span className="text-latte">•</span>
+                    <span>{t.name}</span>
+                    <span>(+{t.extraPrice.toLocaleString('vi-VN')}đ)</span>
+                    <span className="font-bold">x{t.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <span className="font-bold text-coffee text-sm">{price}</span>
         </div>
@@ -41,7 +72,12 @@ export function CartItem({ name, note, price, quantity, onIncrease, onDecrease, 
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
-          <button className="text-[10px] text-latte font-bold hover:underline h-8 px-2 flex items-center">Ghi chú</button>
+          <button 
+            onClick={onCustomize}
+            className="text-[10px] text-latte font-bold hover:underline h-8 px-2 flex items-center"
+          >
+            Ghi chú
+          </button>
         </div>
       </div>
       <div className="h-px bg-line/50"></div>

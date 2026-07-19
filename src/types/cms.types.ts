@@ -26,25 +26,27 @@ export type CmsPagePayload = {
 
 export type Banner = {
   id: string
-  title: string
-  description?: string | null
+  title?: string | null
+  subtitle?: string | null
   imageUrl: string
-  ctaLabel?: string | null
-  ctaHref?: string | null
-  sortOrder: number
+  ctaUrl?: string | null
+  displayOrder: number
   isActive: boolean
+  startDate?: string | null
+  endDate?: string | null
   updatedAt?: string | null
   createdAt?: string | null
 }
 
 export type BannerPayload = {
-  title: string
-  description?: string
+  title?: string
+  subtitle?: string
   imageUrl: string
-  ctaLabel?: string
-  ctaHref?: string
-  sortOrder: number
+  ctaUrl?: string
+  displayOrder: number
   isActive: boolean
+  startDate?: string | null
+  endDate?: string | null
 }
 
 export type Post = {

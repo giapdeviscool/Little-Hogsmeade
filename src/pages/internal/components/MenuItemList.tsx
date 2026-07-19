@@ -19,7 +19,9 @@ export function MenuItemList() {
   const [loading, setLoading] = useState(true)
 
   const authSession = getAuthSession()
-  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
+  const isChainOwner = userRole.includes('owner')
+  const isChainAdmin = userRole.includes('chain admin')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editModalState, setEditModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
   const [assignModalState, setAssignModalState] = useState<{isOpen: boolean; item: MenuItem | null}>({ isOpen: false, item: null })
@@ -212,27 +214,31 @@ export function MenuItemList() {
                       <td className="border-b border-line px-4 py-4">{renderStatus(item)}</td>
                       <td className="border-b border-line px-4 py-4">
                         <div className="flex flex-col gap-2 items-start">
-                          <button 
-                            onClick={() => setEditModalState({ isOpen: true, item })}
-                            className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            Chỉnh sửa
-                          </button>
-                          <button 
-                            onClick={() => setAssignModalState({ isOpen: true, item })}
-                            className="text-xs font-bold text-coffee hover:underline flex items-center gap-1"
-                          >
-                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[10px]">
-                              {item._count?.menuItemToppingGroups || 0}
-                            </span>
-                            Gán Topping
-                          </button>
-                          <button 
-                            onClick={() => setRecipeModalState({ isOpen: true, item })}
-                            className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1"
-                          >
-                            Cấu hình BOM
-                          </button>
+                          {!(isChainAdmin && !item.branchId) && (
+                            <>
+                              <button 
+                                onClick={() => setEditModalState({ isOpen: true, item })}
+                                className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                              >
+                                Chỉnh sửa
+                              </button>
+                              <button 
+                                onClick={() => setAssignModalState({ isOpen: true, item })}
+                                className="text-xs font-bold text-coffee hover:underline flex items-center gap-1"
+                              >
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[10px]">
+                                  {item._count?.menuItemToppingGroups || 0}
+                                </span>
+                                Gán Topping
+                              </button>
+                              <button 
+                                onClick={() => setRecipeModalState({ isOpen: true, item })}
+                                className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1"
+                              >
+                                Cấu hình BOM
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -310,6 +316,8 @@ export function MenuItemList() {
         }}
         menuItemId={recipeModalState.item?.id || null}
         menuItemName={recipeModalState.item?.name || ''}
+        isGlobal={!recipeModalState.item?.branchId}
+        branchId={recipeModalState.item?.branchId || null}
       />
 
       {alertMessage && (

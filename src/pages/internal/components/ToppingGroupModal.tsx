@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createToppingGroup, updateToppingGroup } from '../../../api/topping-group.api'
 import { AlertModal } from '../../../components/ui/AlertModal'
+import { CurrencyInput } from '../../../components/ui/CurrencyInput'
 
 interface ToppingGroupModalProps {
   isOpen: boolean
@@ -162,14 +163,12 @@ export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: Topp
                     />
                   </div>
                   <div className="w-1/3">
-                    <input
-                      type="number"
-                      min="0"
+                    <CurrencyInput
                       required
                       placeholder="Phụ thu (VND)"
                       className="w-full rounded-[14px] border border-line p-3 text-sm"
                       value={top.extraPrice}
-                      onChange={(e) => handleToppingChange(idx, 'extraPrice', e.target.value)}
+                      onValueChange={(val) => handleToppingChange(idx, 'extraPrice', val)}
                     />
                   </div>
                   <button 

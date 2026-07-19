@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/dialog'
 import { Field, NumberField, TextField } from '../../../components/pages/owner/OwnerFields'
 import type { LoyaltyReward, LoyaltyRewardPayload, RewardDialogMode, RewardFormErrors } from '../loyalty.types'
+import { ImageField } from '../../cms/components/CmsSharedUI'
+import { uploadImage } from '../../../api/cms.api'
 
 const emptyForm: LoyaltyRewardPayload = {
   name: '',
@@ -54,6 +56,16 @@ export function RewardDialog({
 }) {
   const [form, setForm] = useState<LoyaltyRewardPayload>(emptyForm)
   const [errors, setErrors] = useState<RewardFormErrors>({})
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleUploadImage = async (file: File) => {
+    try {
+      const res = await uploadImage(file, 'rewards')
+      setForm((prev) => ({ ...prev, imageUrl: res.data?.secure_url || '' }))
+    } catch (error) {
+      alert('Có lỗi xảy ra khi tải ảnh lên')
+    }
+  }
 
   useEffect(() => {
     if (!isOpen) return
@@ -67,6 +79,7 @@ export function RewardDialog({
         minOrderValue: reward.minOrderValue ?? 0,
         expiryDays: reward.expiryDays ?? 30,
         description: reward.description ?? '',
+        imageUrl: reward.imageUrl,
         isActive: reward.isActive,
       })
     } else {
@@ -87,12 +100,12 @@ export function RewardDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[560px]">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-coffee">{title}</DialogTitle>
+      <DialogContent className="w-full sm:max-w-lg p-0 gap-0 overflow-hidden bg-cream border-line">
+        <DialogHeader className="border-b border-line bg-white px-6 py-5 text-left">
+          <DialogTitle className="text-xl font-bold text-coffee">{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-4">
+        <div className="space-y-4 px-6 py-6 overflow-y-auto max-h-[80vh]">
           <TextField
             label="Tên phần thưởng"
             value={form.name}
@@ -158,7 +171,15 @@ export function RewardDialog({
             />
           </label>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <ImageField
+            label="Ảnh minh họa"
+            value={form.imageUrl ?? ''}
+            onChange={(val) => setForm(prev => ({ ...prev, imageUrl: val }))}
+            onUpload={handleUploadImage}
+            fileRef={fileRef}
+          />
+
+          <div className="border-t border-line bg-white -mx-6 -mb-6 mt-6 px-6 py-4 flex justify-end gap-2">
             <button
               type="button"
               className="h-9 rounded-lg px-4 text-sm font-semibold text-muted transition-colors hover:bg-beige"

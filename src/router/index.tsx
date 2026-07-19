@@ -33,6 +33,7 @@ import { InvoicePage } from '@/pages/invoices/index'
 import { ShiftOpeningPage } from '../pages/pos/ShiftOpeningPage'
 import { ShiftClosingPage } from '../pages/pos/ShiftClosingPage'
 import { ShiftResumePage } from '../pages/pos/ShiftResumePage'
+import { ShiftOverviewPage } from '../pages/pos/ShiftOverviewPage'
 import { LoyaltyConfigurationPage } from '@/pages/loyalty/LoyaltyConfigurationPage'
 
 export function AppRouter() {
@@ -81,6 +82,7 @@ export function AppRouter() {
       <Route path={ROUTES.shiftResume} element={<ShiftResumePage />} />
       <Route path={ROUTES.pos} element={<PosPage />} />
       <Route path={ROUTES.invoices} element={<InvoicePage />} />
+      <Route path={ROUTES.shiftOverview} element={<ShiftOverviewPage />} />
       
       <Route path="*" element={<Navigate to={ROUTES.customerHome} replace />} />
     </Routes>

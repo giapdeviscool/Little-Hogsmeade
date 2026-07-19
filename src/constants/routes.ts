@@ -27,6 +27,7 @@ export const ROUTES = {
   shiftResume: '/shift-resume',
   pos: '/pos',
   invoices: '/invoices',
+  shiftOverview: '/shift-overview',
 } as const
 
 // trigger HMR

@@ -7,10 +7,14 @@ export function FeaturedMenuSection({
   featuredMenuBlock,
   query,
   setQuery,
+  customTitle,
+  customSubtitle,
 }: {
   featuredMenuBlock: FeaturedMenuBlock
   query: string
   setQuery: (value: string) => void
+  customTitle?: string
+  customSubtitle?: string
 }) {
   const filteredItems = featuredMenuBlock.items.filter((item) => [item.name, item.description, item.badge ?? ''].some((value) => value.toLowerCase().includes(query.toLowerCase())))
 
@@ -19,9 +23,9 @@ export function FeaturedMenuSection({
       <div className="mx-auto max-w-[1280px] px-4 md:px-8 lg:px-14">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Món nổi bật</p>
+            <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">{customSubtitle || 'Món nổi bật'}</p>
             <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">
-              Món nổi bật
+              {customTitle || 'Món nổi bật'}
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{featuredMenuBlock.description}</p>
           </div>

@@ -99,7 +99,8 @@
     "internal": "Internal Management",
     "owner": "Chain Management (Owner)",
     "cms": "CMS (Landing Page)",
-    "customers": "Customers"
+    "customers": "Customers",
+    "loyalty": "Loyalty"
   },
   "pages": {
     "dashboardTitle": "Little Hogsmeade Chain Overview",
@@ -118,9 +119,9 @@
         "label": "Landing Page Editor",
         "description": "Banner, contact, opening hours, featured menu"
       },
-      "featured-menu": {
-        "label": "Featured Menu",
-        "description": "Manage featured menu items displayed on Landing Page"
+      "banners": {
+        "label": "Manage Banners",
+        "description": "Add, edit, remove presentation banners (slides)"
       },
       "posts": {
         "label": "Posts List",

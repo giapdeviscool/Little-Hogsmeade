@@ -53,12 +53,12 @@ export function hydrateLandingBlocks(
   const openingHours = safeParse<OpeningHoursBlock>(getPageBySlug(pages, landingPageSlugs.openingHours)?.content, defaultOpeningHoursBlock)
   const featuredMenu = safeParse<FeaturedMenuBlock>(getPageBySlug(pages, landingPageSlugs.featuredMenu)?.content, {
     ...defaultFeaturedMenuBlock,
-    items: banners.slice(0, 3).map((banner) => ({
-      name: banner.title,
-      description: banner.description ?? '',
-      price: 65000,
+    items: banners.filter((banner) => banner.isActive).slice(0, 4).map((banner, index) => ({
+      name: banner.title || 'Món nổi bật',
+      description: banner.subtitle || '',
+      price: 65000 + index * 25000,
       imageUrl: banner.imageUrl,
-      badge: banner.ctaLabel ?? undefined,
+      badge: 'Featured',
     })),
   })
 
