@@ -22,6 +22,7 @@ export function InvoicePage() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [selectedInvoiceData, setSelectedInvoiceData] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [paymentModalData, setPaymentModalData] = useState<{
@@ -69,7 +70,7 @@ export function InvoicePage() {
           isOpen={isDetailOpen} 
           onClose={handleCloseDetail} 
           invoice={selectedInvoice}
-          onRefund={() => setIsRefundModalOpen(true)}
+          onRefund={(data) => { setSelectedInvoiceData(data); setIsRefundModalOpen(true); }}
           onUpdate={handleUpdate}
           refreshTrigger={refreshTrigger}
           onCheckout={(orderId, invoiceId, totalAmount) => {
@@ -81,7 +82,8 @@ export function InvoicePage() {
       <RefundModal 
         isOpen={isRefundModalOpen} 
         onClose={() => setIsRefundModalOpen(false)} 
-        invoiceId={selectedInvoice?.id || ''}
+        invoiceData={selectedInvoiceData}
+        onSuccess={handleUpdate}
       />
 
       {paymentModalData && (

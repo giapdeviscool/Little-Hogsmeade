@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import { getShiftId } from '@/store/shift.store';
+import { getShiftId, clearShiftId } from '@/store/shift.store';
+import { getActiveCashierShift } from '@/api/shift.api';
 import { PosLayout } from '@/layouts/PosLayout';
 import { ProductSection } from '@/components/pos/ProductSection';
 import { OrderSidebar } from '@/components/pos/OrderSidebar';
@@ -34,10 +35,25 @@ export function PosPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const activeShiftId = getShiftId();
-    if (!activeShiftId) {
-      navigate(ROUTES.shiftOpening);
-    }
+    const checkActiveShift = async () => {
+      const activeShiftId = getShiftId();
+      if (!activeShiftId) {
+        navigate(ROUTES.shiftOpening);
+        return;
+      }
+      
+      try {
+        const activeRes = await getActiveCashierShift();
+        if (!activeRes || !activeRes.data || activeRes.data.active === false) {
+          clearShiftId();
+          navigate(ROUTES.shiftOpening);
+        }
+      } catch (error) {
+        clearShiftId();
+        navigate(ROUTES.shiftOpening);
+      }
+    };
+    checkActiveShift();
   }, [navigate]);
 
   const [isOrderOpen, setIsOrderOpen] = useState(false);
