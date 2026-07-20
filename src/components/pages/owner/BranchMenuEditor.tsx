@@ -94,8 +94,7 @@ export function BranchMenuEditor({
       ) : (
         <div className="space-y-4">
           {catOrder.map((cat: any) => {
-            const catItems = itemsByCategory[cat.id]
-            if (!catItems || catItems.length === 0) return null
+            const catItems = itemsByCategory[cat.id] || []
 
             const globalItems = catItems.filter((i: any) => !i.branchId)
             const privateItems = catItems.filter((i: any) => i.branchId)

@@ -60,10 +60,16 @@ export function PricingPanel({ branches, preview, pricingItemId, pricingBranchId
             value={pricingBranchId}
             onChange={(event) => onBranchChange(event.target.value)}
           >
-            <option value="">Tất cả chi nhánh hoạt động</option>
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>{branch.name}</option>
-            ))}
+            {branches.length <= 1 ? (
+              <option value={branches[0]?.id || ''}>{branches[0]?.name || 'Không có chi nhánh'}</option>
+            ) : (
+              <>
+              <option value="">Tất cả chi nhánh hoạt động</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+              </>
+            )}
           </select>
         </div>
       </div>

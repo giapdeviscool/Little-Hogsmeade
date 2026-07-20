@@ -1,36 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { navItems } from '../constants/navigation'
 import { Icon } from '../components/icons/Icon'
 import { cn } from '../utils/cn'
 import { useLocale } from '../hooks/useLocale'
 import { Link, useLocation } from 'react-router-dom'
 import { getAuthSession } from '../store/auth.store'
-import { getBranchesPublic } from '../api/public-menu.api'
+import { canAccessSidebarItem, canAccessInternalTab } from '../utils/permissions'
 
 export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { t } = useLocale()
   const location = useLocation()
   const session = getAuthSession()
   const user = session?.user
+  const roleName = session?.user?.roleName || session?.user?.role || ''
   const displayName = user?.fullName || user?.name || 'Admin'
   const initial = displayName.charAt(0).toUpperCase()
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
 
   const [collapsedKeys, setCollapsedKeys] = useState<string[]>([])
-  const [branchName, setBranchName] = useState<string>(user?.branchName || user?.branch || '')
-  
-  // Also fix role check in case roleName is used
-  const roleName = user?.role || user?.roleName || ''
-  const isOwner = roleName.toLowerCase().includes('owner')
-
-  useEffect(() => {
-    if (user?.branchId && !branchName) {
-      getBranchesPublic().then(res => {
-        const branch = res.data?.items?.find((b: any) => b.id === user.branchId)
-        if (branch) setBranchName(branch.name)
-      }).catch(() => {})
-    }
-  }, [user?.branchId, branchName])
+  const filteredNavItems = navItems.filter(item => canAccessSidebarItem(roleName, item.key))
 
   const handleParentClick = (e: React.MouseEvent, key: string, isActive: boolean, hasSubItems: boolean) => {
     if (hasSubItems) {
@@ -56,22 +44,17 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
         <div>
           <span className="block text-xs text-muted">Xin chào,</span>
           <strong className="block text-[15px] truncate max-w-[120px]">{displayName}</strong>
-          {!isOwner && branchName && (
-            <span className="block text-[11px] font-medium text-latte truncate max-w-[120px] mt-0.5">
-              {branchName}
-            </span>
-          )}
         </div>
       </div>
 
       <nav className="flex flex-col gap-2">
-        {navItems.filter(item => !item.roles || (roleName && item.roles.some(r => r.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(r.toLowerCase())))).map((item) => {
+        {filteredNavItems.map((item) => {
           const href = item.href ?? `/admin/${item.key}`
           const isActive = location.pathname.startsWith(href)
           const isExpanded = isActive && !collapsedKeys.includes(item.key)
           return (
             <div key={item.key} className="flex flex-col">
-              <Link 
+              <Link
                 to={`/admin/${item.href || item.key}`}
                 onClick={(e) => handleParentClick(e, item.key, isActive, !!item.subItems)}
                 className={cn(navButton, isActive && !item.subItems ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}
@@ -85,11 +68,18 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
                 )}
               </Link>
 
-              {item.subItems && isExpanded && (
+              {item.subItems && isExpanded && [true].map(function() {
+                const subs = item.subItems!
+                const allowedSubItems = subs.filter(function(sub) {
+                  if (item.key === 'internal') return canAccessInternalTab(roleName, sub.key)
+                  return true
+                })
+                if (allowedSubItems.length === 0) return null
+                return (
                 <div className="mt-1 flex flex-col gap-1 pl-11 pr-2">
-                  {item.subItems.filter(sub => !sub.roles || (roleName && sub.roles.some(r => r.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(r.toLowerCase())))).map((sub) => {
+                  {allowedSubItems.map(function(sub) {
                     const searchParams = new URLSearchParams(location.search)
-                    const currentTab = searchParams.get('tab') || item.subItems!.filter(s => !s.roles || (roleName && s.roles.some(r => r.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(r.toLowerCase()))))[0]?.key
+                    const currentTab = searchParams.get('tab') || allowedSubItems[0]?.key
                     const isSubActive = currentTab === sub.key
 
                     return (
@@ -106,17 +96,19 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
                     )
                   })}
                 </div>
-              )}
+              )})[0]}
             </div>
           )
         })}
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
-        <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
-          <Icon name="settings" />
-          {t.common.settings}
-        </Link>
+        {((roleName||'').toLowerCase().includes('owner')) && (
+          <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
+            <Icon name="settings" />
+            {t.common.settings}
+          </Link>
+        )}
         <button type="button" onClick={onLogout} className={`${navButton} text-coffee hover:bg-white/65`}>
           <Icon name="logout" />
           {t.common.logout}

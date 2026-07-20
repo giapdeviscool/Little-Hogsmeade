@@ -2,6 +2,7 @@ import { Outlet, useNavigate, Navigate } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { clearAuthSession, getAuthSession } from '../store/auth.store'
 import { ROUTES } from '../constants/routes'
+import { ProtectedRoute } from '../components/auth/ProtectedRoute'
 
 export function AdminLayout() {
   const navigate = useNavigate()
@@ -27,7 +28,9 @@ export function AdminLayout() {
     <div className="grid min-h-screen grid-cols-[290px_minmax(990px,1fr)] bg-white text-coffee">
       <Sidebar onLogout={logout} />
       <main className="min-w-0">
-        <div className="px-10 py-8"><Outlet /></div>
+        <div className="px-10 py-8">
+          <ProtectedRoute><Outlet /></ProtectedRoute>
+        </div>
       </main>
     </div>
   )
