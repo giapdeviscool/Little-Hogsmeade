@@ -7,6 +7,7 @@ import {
 import { DateField, Field, NumberField, TextField, StatusBadge, DetailRow } from "./OwnerFields";
 import { dateToInput } from "../../../utils/owner.utils";
 import type { Branch, Voucher, VoucherPayload } from "../../../types";
+import { getAuthSession } from '../../../store/auth.store';
 
 type VoucherDialogMode = "create" | "edit" | "view";
 
@@ -31,6 +32,10 @@ export function VoucherDialog({
   onFormChange: (form: VoucherPayload) => void;
   onSave: () => void;
 }) {
+  const session = getAuthSession();
+  const roleName = session?.user?.role || session?.user?.roleName || '';
+  const isOwner = roleName.toLowerCase().includes('owner');
+
   const isViewMode = mode === "view";
   const title = mode === "create" ? "Tạo Voucher mới" : mode === "edit" ? "Sửa Voucher" : voucher?.name || "Chi tiết Voucher";
 
@@ -71,6 +76,23 @@ export function VoucherDialog({
                 <DetailRow
                   label="Trạng thái"
                   value={<StatusBadge status={voucher.isActive ? "active" : "inactive"} />}
+                />
+              </div>
+              <div className="col-span-1 md:col-span-2 space-y-4">
+                <DetailRow
+                  label="Phạm vi áp dụng"
+                  value={
+                    voucher.scope === 'global' ? (
+                      <span className="font-semibold text-emerald-600">Toàn chuỗi</span>
+                    ) : (
+                      <div className="flex flex-wrap justify-end gap-1">
+                        {voucher.appliedBranches?.map(bId => {
+                          const bName = branches.find(b => b.id === bId)?.name || bId;
+                          return <span key={bId} className="bg-beige px-2 py-0.5 rounded text-xs text-coffee">{bName}</span>
+                        })}
+                      </div>
+                    )
+                  }
                 />
               </div>
             </div>
@@ -161,23 +183,25 @@ export function VoucherDialog({
                 />
               </div>
 
-              <Field label="Phạm vi áp dụng">
-                <select
-                  className="h-9 rounded-lg border border-line bg-white px-3 text-sm"
-                  value={form.scope}
-                  onChange={(event) =>
-                    onFormChange({
-                      ...form,
-                      scope: event.target.value as VoucherPayload["scope"],
-                      appliedBranches: [],
-                    })
-                  }
-                >
-                  <option value="global">Toàn chuỗi</option>
-                  <option value="specific">Chi nhánh cụ thể</option>
-                </select>
-              </Field>
-              {form.scope === "specific" ? (
+              {isOwner && (
+                <Field label="Phạm vi áp dụng">
+                  <select
+                    className="h-9 rounded-lg border border-line bg-white px-3 text-sm"
+                    value={form.scope}
+                    onChange={(event) =>
+                      onFormChange({
+                        ...form,
+                        scope: event.target.value as VoucherPayload["scope"],
+                        appliedBranches: [],
+                      })
+                    }
+                  >
+                    <option value="global">Toàn chuỗi</option>
+                    <option value="specific">Chi nhánh cụ thể</option>
+                  </select>
+                </Field>
+              )}
+              {isOwner && form.scope === "specific" ? (
                 <Field label="Chi nhánh">
                   <select
                     className="h-9 rounded-lg border border-line bg-white px-3 text-sm"

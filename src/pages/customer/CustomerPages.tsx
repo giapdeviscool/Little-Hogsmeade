@@ -21,9 +21,17 @@ import { Eye, Gift, Award, History, Ticket } from 'lucide-react'
 import { PostDetailModal } from '../../components/customer/DetailModals'
 import { cn } from '../../utils/cn'
 
-function PinOtpInput({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
+function PinOtpInput({ value, onChange, disabled, autoFocus }: { value: string; onChange: (v: string) => void; disabled?: boolean; autoFocus?: boolean }) {
   const inputs = useRef<(HTMLInputElement | null)[]>([])
   
+  useEffect(() => {
+    if (autoFocus && !disabled) {
+      setTimeout(() => {
+        inputs.current[0]?.focus()
+      }, 100)
+    }
+  }, [autoFocus, disabled])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
     const val = e.target.value.replace(/\D/g, '')
     if (!val) {
@@ -63,6 +71,7 @@ function PinOtpInput({ value, onChange, disabled }: { value: string; onChange: (
           value={value[i] || ''}
           onChange={(e) => handleChange(e, i)}
           onKeyDown={(e) => handleKeyDown(e, i)}
+          autoFocus={i === 0}
           className="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold rounded-xl border border-line bg-white outline-none focus:border-coffee shadow-soft disabled:opacity-50"
         />
       ))}
@@ -819,6 +828,23 @@ export function CustomerMembershipPage() {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [membership, setMembership] = useState<CustomerMembership | null>(null)
   const [transactions, setTransactions] = useState<PointTransaction[]>([])
+  const [rewards, setRewards] = useState<LoyaltyReward[]>([])
+  const [showRewardModal, setShowRewardModal] = useState(false)
+  const [redeemingId, setRedeemingId] = useState<string | null>(null)
+  const [successVoucher, setSuccessVoucher] = useState<any>(null)
+
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [selectedBranch, setSelectedBranch] = useState<string>('')
+
+  useEffect(() => {
+    getBranches().then(res => {
+      if (res.data?.items) setBranches(res.data.items)
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    getCustomerLoyaltyRewards(selectedBranch || null).then(res => setRewards(res || [])).catch(() => {})
+  }, [selectedBranch])
 
   useEffect(() => {
     if (error) {
@@ -855,7 +881,7 @@ export function CustomerMembershipPage() {
     e.preventDefault()
     if (!phone || !pin) return
     if (authStatus === 'not_found' && !fullName) {
-      setError('Vui lòng nhập họ tên.')
+      setError('Vui lòng nhập họ tên để đăng ký.')
       return
     }
 
@@ -868,19 +894,48 @@ export function CustomerMembershipPage() {
         setCustomer(fullProfile)
         
         if (fullProfile.customerMemberships && fullProfile.customerMemberships.length > 0) {
-          const foundMem = fullProfile.customerMemberships[0]
-          setMembership(foundMem)
-          
-          const transRes = await getPointTransactions(foundMem.id)
-          setTransactions(transRes.data || [])
-        } else {
-          setMembership(null)
+          const m = fullProfile.customerMemberships[0];
+          setMembership(m)
+          getPointTransactions(m.id).then(txRes => {
+            if (txRes.data) setTransactions(txRes.data)
+          }).catch(() => {})
         }
       }
     } catch (err: any) {
       setError(err?.message || 'Lỗi đăng nhập. Vui lòng kiểm tra lại.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleRedeem(reward: LoyaltyReward) {
+    if (!membership || !customer) return
+    
+    const requiredPoints = reward.pointsRequired
+    if (membership.totalPoints < requiredPoints) {
+      setError(`Bạn không đủ điểm. Cần ${requiredPoints} điểm để đổi.`)
+      return
+    }
+
+    if (!window.confirm(`Bạn có chắc muốn dùng ${requiredPoints} điểm để đổi phần thưởng "${reward.name}"?`)) return
+
+    setRedeemingId(reward.id)
+    try {
+      const res = await redeemLoyaltyRewardApi(customer.id, reward.id)
+      
+      if (res.data) {
+        const { voucher, updatedMembership } = res.data
+        setMembership(updatedMembership)
+        setSuccessVoucher(voucher)
+        
+        getPointTransactions(customer.id).then(txRes => {
+          if (txRes.data) setTransactions(txRes.data)
+        }).catch(() => {})
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Có lỗi xảy ra khi đổi điểm. Vui lòng thử lại.')
+    } finally {
+      setRedeemingId(null)
     }
   }
 
@@ -945,7 +1000,7 @@ export function CustomerMembershipPage() {
             <div className="flex flex-col items-center gap-6 mt-6">
               {authStatus !== 'locked' && (
                 <>
-                  <PinOtpInput value={pin} onChange={setPin} disabled={loading} />
+                  <PinOtpInput value={pin} onChange={setPin} disabled={loading} autoFocus />
                   <button 
                     type="submit" 
                     disabled={loading || pin.length < 6}
@@ -1063,9 +1118,9 @@ export function CustomerMembershipPage() {
                   <p className="text-sm text-white/70">Chưa có thông tin đặc quyền.</p>
                 )}
                 <div className="mt-8 pt-6 border-t border-white/20">
-                  <a href="/promotions" className="w-full block text-center rounded-xl bg-white text-coffee font-bold py-3 hover:bg-cream transition">
+                  <button onClick={() => setShowRewardModal(true)} className="w-full block text-center rounded-xl bg-white text-coffee font-bold py-3 hover:bg-cream transition">
                     Đổi thưởng ngay
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1098,6 +1153,100 @@ export function CustomerMembershipPage() {
           </div>
         )}
       </div>
+
+      {showRewardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h3 className="font-bold text-xl flex items-center gap-2">
+                <Gift className="h-5 w-5 text-gold" />
+                Danh sách phần thưởng
+              </h3>
+              
+              <div className="flex items-center gap-3">
+                {!successVoucher && (
+                  <select 
+                    value={selectedBranch}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    className="border border-line rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-coffee"
+                  >
+                    <option value="">Tất cả chi nhánh (Chung)</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                )}
+                
+                <button onClick={() => { setShowRewardModal(false); setSuccessVoucher(null); }} className="p-2 hover:bg-cream rounded-full transition text-muted">
+                  <span className="sr-only">Đóng</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 bg-cream/30">
+              {successVoucher ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <h4 className="font-bold text-xl mb-2 text-emerald-700">Đổi thưởng thành công!</h4>
+                  <p className="text-muted mb-6">Mã voucher của bạn đã được tạo thành công và chỉ được sử dụng 1 lần.</p>
+                  
+                  <div className="bg-white border border-emerald-200 rounded-xl p-6 max-w-sm mx-auto shadow-sm">
+                    <p className="text-sm font-semibold text-muted mb-2 uppercase tracking-wider">Mã Voucher của bạn</p>
+                    <p className="text-3xl font-black text-coffee tracking-widest mb-4">{successVoucher.code}</p>
+                    {successVoucher.expireDate && (
+                      <p className="text-sm text-muted">Hết hạn: <span className="font-semibold text-red-500">{formatVnDate(successVoucher.expireDate)}</span></p>
+                    )}
+                  </div>
+                  
+                  <button onClick={() => setSuccessVoucher(null)} className="mt-8 px-6 py-2.5 bg-coffee text-white font-bold rounded-lg hover:bg-opacity-90 transition">
+                    Đổi thêm quà khác
+                  </button>
+                </div>
+              ) : rewards.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {rewards.map(reward => {
+                    const canRedeem = membership ? membership.totalPoints >= reward.pointsRequired : false;
+                    return (
+                      <div key={reward.id} className="bg-white p-5 rounded-xl border border-line shadow-sm hover:shadow-md transition flex flex-col">
+                        <div className="mb-4 -mx-5 -mt-5 h-32 rounded-t-xl overflow-hidden bg-[#F5F1EA] border-b border-line flex items-center justify-center">
+                          {reward.imageUrl ? (
+                            <img src={reward.imageUrl} alt={reward.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Gift className="w-10 h-10 text-coffee opacity-20" />
+                          )}
+                        </div>
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-bold text-coffee leading-tight">{reward.name}</h4>
+                          <span className="flex items-center gap-1 bg-gold/10 text-gold font-bold px-2.5 py-1 rounded-full text-xs shrink-0 whitespace-nowrap">
+                            <Award className="w-3 h-3" />
+                            {reward.pointsRequired}
+                          </span>
+                        </div>
+                        {reward.description && <p className="text-sm text-muted mb-4 line-clamp-2">{reward.description}</p>}
+                        <button
+                          onClick={() => handleRedeem(reward)}
+                          disabled={!canRedeem || redeemingId === reward.id}
+                          className={`w-full py-2.5 rounded-lg font-bold text-sm transition mt-auto ${canRedeem ? 'bg-coffee text-white hover:bg-opacity-90' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                        >
+                          {redeemingId === reward.id ? 'Đang xử lý...' : canRedeem ? 'Đổi thẻ này' : 'Không đủ điểm'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Gift className="w-12 h-12 text-muted mx-auto mb-4 opacity-50" />
+                  <p className="text-muted font-medium">Hiện tại chưa có phần thưởng nào để đổi.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

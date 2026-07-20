@@ -26,9 +26,8 @@ export const navItems: NavItem[] = [
       { key: 'what-if', label: 'Mô phỏng What-if' },
     ]
   },
-  { key: 'owner', icon: 'building' },
-  { key: 'cms', icon: 'globe' },
+  { key: 'owner', icon: 'building', roles: ['Chain Owner'] },
+  { key: 'cms', icon: 'globe', roles: ['Chain Owner'] },
   { key: 'loyalty', icon: 'loyalty' },
   { key: 'customers', icon: 'users' },
-
 ]

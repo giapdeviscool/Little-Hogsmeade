@@ -8,9 +8,22 @@ import { RewardsCatalogTab } from './components/RewardsCatalogTab'
 import { VouchersTab } from './components/VouchersTab'
 import { TiersTab } from './components/TiersTab'
 
+import { getAuthSession } from '../../store/auth.store'
+
 export function LoyaltyConfigurationPage() {
   const { t } = useLocale()
-  const [activeTab, setActiveTab] = useState<LoyaltyTab>('earning')
+  const session = getAuthSession()
+  const user = session?.user
+  
+  const roleName = user?.role || user?.roleName || ''
+  const isOwner = roleName.toLowerCase().includes('owner')
+
+  const accessibleTabs = loyaltyTabKeys.filter(tab => {
+    if ((tab === 'earning' || tab === 'tiers') && !isOwner) return false
+    return true
+  })
+
+  const [activeTab, setActiveTab] = useState<LoyaltyTab>(accessibleTabs[0] || 'rewards')
 
   return (
     <>
@@ -23,7 +36,7 @@ export function LoyaltyConfigurationPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2 rounded-[20px] bg-cream p-2 shadow-soft">
-        {loyaltyTabKeys.map((tabKey) => (
+        {accessibleTabs.map((tabKey) => (
           <button
             key={tabKey}
             type="button"

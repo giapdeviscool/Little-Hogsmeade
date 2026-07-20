@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { navItems } from '../constants/navigation'
 import { Icon } from '../components/icons/Icon'
 import { cn } from '../utils/cn'
 import { useLocale } from '../hooks/useLocale'
 import { Link, useLocation } from 'react-router-dom'
 import { getAuthSession } from '../store/auth.store'
+import { getBranchesPublic } from '../api/public-menu.api'
 
 export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const { t } = useLocale()
@@ -16,6 +17,20 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
 
   const [collapsedKeys, setCollapsedKeys] = useState<string[]>([])
+  const [branchName, setBranchName] = useState<string>(user?.branchName || user?.branch || '')
+  
+  // Also fix role check in case roleName is used
+  const roleName = user?.role || user?.roleName || ''
+  const isOwner = roleName.toLowerCase().includes('owner')
+
+  useEffect(() => {
+    if (user?.branchId && !branchName) {
+      getBranchesPublic().then(res => {
+        const branch = res.data?.items?.find((b: any) => b.id === user.branchId)
+        if (branch) setBranchName(branch.name)
+      }).catch(() => {})
+    }
+  }, [user?.branchId, branchName])
 
   const handleParentClick = (e: React.MouseEvent, key: string, isActive: boolean, hasSubItems: boolean) => {
     if (hasSubItems) {
@@ -41,11 +56,16 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
         <div>
           <span className="block text-xs text-muted">Xin chào,</span>
           <strong className="block text-[15px] truncate max-w-[120px]">{displayName}</strong>
+          {!isOwner && branchName && (
+            <span className="block text-[11px] font-medium text-latte truncate max-w-[120px] mt-0.5">
+              {branchName}
+            </span>
+          )}
         </div>
       </div>
 
       <nav className="flex flex-col gap-2">
-        {navItems.map((item) => {
+        {navItems.filter(item => !item.roles || (roleName && item.roles.some(r => r.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(r.toLowerCase())))).map((item) => {
           const href = item.href ?? `/admin/${item.key}`
           const isActive = location.pathname.startsWith(href)
           const isExpanded = isActive && !collapsedKeys.includes(item.key)
@@ -67,9 +87,9 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
 
               {item.subItems && isExpanded && (
                 <div className="mt-1 flex flex-col gap-1 pl-11 pr-2">
-                  {item.subItems.map((sub) => {
+                  {item.subItems.filter(sub => !sub.roles || (roleName && sub.roles.some(r => r.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(r.toLowerCase())))).map((sub) => {
                     const searchParams = new URLSearchParams(location.search)
-                    const currentTab = searchParams.get('tab') || item.subItems![0].key
+                    const currentTab = searchParams.get('tab') || item.subItems!.filter(s => !s.roles || (roleName && s.roles.some(r => r.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(r.toLowerCase()))))[0]?.key
                     const isSubActive = currentTab === sub.key
 
                     return (
