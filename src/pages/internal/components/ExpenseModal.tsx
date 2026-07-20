@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { getExpenseCategories, createExpense, type ExpenseCategory } from '@/api/expense.api'
 import { getAuthSession } from '@/store/auth.store'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 
 interface ExpenseModalProps {
   isOpen: boolean
@@ -128,15 +129,12 @@ export function ExpenseModal({ isOpen, onClose, onSuccess, branchId }: ExpenseMo
               <label className="mb-1 block text-sm font-semibold uppercase tracking-wider text-muted">
                 Số tiền (VNĐ) *
               </label>
-              <input
-                type="number"
-                min="0"
-                step="1000"
-                className="w-full rounded-xl border border-line bg-cream px-4 py-2.5 outline-none transition focus:border-coffee font-semibold text-red-600"
-                placeholder="VD: 15000000"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              <CurrencyInput
                 required
+                className="w-full rounded-xl border border-line bg-cream px-4 py-2.5 outline-none transition focus:border-coffee font-semibold text-red-600"
+                placeholder="VD: 15.000.000"
+                value={formData.amount}
+                onValueChange={(val) => setFormData({ ...formData, amount: val })}
               />
             </div>
 

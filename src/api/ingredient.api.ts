@@ -25,6 +25,11 @@ export function getIngredients(params?: { search?: string, branchId?: string }) 
   return httpClient<{ data: Ingredient[] }>(url)
 }
 
+export async function getInventoryStats(branchId?: string) {
+  const query = branchId ? `?branchId=${branchId}` : ''
+  return httpClient<{ data: { totalValue: number, lowStockCount: number } }>(`/ingredients/stats${query}`)
+}
+
 export function createIngredient(data: Partial<Ingredient>) {
   return httpClient<{ data: Ingredient }>('/ingredients', {
     method: 'POST',

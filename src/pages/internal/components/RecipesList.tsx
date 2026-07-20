@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Card } from '../../../components/ui/Card'
 import { getRecipes } from '../../../api/recipe.api'
-import type { Recipe } from '../../../types'
+import type { Recipe, Branch } from '../../../types'
 import { X } from 'lucide-react'
+import { getAuthSession } from '../../../store/auth.store'
+import { getBranches } from '../../../api/employee.api'
 
 interface GroupedRecipe {
   fullName: string
@@ -61,15 +63,35 @@ function RecipeDetailModal({ data, onClose }: { data: GroupedRecipe | null, onCl
 }
 
 export function RecipesList() {
+  const authSession = getAuthSession()
+  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const userBranchId = authSession?.user?.branchId || ''
+
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedGroup, setSelectedGroup] = useState<GroupedRecipe | null>(null)
+  
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [selectedBranch, setSelectedBranch] = useState(isChainOwner ? '' : userBranchId)
+
+  useEffect(() => {
+    async function loadBranches() {
+      try {
+        const res = await getBranches()
+        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.items || []
+        setBranches(items)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    loadBranches()
+  }, [])
 
   const fetchRecipes = async () => {
     try {
       setLoading(true)
-      const res = await getRecipes({ search })
+      const res = await getRecipes({ search, branchId: selectedBranch })
       setRecipes(res.data.items)
     } catch (err) {
       console.error(err)
@@ -80,7 +102,7 @@ export function RecipesList() {
 
   useEffect(() => {
     fetchRecipes()
-  }, [search])
+  }, [search, selectedBranch])
 
   const groupedRecipes = useMemo(() => {
     const map = recipes.reduce((acc, r) => {
@@ -106,10 +128,24 @@ export function RecipesList() {
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold">Danh sách công thức (BOM)</h2>
         <div className="flex gap-4">
+          {isChainOwner && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded-lg border border-line px-4 bg-white outline-none text-sm font-semibold h-[42px]"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <input
             type="text"
             placeholder="Tìm theo món ăn..."
-            className="rounded-lg border border-line px-4 py-2 w-64"
+            className="rounded-lg border border-line px-4 py-2 w-64 h-[42px]"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

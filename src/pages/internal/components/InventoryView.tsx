@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Card } from '../../../components/ui/Card'
+import { getInventoryStats, getIngredients, type Ingredient } from '../../../api/ingredient.api'
 import { cn } from '../../../utils/cn'
-import { getIngredients, type Ingredient } from '../../../api/ingredient.api'
 import { getBranches } from '../../../api/employee.api'
 import type { Branch } from '../../../types'
 import { getAuthSession } from '../../../store/auth.store'
@@ -21,6 +21,7 @@ export function InventoryView() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [selectedBranch, setSelectedBranch] = useState(isChainOwner ? '' : userBranchId)
+  const [stats, setStats] = useState({ totalValue: 0, lowStockCount: 0, receiptsThisMonth: 0 })
   
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -58,17 +59,28 @@ export function InventoryView() {
     // allow fetching for all branches
     try {
       setLoading(true)
-      const res = await getIngredients({ search, branchId: selectedBranch })
+      const [res, statsRes] = await Promise.all([
+        getIngredients({ search, branchId: selectedBranch }),
+        getInventoryStats(selectedBranch)
+      ])
       let data = res.data
       if (filterType !== 'all') {
         data = data.filter(i => i.ingredientType === filterType)
       }
       setIngredients(data)
+      setStats((statsRes as any).data)
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatCurrency = (amount: number) => {
+    if (amount >= 1e9) return `₫${(amount / 1e9).toFixed(1)}B`
+    if (amount >= 1e6) return `₫${(amount / 1e6).toFixed(1)}M`
+    if (amount >= 1e3) return `₫${(amount / 1e3).toFixed(1)}K`
+    return `₫${amount}`
   }
 
   useEffect(() => {
@@ -129,7 +141,18 @@ export function InventoryView() {
           </button>
         </div>
       </div>
-      <section className="mt-6 grid grid-cols-3 gap-5">{['Tổng giá trị kho ₫428.6M', 'Nguyên liệu sắp hết 12', 'Số phiếu nhập tháng 84'].map((x) => <Card key={x} className="p-5"><span className="text-sm text-muted">{x.split(' ').slice(0, -1).join(' ')}</span><b className="block text-[28px]">{x.split(' ').at(-1)}</b></Card>)}</section>
+      <section className="mt-6 grid grid-cols-3 gap-5">
+        {[
+          { label: 'Tổng giá trị kho', value: formatCurrency(stats.totalValue) },
+          { label: 'Nguyên liệu sắp hết', value: stats.lowStockCount.toString() },
+          { label: 'Số phiếu nhập tháng', value: stats.receiptsThisMonth.toString() }
+        ].map((x) => (
+          <Card key={x.label} className="p-5">
+            <span className="text-sm text-muted">{x.label}</span>
+            <b className="block text-[28px]">{x.value}</b>
+          </Card>
+        ))}
+      </section>
       <Card className="mt-6 overflow-hidden p-6">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-coffee">Danh sách Nguyên liệu</h3>
@@ -157,12 +180,12 @@ export function InventoryView() {
           </div>
         </div>
         <table className="w-full text-left text-sm">
-          <thead><tr>{['Mã NVL', 'Tên nguyên liệu', 'Loại', 'Số lượng', 'Định mức', 'Trạng thái', 'Thao tác'].map((h) => <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>)}</tr></thead>
+          <thead><tr>{['Mã NVL', 'Tên nguyên liệu', 'Loại', ...(selectedBranch === '' ? [] : ['Số lượng']), 'Định mức', ...(selectedBranch === '' ? [] : ['Trạng thái']), 'Thao tác'].map((h) => <th key={h} className="border-b border-line px-4 py-3 text-xs uppercase text-muted">{h}</th>)}</tr></thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="py-8 text-center">Đang tải...</td></tr>
+              <tr><td colSpan={selectedBranch === '' ? 5 : 7} className="py-8 text-center">Đang tải...</td></tr>
             ) : ingredients.length === 0 ? (
-              <tr><td colSpan={7} className="py-8 text-center text-muted">Không có nguyên liệu nào.</td></tr>
+              <tr><td colSpan={selectedBranch === '' ? 5 : 7} className="py-8 text-center text-muted">Không có nguyên liệu nào.</td></tr>
             ) : (
               ingredients.map((item) => {
                 const isSafe = item.currentStock > item.minStockLevel
@@ -187,13 +210,17 @@ export function InventoryView() {
                         )
                       })()}
                     </td>
-                    <td className="border-b border-line px-4 py-4">{item.currentStock} {item.unit}</td>
+                    {selectedBranch !== '' && (
+                      <td className="border-b border-line px-4 py-4">{item.currentStock} {item.unit}</td>
+                    )}
                     <td className="border-b border-line px-4 py-4">{item.minStockLevel} {item.unit}</td>
-                    <td className="border-b border-line px-4 py-4">
-                      <span className={cn('rounded-full px-3 py-1 text-xs font-bold', isSafe ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}>
-                        {isSafe ? 'An toàn' : 'Cần nhập gấp'}
-                      </span>
-                    </td>
+                    {selectedBranch !== '' && (
+                      <td className="border-b border-line px-4 py-4">
+                        <span className={cn('rounded-full px-3 py-1 text-xs font-bold', isSafe ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}>
+                          {isSafe ? 'An toàn' : 'Cần nhập gấp'}
+                        </span>
+                      </td>
+                    )}
                     <td className="border-b border-line px-4 py-4 space-x-3 whitespace-nowrap">
                       {item.globalIngredientId === null && (
                         <button 

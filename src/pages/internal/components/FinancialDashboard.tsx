@@ -537,6 +537,10 @@ export function FinancialDashboard() {
         branchId={isOwner ? selectedBranchId : currentBranchId} 
         month={month} 
         year={year} 
+        onMonthChange={(m, y) => {
+          setMonth(m)
+          setYear(y)
+        }}
       />
 
     </div>

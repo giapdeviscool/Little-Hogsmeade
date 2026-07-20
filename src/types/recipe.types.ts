@@ -17,4 +17,5 @@ export interface RecipeFilterParams {
   limit?: number
   search?: string
   ingredientId?: string
+  branchId?: string
 }
