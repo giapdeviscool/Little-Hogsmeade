@@ -1,12 +1,11 @@
 import { env } from "../config/env";
 import { getAuthToken } from "../store/auth.store";
 
-
 export async function httpClient<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  console.log('env.apiBaseUrl', env.apiBaseUrl)
+  console.log("env.apiBaseUrl", env.apiBaseUrl);
   const token = getAuthToken();
   const isFormData = init?.body instanceof FormData;
   const headers: HeadersInit = {
@@ -17,10 +16,10 @@ export async function httpClient<T>(
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`http://localhost:3000/api/v1${path}`, {
+  const response = await fetch(`${env.apiBaseUrl}${path}`, {
     ...init,
     headers,
-  })
+  });
 
   if (!response.ok) {
     const errorPayload = (await response.json().catch(() => null)) as {

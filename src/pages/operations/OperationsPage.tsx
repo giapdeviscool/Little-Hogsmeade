@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { cn } from '../../utils/cn'
 import { Bell } from 'lucide-react'
 import { Button } from '../../components/ui/button'
@@ -13,9 +13,6 @@ interface NotificationItem {
 }
 
 export function OperationsPage() {
-  const location = useLocation()
-  const isDelivery = location.pathname.includes('/delivery')
-  
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
@@ -31,13 +28,6 @@ export function OperationsPage() {
       description: 'Khách hàng tại Bàn N-03 yêu cầu xuất hóa đơn thanh toán.',
       time: '12 phút trước',
       read: false,
-    },
-    {
-      id: '3',
-      title: 'Đơn giao hàng mới',
-      description: 'Đơn hàng #ORD-260625-A12 đã được gán cho shipper Trần Văn B.',
-      time: '20 phút trước',
-      read: true,
     },
   ])
 
@@ -144,34 +134,11 @@ export function OperationsPage() {
           Vận hành & Phục vụ
         </p>
         <h1 className="mt-2 text-[34px] font-bold tracking-[-0.04em]">
-          {isDelivery ? 'Quản lý giao hàng' : 'Sơ đồ bàn ăn'}
+          Sơ đồ bàn ăn
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted">
-          {isDelivery 
-            ? 'Theo dõi trạng thái giao hàng của shipper và điều phối vận chuyển theo thời gian thực.'
-            : 'Theo dõi sơ đồ bàn ăn của các khu vực trong quán, hỗ trợ nhận khách nhanh và đặt bàn trước.'}
+          Theo dõi sơ đồ bàn ăn của các khu vực trong quán, hỗ trợ nhận khách nhanh và đặt bàn trước.
         </p>
-      </div>
-
-      <div className="flex items-center gap-2 rounded-[20px] bg-cream p-2 shadow-soft max-w-sm">
-        <Link
-          to="/admin/operations/tables"
-          className={cn(
-            'flex-1 rounded-[16px] px-5 py-3 flex items-center justify-center transition font-semibold text-[14px]',
-            !isDelivery ? 'bg-white text-coffee shadow-soft' : 'text-coffee hover:bg-white/70',
-          )}
-        >
-          Sơ đồ bàn
-        </Link>
-        <Link
-          to="/admin/operations/delivery"
-          className={cn(
-            'flex-1 rounded-[16px] px-5 py-3 flex items-center justify-center transition font-semibold text-[14px]',
-            isDelivery ? 'bg-white text-coffee shadow-soft' : 'text-coffee hover:bg-white/70',
-          )}
-        >
-          Quản lý giao hàng
-        </Link>
       </div>
 
       <div className="mt-10">

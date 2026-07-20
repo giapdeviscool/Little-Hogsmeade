@@ -25,17 +25,9 @@ export interface OrderType {
   title: string;
   customer: Customer | null;
   cartItems: CartItemType[];
-  orderType: 'dine-in' | 'takeaway' | 'delivery';
+  orderType: 'dine-in' | 'takeaway';
   voucherCode?: string;
   discountAmount?: number;
-  deliveryInfo?: {
-    receiverName: string;
-    receiverPhone: string;
-    deliveryAddress: string;
-    deliveryFee: number;
-    distance?: number;
-    note?: string;
-  };
 }
 
 export function PosPage() {
@@ -158,31 +150,10 @@ export function PosPage() {
     ));
   };
 
-  const handleSetOrderType = (orderType: 'dine-in' | 'takeaway' | 'delivery') => {
+  const handleSetOrderType = (orderType: 'dine-in' | 'takeaway') => {
     setOrders(prev => prev.map(o =>
       o.id === activeOrderId ? { ...o, orderType } : o
     ));
-  };
-
-  const handleUpdateDeliveryInfo = (info: Partial<NonNullable<OrderType['deliveryInfo']>>) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== activeOrderId) return o;
-      const defaultInfo = {
-        receiverName: o.customer?.fullName || '',
-        receiverPhone: o.customer?.phone || '',
-        deliveryAddress: '',
-        deliveryFee: 0,
-        distance: 0,
-        note: ''
-      };
-      return {
-        ...o,
-        deliveryInfo: {
-          ...(o.deliveryInfo || defaultInfo),
-          ...info
-        }
-      };
-    }));
   };
 
   const handleSetVoucher = (voucherCode?: string, discountAmount: number = 0) => {
@@ -215,7 +186,6 @@ export function PosPage() {
               onChangeOrder={setActiveOrderId}
               onSetCustomer={handleSetCustomer}
               onSetOrderType={handleSetOrderType}
-              onUpdateDeliveryInfo={handleUpdateDeliveryInfo}
               onClearOrder={handleClearOrder}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}

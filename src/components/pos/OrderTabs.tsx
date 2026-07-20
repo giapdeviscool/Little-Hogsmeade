@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, X, Plus, Store, ShoppingBag, Truck } from 'lucide-react';
+import { Trash2, X, Plus, Store, ShoppingBag } from 'lucide-react';
 import type { OrderType } from '@/pages/pos/index';
 import type { Customer } from '@/types/customer.types';
 import { CustomerSearch } from '@/components/pos/CustomerSearch';
@@ -13,7 +13,7 @@ interface OrderTabsProps {
   onDeleteOrder: (id: string) => void;
   onChangeOrder: (id: string) => void;
   onSetCustomer: (customer: Customer | null) => void;
-  onSetOrderType: (type: 'dine-in' | 'takeaway' | 'delivery') => void;
+  onSetOrderType: (type: 'dine-in' | 'takeaway') => void;
 }
 
 export function OrderTabs({
@@ -107,17 +107,6 @@ export function OrderTabs({
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             Mang đi
-          </button>
-          <button
-            onClick={() => onSetOrderType('delivery')}
-            className={`flex-1 py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
-              activeOrder.orderType === 'delivery'
-                ? 'bg-coffee text-white shadow-md'
-                : 'bg-beige text-muted hover:bg-line/50 border border-transparent'
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5" />
-            Giao hàng
           </button>
         </div>
       </div>

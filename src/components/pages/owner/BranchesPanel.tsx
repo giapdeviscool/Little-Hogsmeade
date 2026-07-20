@@ -5,6 +5,7 @@ import { Plus, Store } from "lucide-react";
 import { BranchCard } from "./BranchCard";
 import { BranchDialog } from "./BranchDialog";
 import { BranchDetailDialog } from "./BranchDetailDialog";
+import { isOwner } from "../../../utils/permissions";
 
 export function BranchesPanel({
   branches,
@@ -40,6 +41,7 @@ export function BranchesPanel({
           <h2 className="text-lg font-semibold text-coffee">
             Danh sách chi nhánh
           </h2>
+          {isOwner() && (
           <button
             onClick={onOpenModal}
             className="flex h-9 items-center gap-2 rounded-lg bg-coffee px-4 text-sm font-semibold text-white transition-colors hover:bg-coffee/90"
@@ -47,6 +49,7 @@ export function BranchesPanel({
             <Plus className="h-4 w-4" />
             Tạo chi nhánh
           </button>
+          )}
         </div>
 
         {branches.length === 0 ? (
@@ -64,6 +67,7 @@ export function BranchesPanel({
                 onView={() => setDetailBranch(branch)}
                 onEdit={() => onEdit(branch)}
                 onToggle={() => onToggleStatus(branch.id)}
+                canEdit={isOwner()}
               />
             ))}
           </div>

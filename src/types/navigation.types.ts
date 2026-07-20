@@ -1,3 +1,5 @@
+import type { AuthRole } from './auth.types'
+
 export type TabKey = 'dashboard' | 'pos' | 'operations' | 'internal' | 'owner' | 'cms' | 'customers' | 'settings' | 'loyalty'
 
 export type SidebarNavKey = Exclude<TabKey, 'settings'>
@@ -8,5 +10,6 @@ export type NavItem = {
   key: SidebarNavKey
   icon: NavIconKey
   href?: string
-  subItems?: { key: string; label: string }[]
+  roles?: AuthRole[]
+  subItems?: { key: string; label: string; roles?: AuthRole[] }[]
 }
