@@ -152,6 +152,7 @@ export function MenuItemList() {
               }}
             >
               <option value="">Tất cả chi nhánh</option>
+              <option value="global">Món ăn toàn chuỗi (Global)</option>
               {branches.map(b => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}

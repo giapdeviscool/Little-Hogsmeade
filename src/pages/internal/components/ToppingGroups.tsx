@@ -4,6 +4,9 @@ import { getToppingGroups, softDeleteToppingGroup } from '../../../api/topping-g
 import { ToppingGroupModal } from './ToppingGroupModal'
 import { ConfirmModal } from '../../../components/ui/ConfirmModal'
 import { AlertModal } from '../../../components/ui/AlertModal'
+import { getAuthSession } from '../../../store/auth.store'
+import { getBranches } from '../../../api/employee.api'
+import type { Branch } from '../../../types'
 
 export function ToppingGroups() {
   const [groups, setGroups] = useState<any[]>([])
@@ -13,10 +16,30 @@ export function ToppingGroups() {
   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean; id: string | null}>({ isOpen: false, id: null })
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({ isOpen: false, title: '', message: '', type: 'info' })
 
+  const authSession = getAuthSession()
+  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const userBranchId = authSession?.user?.branchId || ''
+
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [selectedBranch, setSelectedBranch] = useState(isChainOwner ? '' : userBranchId)
+
+  useEffect(() => {
+    async function loadBranches() {
+      try {
+        const res = await getBranches()
+        const items = Array.isArray(res.data) ? res.data : (res.data as any)?.items || []
+        setBranches(items)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    loadBranches()
+  }, [])
+
   const fetchGroups = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await getToppingGroups()
+      const res = await getToppingGroups(selectedBranch)
       setGroups(res.data)
     } catch (error) {
       console.error('Failed to fetch topping groups', error)
@@ -27,7 +50,7 @@ export function ToppingGroups() {
 
   useEffect(() => {
     fetchGroups()
-  }, [fetchGroups])
+  }, [fetchGroups, selectedBranch])
 
   const handleDeleteClick = (id: string) => {
     setConfirmConfig({ isOpen: true, id })
@@ -54,6 +77,20 @@ export function ToppingGroups() {
           <p className="text-sm text-muted mt-1">Các tuỳ chọn thêm (Đá, Đường, Topping...)</p>
         </div>
         <div className="flex gap-2">
+          {isChainOwner && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded-[14px] border border-line px-4 bg-white outline-none text-sm font-semibold h-[42px]"
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <button 
             onClick={() => {
               setEditData(null)

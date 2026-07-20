@@ -11,6 +11,9 @@ const paths: Record<string, string> = {
   bell: 'M18 16v-5a6 6 0 0 0-12 0v5l-2 2h16zM10 20h4',
   search: 'M11 19a8 8 0 1 1 5.7-2.3L21 21',
   chevronDown: 'M6 9l6 6 6-6',
+  calendar: 'M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18',
+  clock: 'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z M12 6v6l4 2',
+  wallet: 'M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z M21 12H16v-2h5 M17 12v.01',
 }
 
 export function Icon({ name }: { name: string }) {
