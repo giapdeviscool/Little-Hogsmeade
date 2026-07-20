@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, Eye, CreditCard, Banknote, Wallet, Loader2, AlertCircle, Filter, RotateCcw } from 'lucide-react';
+import { Search, ChevronDown, Eye, CreditCard, Banknote, Wallet, Loader2, AlertCircle, Filter, RotateCcw, Store } from 'lucide-react';
 import { listInvoices } from '@/api/invoice.api';
 import { RecordPagination } from '../ui/RecordPagination';
+import { getAuthSession } from '@/store/auth.store';
+import { getBranches } from '@/api/chain.api';
+import { CustomSelect } from '../ui/CustomSelect';
 
 export interface Invoice {
   id: string; // Map orderId here for compatibility with existing Detail Panel
@@ -35,6 +38,7 @@ const truncateId = (id: string) => {
 
 export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTableProps) {
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,9 +53,29 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
   const [paymentMethod, setPaymentMethod] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [branchId, setBranchId] = useState('');
   
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const session = getAuthSession();
+  const isOwner = (session?.user?.roleName || '').toLowerCase().includes('owner');
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await getBranches();
+        if (!res.error && res.data && res.data.items) {
+          setBranches(res.data.items);
+        }
+      } catch (err) {
+        console.error('Failed to fetch branches:', err);
+      }
+    };
+    if (isOwner) {
+      fetchBranches();
+    }
+  }, [isOwner]);
 
   useEffect(() => {
     const fetchInvoicesData = async () => {
@@ -93,6 +117,7 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
     if (idSearchValue) {
       newFilters[idSearchType] = idSearchValue;
     }
+    if (branchId) newFilters.branchId = branchId;
     setAppliedFilters(newFilters);
   };
 
@@ -103,6 +128,7 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
     setPaymentMethod('');
     setStartDate('');
     setEndDate('');
+    setBranchId('');
     setCurrentPage(1);
     setAppliedFilters({});
   };
@@ -241,6 +267,21 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
                 </span>
               </div>
             </div>
+
+            {isOwner && (
+              <div>
+                <label className="block text-[11px] font-bold text-muted uppercase tracking-widest mb-2">Chi nhánh</label>
+                <CustomSelect
+                  value={branchId}
+                  onChange={setBranchId}
+                  options={[
+                    { value: '', label: 'Tất cả chi nhánh' },
+                    ...branches.map(b => ({ value: b.id || b._id, label: b.name }))
+                  ]}
+                  placeholder="Tất cả chi nhánh"
+                />
+              </div>
+            )}
             
             <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               <div>
@@ -297,6 +338,7 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
               <tr className="bg-cream border-b border-line">
                 <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Mã đơn hàng</th>
                 <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Khách hàng</th>
+                {isOwner && <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Chi nhánh</th>}
                 <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Thời gian</th>
                 <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Trạng thái</th>
                 <th className="px-2 py-5 text-[11px] font-bold uppercase tracking-widest text-muted">Phương thức</th>
@@ -307,10 +349,12 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
             <tbody className="divide-y divide-line">
               {invoices.map(invoice => {
                 const method = invoice.payments?.[0]?.method || 'N/A';
+                const branchName = branches.find(b => (b.id || b._id) === invoice.branchId)?.name || 'Hogsmeade';
                 return (
                   <tr key={invoice.id} className="hover:bg-cream/50 transition-colors cursor-pointer group h-20" onClick={() => onSelectInvoice({ id: invoice.orderId, originalInvoiceId: invoice.id })}>
                     <td className="px-2 py-4 font-bold text-coffee group-hover:text-gold transition-colors" title={invoice.orderId}>{truncateId(invoice.orderId)}</td>
                     <td className="px-2 py-4 font-semibold text-coffee">{invoice.order?.customer?.fullName || 'Khách vãng lai'}</td>
+                    {isOwner && <td className="px-2 py-4 text-sm font-medium text-coffee">{branchName}</td>}
                     <td className="px-2 py-4 text-muted text-sm">{formatDate(invoice.createdAt)}</td>
                     <td className="px-2 py-4">{getStatusDisplay(invoice.status)}</td>
                     <td className="px-2 py-4 flex items-center gap-2 text-muted text-sm h-20">{getMethodDisplay(method)}</td>
