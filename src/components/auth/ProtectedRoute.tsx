@@ -6,8 +6,7 @@ import { ROUTES } from '../../constants/routes'
 function getDefaultRoute(roleName: string): string {
   const n = roleName.toLowerCase().trim()
   if (n.includes('owner') || n.includes('chain admin') || n === 'admin') return '/admin/dashboard'
-  if (n.includes('cashier')) return '/pos'
-  if (n.includes('staff') || n.includes('kitchen')) return '/admin/operations'
+  if (n.includes('cashier') || n.includes('staff') || n.includes('kitchen')) return '/admin/operations'
   return ROUTES.login
 }
 

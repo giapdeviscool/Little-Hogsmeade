@@ -31,7 +31,7 @@ export function CashierLoginPage() {
 
       // Transition effect and redirect
       setTimeout(() => {
-        navigate(ROUTES.shiftOpening)
+        navigate(ROUTES.pos)
       }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to connect to server')
