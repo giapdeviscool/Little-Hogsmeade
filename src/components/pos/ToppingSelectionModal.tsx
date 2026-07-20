@@ -92,6 +92,14 @@ export function ToppingSelectionModal({
       if (existing) {
         delete next[topping.id];
       } else {
+        if (activeGroup?.maxSelect === 1) {
+          activeGroup.toppings.forEach(t => {
+            if (next[t.id]) {
+              delete next[t.id];
+            }
+          });
+        }
+        
         next[topping.id] = {
           toppingId: topping.id,
           name: topping.name,
@@ -212,8 +220,8 @@ export function ToppingSelectionModal({
                         </div>
                       </div>
 
-                      {/* Quantity Controls (Only shown if selected) */}
-                      {isSelected && (
+                      {/* Quantity Controls (Only shown if selected and maxSelect > 1) */}
+                      {isSelected && activeGroup?.maxSelect !== 1 && (
                         <div
                           className="flex items-center gap-2"
                           onClick={(e) => e.stopPropagation()} // Prevent toggling selection

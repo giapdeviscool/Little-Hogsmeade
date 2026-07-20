@@ -6,12 +6,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Field, NumberField, TextField } from '../../../components/pages/owner/OwnerFields'
+import type { Branch } from '../../../types'
 import type { LoyaltyReward, LoyaltyRewardPayload, RewardDialogMode, RewardFormErrors } from '../loyalty.types'
 import { ImageField } from '../../cms/components/CmsSharedUI'
 import { uploadImage } from '../../../api/cms.api'
 
 const emptyForm: LoyaltyRewardPayload = {
   name: '',
+  branchId: null,
   pointsRequired: 1,
   discountValue: 10,
   discountType: 'percent',
@@ -39,11 +41,15 @@ function validateForm(form: LoyaltyRewardPayload): RewardFormErrors {
   return errors
 }
 
+import { getAuthSession } from '../../../store/auth.store'
+
 export function RewardDialog({
   isOpen,
   mode,
   reward,
   saving,
+  branches,
+  error,
   onClose,
   onSave,
 }: {
@@ -51,9 +57,16 @@ export function RewardDialog({
   mode: RewardDialogMode
   reward: LoyaltyReward | null
   saving: boolean
+  branches: Branch[]
+  error?: string | null
   onClose: () => void
   onSave: (payload: LoyaltyRewardPayload) => void
 }) {
+  const session = getAuthSession()
+  const user = session?.user
+  const roleName = user?.role || user?.roleName || ''
+  const isOwner = roleName.toLowerCase().includes('owner')
+
   const [form, setForm] = useState<LoyaltyRewardPayload>(emptyForm)
   const [errors, setErrors] = useState<RewardFormErrors>({})
   const fileRef = useRef<HTMLInputElement>(null)
@@ -73,6 +86,7 @@ export function RewardDialog({
     if (mode === 'edit' && reward) {
       setForm({
         name: reward.name,
+        branchId: reward.branchId,
         pointsRequired: reward.pointsRequired,
         discountValue: reward.discountValue ?? 0,
         discountType: reward.discountType ?? 'percent',
@@ -83,7 +97,7 @@ export function RewardDialog({
         isActive: reward.isActive,
       })
     } else {
-      setForm(emptyForm)
+      setForm({ ...emptyForm, branchId: isOwner ? null : (user?.branchId || null) })
     }
 
     setErrors({})
@@ -106,6 +120,27 @@ export function RewardDialog({
         </DialogHeader>
 
         <div className="space-y-4 px-6 py-6 overflow-y-auto max-h-[80vh]">
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-[#c25a5a]">
+              {error}
+            </div>
+          )}
+
+          {isOwner && (
+            <Field label="Chi nhánh áp dụng">
+              <select
+                className="h-10 w-full rounded-lg border border-line bg-white px-3 text-sm focus:border-coffee focus:outline-none"
+                value={form.branchId || ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value || null }))}
+              >
+                <option value="">Tất cả chi nhánh (Chung)</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </Field>
+          )}
+
           <TextField
             label="Tên phần thưởng"
             value={form.name}

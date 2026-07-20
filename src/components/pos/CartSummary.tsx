@@ -6,16 +6,8 @@ import { VoucherInput } from './VoucherInput';
 
 interface CartSummaryProps {
   cartItems?: CartItemType[];
-  orderType?: 'dine-in' | 'takeaway' | 'delivery';
+  orderType?: 'dine-in' | 'takeaway';
   customerId?: string | null;
-  deliveryInfo?: {
-    receiverName: string;
-    receiverPhone: string;
-    deliveryAddress: string;
-    deliveryFee: number;
-    distance?: number;
-    note?: string;
-  };
   voucherCode?: string;
   discountAmount?: number;
   onSetVoucher?: (code?: string, amount?: number) => void;
@@ -26,7 +18,6 @@ export function CartSummary({
   cartItems = [],
   orderType = 'dine-in',
   customerId = null,
-  deliveryInfo,
   voucherCode,
   discountAmount = 0,
   onSetVoucher,
@@ -44,9 +35,7 @@ export function CartSummary({
     const toppingsTotal = (item.toppings || []).reduce((sum, t) => sum + t.extraPrice * t.quantity, 0);
     return acc + (base + toppingsTotal) * item.quantity;
   }, 0);
-  const discount = 0;
-  const shippingFee = orderType === 'delivery' ? (deliveryInfo?.deliveryFee || 0) : 0;
-  const total = subtotal - discountAmount + shippingFee;
+  const total = subtotal - discountAmount;
 
   const formatPrice = (val: number) => `₫${Math.round(val).toLocaleString('vi-VN')}`;
 

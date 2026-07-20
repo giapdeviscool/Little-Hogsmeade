@@ -16,16 +16,17 @@ import type {
 } from '../types'
 import { defaultLoyaltyEarnConfig } from '../pages/loyalty/loyalty.constants'
 
-function resolveBranchId(branchId?: string) {
+function resolveBranchId(branchId?: string | null) {
+  if (branchId === null) return null
   return branchId || getAuthSession()?.user?.branchId || env.defaultBranchId || undefined
 }
 
-function buildBranchQuery(branchId?: string, existingQuery = '') {
+function buildBranchQuery(branchId?: string | null, existingQuery = '') {
   const resolvedBranchId = resolveBranchId(branchId)
-  if (!resolvedBranchId) return existingQuery
-
+  if (resolvedBranchId === undefined) return existingQuery
+  const val = resolvedBranchId === null ? 'null' : encodeURIComponent(resolvedBranchId)
   const separator = existingQuery ? '&' : '?'
-  return `${existingQuery}${separator}branchId=${encodeURIComponent(resolvedBranchId)}`
+  return `${existingQuery}${separator}branchId=${val}`
 }
 
 export function mapLoyaltyConfigFromApi(data: LoyaltyConfigApiRecord): LoyaltyEarnConfig {
@@ -55,6 +56,7 @@ export function mapLoyaltyConfigToApi(config: LoyaltyEarnConfig): LoyaltyConfigU
 export function mapLoyaltyRewardFromApi(data: LoyaltyRewardApiRecord): LoyaltyReward {
   return {
     id: data.id,
+    branchId: data.branch_id,
     name: data.name,
     pointsRequired: data.pointsRequired,
     discountValue: data.discountValue,
@@ -71,12 +73,14 @@ export function mapLoyaltyRewardFromApi(data: LoyaltyRewardApiRecord): LoyaltyRe
 export function mapLoyaltyRewardToApi(payload: LoyaltyRewardPayload): LoyaltyRewardUpsertPayload {
   return {
     name: payload.name.trim(),
+    branchId: payload.branchId === null ? null : payload.branchId,
     pointsRequired: payload.pointsRequired,
     discountValue: payload.discountValue,
     discountType: payload.discountType,
     minOrderValue: payload.minOrderValue,
     expiryDays: payload.expiryDays,
     description: payload.description?.trim() || undefined,
+    imageUrl: payload.imageUrl,
     isActive: payload.isActive,
   }
 }
@@ -145,11 +149,11 @@ export async function getLoyaltyRewards(
 }
 
 export async function getCustomerLoyaltyRewards(
-  branchId?: string,
+  branchId?: string | null,
 ): Promise<LoyaltyReward[]> {
   // Using public endpoint that doesn't require admin role
   const response = await httpClient<ApiResponse<PaginatedData<LoyaltyRewardApiRecord>>>(
-    `/customer/loyalty/rewards${buildBranchQuery(branchId)}`
+    `/customers/loyalty/rewards${buildBranchQuery(branchId)}`
   )
 
   const data = response.data

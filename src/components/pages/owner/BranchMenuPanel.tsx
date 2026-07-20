@@ -16,6 +16,7 @@ import {
   updateBranchMenuItems,
 } from "../../../api/branch-menu.api";
 import { getCategories } from "../../../api/category.api";
+import { isOwner } from "../../../utils/permissions";
 import type { Branch, ChainConfig, Category } from "../../../types";
 
 interface BranchMenuPanelProps {
@@ -35,16 +36,16 @@ export function BranchMenuPanel({
   onSync,
   onSaveConfig,
 }: BranchMenuPanelProps) {
-  const [activeOuterTab, setActiveOuterTab] = useState("config");
-  const [activeBranchTab, setActiveBranchTab] = useState("base");
+  const activeBranches = branches.filter((b) => b.status === "active");
+  const isOwnerUser = isOwner();
+  const [activeOuterTab, setActiveOuterTab] = useState(isOwnerUser ? 'config' : 'menu')
+  const [activeBranchTab, setActiveBranchTab] = useState(isOwnerUser ? 'base' : (activeBranches[0]?.id || 'base'))
   const [branchMenus, setBranchMenus] = useState<Record<string, any>>({});
   const [loadingBranch, setLoadingBranch] = useState(false);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const activeBranches = branches.filter((b) => b.status === "active");
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -158,10 +159,12 @@ export function BranchMenuPanel({
           variant="line"
           className="h-auto bg-transparent gap-6 px-0 rounded-none"
         >
+          {isOwner() && (
           <TabsTrigger value="config" className={TabTriggerStyle}>
             <Settings className="h-4 w-4" />
             Cấu hình chung
           </TabsTrigger>
+          )}
           <TabsTrigger value="menu" className={TabTriggerStyle}>
             <ClipboardList className="h-4 w-4" />
             Menu

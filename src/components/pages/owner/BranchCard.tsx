@@ -12,11 +12,13 @@ export function BranchCard({
   onView,
   onEdit,
   onToggle,
+  canEdit = true,
 }: {
   branch: Branch;
   onView: () => void;
   onEdit: () => void;
   onToggle: () => void;
+  canEdit?: boolean;
 }) {
   return (
     <div
@@ -63,6 +65,7 @@ export function BranchCard({
             </TooltipContent>
           </Tooltip>
 
+          {canEdit && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -79,7 +82,9 @@ export function BranchCard({
               <p>Chỉnh sửa chi nhánh</p>
             </TooltipContent>
           </Tooltip>
+          )}
 
+          {canEdit && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -108,6 +113,7 @@ export function BranchCard({
               </p>
             </TooltipContent>
           </Tooltip>
+          )}
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { VouchersPanel } from "../../../components/pages/owner/VouchersPanel";
 import * as chainApi from "../../../api/chain.api";
 import { getErrorMessage } from "../../../utils/owner.utils";
 import type { Voucher, VoucherPayload, Branch } from "../../../types";
+import toast from 'react-hot-toast';
 
 const emptyVoucherForm: VoucherPayload = {
   name: "",
@@ -33,8 +34,6 @@ export function VouchersTab() {
   const [voucherForm, setVoucherForm] = useState<VoucherPayload>(emptyVoucherForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
 
   const loadData = async () => {
     try {
@@ -59,18 +58,17 @@ export function VouchersTab() {
 
   async function saveVoucher() {
     if (new Date(voucherForm.expireDate) <= new Date(voucherForm.startDate)) {
-      setError("Ngày kết thúc phải lớn hơn ngày bắt đầu.");
+      toast.error("Ngày kết thúc phải lớn hơn ngày bắt đầu.");
       return;
     }
     try {
       setSaving(true);
-      setError("");
       if (voucherDialogMode === "edit" && selectedVoucherId) {
         await chainApi.updateVoucher(selectedVoucherId, voucherForm);
-        setNotice("Đã cập nhật ưu đãi.");
+        toast.success("Đã cập nhật ưu đãi.");
       } else {
         await chainApi.createVoucher(voucherForm);
-        setNotice("Đã tạo ưu đãi mới.");
+        toast.success("Đã tạo ưu đãi mới.");
       }
       setVoucherForm(emptyVoucherForm);
       setIsVoucherModalOpen(false);
@@ -127,12 +125,12 @@ export function VouchersTab() {
     try {
       setSaving(true);
       await chainApi.toggleVoucherStatus(id);
-      setNotice("Đã cập nhật trạng thái.");
+      toast.success("Đã cập nhật trạng thái.");
       setConfirmToggleVoucherId(null);
       const response = await chainApi.getVouchers();
       setVouchers(response.data?.items || []);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -144,16 +142,6 @@ export function VouchersTab() {
 
   return (
     <div className="space-y-4">
-      {notice && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
-          {notice}
-        </div>
-      )}
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
-          {error}
-        </div>
-      )}
       <VouchersPanel
         branches={activeBranches}
         Vouchers={vouchers}

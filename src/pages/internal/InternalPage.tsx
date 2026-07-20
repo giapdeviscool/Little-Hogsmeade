@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Navigate } from 'react-router-dom'
 import { InventoryView } from './components/InventoryView'
 import { EmployeeList } from './components/EmployeeList'
 import { ShiftManagement } from './components/ShiftManagement'
@@ -13,10 +13,25 @@ import { StockConversion } from './components/StockConversion'
 import { ExpenseManagement } from './components/ExpenseManagement'
 import { FinancialDashboard } from './components/FinancialDashboard'
 import { WhatIfSimulator } from './components/WhatIfSimulator'
+import { getAuthSession } from '../../store/auth.store'
+import { canAccessInternalTab } from '../../utils/permissions'
+
+const ALL_TABS = [
+  'employees', 'shifts', 'schedule', 'attendance', 'payroll',
+  'inventory', 'categories', 'menuItems', 'toppingGroups',
+  'recipes', 'stock-conversion', 'expenses', 'finance', 'what-if',
+]
 
 export function InternalPage() {
   const [searchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') || 'employees'
+  const session = getAuthSession()
+  const roleName = session?.user?.roleName || session?.user?.role || ''
+
+  if (!canAccessInternalTab(roleName, activeTab)) {
+    const firstAllowed = ALL_TABS.find(tab => canAccessInternalTab(roleName, tab)) || 'employees'
+    return <Navigate to={`/admin/internal?tab=${firstAllowed}`} replace />
+  }
 
   return (
     <div className="flex h-full flex-col">

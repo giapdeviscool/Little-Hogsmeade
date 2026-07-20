@@ -114,6 +114,14 @@ export function AddOrderItemsPanel({ isOpen, orderId, tableId, onBack, onAdded }
   const toggleTopping = (toppingId: string, group: ToppingGroup) => {
     setSelectedToppingIds((current) => {
       if (current.includes(toppingId)) return current.filter((id) => id !== toppingId)
+      
+      // Auto-deselect others if maxSelect is 1
+      if (group.maxSelect === 1) {
+        const groupToppingIds = group.toppings.map((t) => t.id)
+        const next = current.filter((id) => !groupToppingIds.includes(id))
+        return [...next, toppingId]
+      }
+
       const selectedInGroup = group.toppings.filter((topping) => current.includes(topping.id)).length
       if (selectedInGroup >= group.maxSelect) return current
       return [...current, toppingId]

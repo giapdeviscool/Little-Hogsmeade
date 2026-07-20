@@ -36,6 +36,7 @@ export type LoyaltyConfigUpdatePayload = {
 
 export type LoyaltyReward = {
   id: string
+  branchId?: string | null
   name: string
   pointsRequired: number
   discountValue: number
@@ -69,12 +70,14 @@ export type LoyaltyRewardApiRecord = {
 
 export type LoyaltyRewardUpsertPayload = {
   name: string
+  branchId?: string | null
   pointsRequired: number
   discountValue: number
   discountType: 'percent' | 'fixed' | 'gift'
   minOrderValue: number
   expiryDays: number
   description?: string
+  imageUrl?: string | null
   isActive: boolean
 }
 
@@ -84,7 +87,7 @@ export type LoyaltyRewardListParams = {
   search?: string
   discount_type?: TypeFilter
   status?: 'active' | 'inactive'
-  branchId?: string
+  branchId?: string | null
 }
 
 export type LoyaltyRewardListResult = {

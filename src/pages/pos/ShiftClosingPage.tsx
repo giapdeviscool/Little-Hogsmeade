@@ -574,7 +574,7 @@ export function ShiftClosingPage() {
                     ))}
                   </div>
 
-                  {timeLeft > 0 ? (
+                  {/* {timeLeft > 0 ? (
                     <p className="text-center text-xs text-muted">
                       Thời gian mã lực: <span className="font-bold text-coffee tabular-nums">{timeLeft}s</span>
                     </p>
@@ -588,7 +588,7 @@ export function ShiftClosingPage() {
                     >
                       Làm mới OTP
                     </button>
-                  )}
+                  )} */}
                 </div>
 
                 {errorMessage && (

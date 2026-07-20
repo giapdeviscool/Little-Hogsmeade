@@ -42,6 +42,7 @@ export function getAdminInvoices(params: {
   cashierId?: string;
   startDate?: string;
   endDate?: string;
+  branchId?: string;
 }) {
   const query = new URLSearchParams();
   
@@ -52,7 +53,7 @@ export function getAdminInvoices(params: {
   });
 
   const queryString = query.toString();
-  const endpoint = queryString ? `/invoices?${queryString}` : '/admin/invoices';
+  const endpoint = queryString ? `/invoices/admin?${queryString}` : `/invoices/admin`;
 
   return httpClient<any>(endpoint, {
     method: 'GET',

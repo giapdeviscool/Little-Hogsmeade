@@ -1,9 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import axios from 'axios'
+import { httpClient } from '../../api/httpClient'
 import { CalendarDays, Loader2, Phone, UserRound } from 'lucide-react'
 import { updateTableStatus } from '../../api/tableStatus.api'
-import { env } from '../../config/env'
-import { getAuthToken } from '../../store/auth.store'
 import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 import { Input } from '../../components/ui/input'
@@ -18,8 +16,6 @@ type UpdateTableStatusModalProps = {
   initialStatus?: UpdateTableStatus
   onUpdateSuccess: (table: BranchTable) => void
 }
-
-type ApiError = { message?: string; errors?: Array<{ message?: string }> }
 
 type CreateReservationResponse = {
   data?: { id?: string }
@@ -43,7 +39,7 @@ function getToday() {
 }
 
 function getApiErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError<ApiError>(error)) return error.response?.data?.message || error.response?.data?.errors?.[0]?.message || fallback
+  if (error instanceof Error && error.message) return error.message
   return fallback
 }
 
@@ -104,23 +100,24 @@ export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, i
       if (status === 'reserved') {
         if (!branchId) throw new Error('Không xác định được chi nhánh để tạo đặt bàn.')
         const reservationDateTime = new Date(`${reservedDate}T${reservedTime}:00`).toISOString()
-        const token = getAuthToken()
-        const reservationResponse = await axios.post<CreateReservationResponse>(
-          `${env.apiBaseUrl}/reservations`,
+        const reservationResponse = await httpClient<CreateReservationResponse>(
+          `/reservations`,
           {
-            branchId,
-            tableId: tableData.id,
-            guestName: guestName.trim(),
-            guestPhone: guestPhone.trim(),
-            guestCount: parsedGuestCount,
-            reservedDate: reservationDateTime,
-            reservedTime: reservationDateTime,
-            note: note.trim(),
-            status: 'reserved',
-          },
-          { headers: token ? { Authorization: `Bearer ${token}` } : undefined },
+            method: 'POST',
+            body: JSON.stringify({
+              branchId,
+              tableId: tableData.id,
+              guestName: guestName.trim(),
+              guestPhone: guestPhone.trim(),
+              guestCount: parsedGuestCount,
+              reservedDate: reservationDateTime,
+              reservedTime: reservationDateTime,
+              note: note.trim(),
+              status: 'reserved',
+            })
+          }
         )
-        const reservationId = reservationResponse.data.data?.id
+        const reservationId = reservationResponse.data?.id
         if (!reservationId) throw new Error('Không nhận được mã đặt bàn từ máy chủ.')
         payload.reservation_id = reservationId
       }
@@ -129,7 +126,7 @@ export function UpdateTableStatusModal({ isOpen, onClose, tableData, branchId, i
       onUpdateSuccess(response.data || { ...tableData, status })
       onClose()
     } catch (requestError) {
-      setError(requestError instanceof Error && !axios.isAxiosError(requestError) ? requestError.message : getApiErrorMessage(requestError, 'Không thể cập nhật trạng thái bàn.'))
+      setError(getApiErrorMessage(requestError, 'Không thể cập nhật trạng thái bàn.'))
     } finally {
       setIsLoading(false)
     }

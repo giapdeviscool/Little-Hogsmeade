@@ -23,6 +23,9 @@ import { RewardDialog } from './RewardDialog'
 
 type TypeFilter = 'all' | 'percent' | 'fixed' | 'gift'
 type StatusFilter = 'all' | 'active' | 'inactive'
+import { getBranches } from '../../../api/chain.api'
+import type { Branch } from '../../../types'
+import toast from 'react-hot-toast'
 
 const PAGE_SIZE = 10
 
@@ -35,7 +38,14 @@ function RewardsSkeleton() {
   )
 }
 
+import { getAuthSession } from '../../../store/auth.store'
+
 export function RewardsCatalogTab() {
+  const session = getAuthSession()
+  const user = session?.user
+  const roleName = user?.role || user?.roleName || ''
+  const isOwner = roleName.toLowerCase().includes('owner')
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [rewards, setRewards] = useState<LoyaltyReward[]>([])
@@ -46,12 +56,20 @@ export function RewardsCatalogTab() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [branchFilter, setBranchFilter] = useState<string>(isOwner ? 'all' : (user?.branchId || ''))
+  const [branches, setBranches] = useState<Branch[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<RewardDialogMode>('create')
   const [selectedReward, setSelectedReward] = useState<LoyaltyReward | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<LoyaltyReward | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getBranches().then(res => {
+      if (res.data?.items) setBranches(res.data.items)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -73,6 +91,7 @@ export function RewardsCatalogTab() {
         search: debouncedSearch || undefined,
         discount_type: typeFilter === 'all' ? undefined : typeFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
+        branchId: branchFilter === 'all' ? null : branchFilter,
       })
 
       setRewards(result.items)
@@ -86,7 +105,7 @@ export function RewardsCatalogTab() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, page, statusFilter, typeFilter])
+  }, [debouncedSearch, page, statusFilter, typeFilter, branchFilter])
 
   useEffect(() => {
     fetchRewards()
@@ -108,19 +127,20 @@ export function RewardsCatalogTab() {
 
   const handleSaveReward = async (payload: LoyaltyRewardPayload) => {
     setSaving(true)
-    setActionError(null)
 
     try {
       if (dialogMode === 'edit' && selectedReward) {
         await updateLoyaltyReward(selectedReward.id, payload)
+        toast.success('Cập nhật phần thưởng thành công')
       } else {
         await createLoyaltyReward(payload)
+        toast.success('Tạo phần thưởng thành công')
         setPage(1)
       }
       await fetchRewards()
       setDialogOpen(false)
     } catch (error: unknown) {
-      setActionError(error instanceof Error ? error.message : 'Không lưu được phần thưởng.')
+      toast.error(error instanceof Error ? error.message : 'Không lưu được phần thưởng.')
     } finally {
       setSaving(false)
     }
@@ -128,30 +148,30 @@ export function RewardsCatalogTab() {
 
   const handleToggleStatus = async (reward: LoyaltyReward) => {
     setSaving(true)
-    setActionError(null)
 
     try {
       await toggleLoyaltyRewardStatus(reward)
+      toast.success('Đã cập nhật trạng thái.')
       await fetchRewards()
     } catch (error: unknown) {
-      setActionError(error instanceof Error ? error.message : 'Không đổi được trạng thái phần thưởng.')
+      toast.error(error instanceof Error ? error.message : 'Không đổi được trạng thái phần thưởng.')
     } finally {
       setSaving(false)
     }
   }
 
   const handleDeleteReward = async () => {
-    if (!deleteTarget) return
-
+    if (!rewardToDelete) return
     setSaving(true)
-    setActionError(null)
 
     try {
-      await deleteLoyaltyReward(deleteTarget.id)
+      await deleteLoyaltyReward(rewardToDelete)
+      toast.success('Đã xóa phần thưởng.')
+      setDeleteConfirmOpen(false)
+      setRewardToDelete(null)
       await fetchRewards()
-      setDeleteTarget(null)
     } catch (error: unknown) {
-      setActionError(error instanceof Error ? error.message : 'Không ngưng áp dụng phần thưởng.')
+      toast.error(error instanceof Error ? error.message : 'Không xóa được phần thưởng.')
     } finally {
       setSaving(false)
     }
@@ -163,15 +183,15 @@ export function RewardsCatalogTab() {
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-coffee">Danh sách phần thưởng</h2>
+          <h2 className="text-xl font-bold text-coffee">Danh sách phần thưởng</h2>
           <p className="mt-1 text-sm text-muted">Quản lý các gói quà khách có thể đổi bằng điểm tích lũy.</p>
         </div>
         <button
           type="button"
           onClick={openCreateDialog}
-          className="inline-flex h-10 items-center gap-2 rounded-lg bg-coffee px-4 text-sm font-semibold text-white transition hover:bg-coffee/90"
+          className="flex h-10 items-center gap-2 rounded-lg bg-coffee px-5 text-sm font-semibold text-white transition hover:bg-coffee/90"
         >
           <Plus className="h-4 w-4" />
           Thêm phần thưởng
@@ -214,6 +234,21 @@ export function RewardsCatalogTab() {
             <option value="active">Đang áp dụng</option>
             <option value="inactive">Tạm ngưng</option>
           </select>
+          {isOwner && (
+            <select
+              className="h-10 rounded-lg border border-line bg-white px-3 text-sm"
+              value={branchFilter}
+              onChange={(event) => {
+                setBranchFilter(event.target.value)
+                setPage(1)
+              }}
+            >
+              <option value="all">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
         </div>
       </Card>
 
@@ -237,6 +272,7 @@ export function RewardsCatalogTab() {
             renderHeader={() => (
               <tr>
                 <th className="px-4 py-3">Tên phần thưởng</th>
+                {isOwner && <th className="px-4 py-3">Chi nhánh</th>}
                 <th className="px-4 py-3">Loại phần thưởng</th>
                 <th className="px-4 py-3 text-right">Điểm yêu cầu</th>
                 <th className="px-4 py-3">Giá trị quy đổi</th>
@@ -261,6 +297,11 @@ export function RewardsCatalogTab() {
                     </div>
                   </div>
                 </td>
+                {isOwner && (
+                  <td className="px-4 py-3 text-sm">
+                    {reward.branchId ? branches.find(b => b.id === reward.branchId)?.name || '...' : 'Tất cả (Chung)'}
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   <RewardTypeBadge type={reward.discountType} />
                 </td>
@@ -317,6 +358,8 @@ export function RewardsCatalogTab() {
         mode={dialogMode}
         reward={selectedReward}
         saving={saving}
+        branches={branches}
+        error={actionError}
         onClose={() => setDialogOpen(false)}
         onSave={handleSaveReward}
       />
