@@ -10,6 +10,7 @@ import {
 import { PricingPanel } from "../../components/pages/owner/PricingPanel";
 import { BranchMenuPanel } from "../../components/pages/owner/BranchMenuPanel";
 import { getErrorMessage, timeToIso } from "../../utils/owner.utils";
+import { filterBranchesByRole, isOwner, getUserBranchId } from "../../utils/permissions";
 import type {
   Branch,
   BranchPayload,
@@ -55,6 +56,9 @@ export function OwnerPage() {
   const activeBranches = branches.filter(
     (branch) => branch.status === "active",
   );
+  const pricingBranches = isOwner()
+    ? activeBranches
+    : activeBranches.filter((b) => b.id === getUserBranchId());
 
   useEffect(() => {
     void loadModule();
@@ -71,7 +75,7 @@ export function OwnerPage() {
           chainApi.getMenuSyncPreview(),
         ]);
 
-      setBranches(branchResponse.data?.items || []);
+      setBranches(filterBranchesByRole(branchResponse.data?.items || []));
       setConfig(configResponse.data || null);
       setMenuPreview(previewResponse.data || { categories: [], menuItems: [] });
     } catch (err) {
@@ -277,7 +281,7 @@ export function OwnerPage() {
       ) : null}
       {!loading && activeTab === "pricing" ? (
         <PricingPanel
-          branches={activeBranches}
+          branches={pricingBranches}
           preview={menuPreview}
           pricingItemId={pricingItemId}
           pricingBranchId={pricingBranchId}

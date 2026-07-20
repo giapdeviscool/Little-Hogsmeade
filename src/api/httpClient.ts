@@ -1,12 +1,11 @@
 import { env } from "../config/env";
 import { getAuthToken } from "../store/auth.store";
 
-
 export async function httpClient<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  console.log('env.apiBaseUrl', env.apiBaseUrl)
+  console.log("env.apiBaseUrl", env.apiBaseUrl);
   const token = getAuthToken();
   const isFormData = init?.body instanceof FormData;
   const headers: HeadersInit = {
@@ -20,7 +19,7 @@ export async function httpClient<T>(
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     ...init,
     headers,
-  })
+  });
 
   if (!response.ok) {
     const errorPayload = (await response.json().catch(() => null)) as {
@@ -33,9 +32,9 @@ export async function httpClient<T>(
       .join(". ");
     throw new Error(
       validationMessage ||
-      errorPayload?.message ||
-      errorPayload?.error ||
-      `Request failed: ${response.status}`,
+        errorPayload?.message ||
+        errorPayload?.error ||
+        `Request failed: ${response.status}`,
     );
   }
 

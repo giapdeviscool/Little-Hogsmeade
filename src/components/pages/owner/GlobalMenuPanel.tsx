@@ -7,6 +7,7 @@ import { getMenuItems } from '../../../api/menu-item.api'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CategoryModal } from '../../../pages/internal/components/CategoryModal'
 import { MoveItemToCategoryModal } from './MoveItemToCategoryModal'
+import { isOwner } from '../../../utils/permissions'
 import type { Category, MenuItem } from '../../../types'
 
 interface GlobalMenuPanelProps {
@@ -128,18 +129,11 @@ export function GlobalMenuPanel({
         </div>
       )}
 
-      {/* Top row: sync button */}
+      {/* Top row: description only, no sync button */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted">
           Quản lý cấu trúc danh mục và món dùng chung cho toàn chuỗi.
         </p>
-        <button
-          className="h-9 whitespace-nowrap rounded-lg bg-coffee px-4 text-sm font-semibold text-white transition-colors hover:bg-coffee/90 disabled:opacity-50"
-          disabled={saving}
-          onClick={() => setConfirmSync(true)}
-        >
-          Đồng bộ xuống chi nhánh
-        </button>
       </div>
 
       {/* Override warning banner */}
@@ -152,7 +146,8 @@ export function GlobalMenuPanel({
         </div>
       )}
 
-      {/* Add category button */}
+      {/* Add category button — owner only */}
+      {isOwner() && (
       <div>
         <button
           onClick={openCreateCategory}
@@ -162,6 +157,7 @@ export function GlobalMenuPanel({
           Thêm danh mục
         </button>
       </div>
+      )}
 
       {/* Category list or empty state */}
       {categories.length === 0 ? (
@@ -169,6 +165,7 @@ export function GlobalMenuPanel({
           <UtensilsCrossed className="mx-auto mb-3 h-10 w-10 text-muted/40" />
           <p className="font-medium text-coffee">Chưa có danh mục nào trong Global Menu</p>
           <p className="mt-1 text-sm text-muted">Bắt đầu bằng cách thêm danh mục đầu tiên</p>
+          {isOwner() && (
           <button
             onClick={openCreateCategory}
             className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-coffee px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-coffee/90"
@@ -176,6 +173,7 @@ export function GlobalMenuPanel({
             <Plus className="h-4 w-4" />
             Thêm danh mục
           </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -198,6 +196,7 @@ export function GlobalMenuPanel({
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
+                    {isOwner() && (<>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" disabled={isFirst} onClick={() => handleMoveCategory(cat, 'up')}>
@@ -238,6 +237,7 @@ export function GlobalMenuPanel({
                         <p>Ẩn danh mục</p>
                       </TooltipContent>
                     </Tooltip>
+                    </>)}
                   </div>
                 </div>
 
@@ -246,7 +246,7 @@ export function GlobalMenuPanel({
 
                 {/* Items list */}
                 <div className="px-4 py-2">
-                  {items.length === 0 ? (
+                  {items.length === 0 && isOwner() ? (
                     <button
                       onClick={() => setMovingToCategory(cat)}
                       className="my-2 flex w-full flex-col items-center justify-center rounded-lg border border-dashed border-line py-6 text-center transition-colors hover:border-coffee/40 hover:bg-beige/50"
@@ -280,8 +280,8 @@ export function GlobalMenuPanel({
                     </ul>
                   )}
 
-                  {/* Add item button (always shown below list) */}
-                  {items.length > 0 && (
+                  {/* Add item button (always shown below list) — owner only */}
+                  {items.length > 0 && isOwner() && (
                     <button
                       onClick={() => setMovingToCategory(cat)}
                       className="mb-1 mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-coffee transition-colors hover:bg-beige"
