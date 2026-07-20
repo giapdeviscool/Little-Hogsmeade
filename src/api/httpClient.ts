@@ -17,7 +17,7 @@ export async function httpClient<T>(
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`http://localhost:3000/api/v1${path}`, {
+  const response = await fetch(`http://localhost:3008/api/v1${path}`, {
     ...init,
     headers,
   })
@@ -33,9 +33,9 @@ export async function httpClient<T>(
       .join(". ");
     throw new Error(
       validationMessage ||
-        errorPayload?.message ||
-        errorPayload?.error ||
-        `Request failed: ${response.status}`,
+      errorPayload?.message ||
+      errorPayload?.error ||
+      `Request failed: ${response.status}`,
     );
   }
 
