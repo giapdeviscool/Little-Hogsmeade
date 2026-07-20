@@ -3,19 +3,25 @@ interface ProductCardProps {
   category: string;
   price: string;
   image: string;
-  outOfStock?: boolean;
+  isActive?: boolean;
+  isAvailable?: boolean;
   isBestSeller?: boolean;
   onClick?: () => void;
 }
 
-export function ProductCard({ name, category, price, image, outOfStock, isBestSeller, onClick }: ProductCardProps) {
-  if (outOfStock) {
+export function ProductCard({ name, category, price, image, isActive = true, isAvailable = true, isBestSeller, onClick }: ProductCardProps) {
+  if (!isActive || !isAvailable) {
+    const message = !isActive ? "Không Hoạt động" : "Tạm thời hết hàng";
+    const badgeColor = !isActive ? "bg-red-600/90 text-white" : "bg-amber-500/90 text-coffee";
+    
     return (
       <button disabled className="flex flex-col bg-white rounded-xl overflow-hidden shadow-sm transition-all text-left border border-line group cursor-not-allowed">
-        <div className="h-[104px] overflow-hidden relative grayscale opacity-60">
-          <img alt={name} className="w-full h-full object-cover" src={image}/>
-          <div className="absolute inset-0 bg-coffee/20 flex items-center justify-center">
-            <span className="bg-coffee/80 backdrop-blur-md text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">Hết hàng</span>
+        <div className="h-[104px] overflow-hidden relative">
+          <img alt={name} className="w-full h-full object-cover grayscale opacity-60" src={image}/>
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <span className={`backdrop-blur-md px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest text-center ${badgeColor}`}>
+              {message}
+            </span>
           </div>
         </div>
         <div className="p-3 flex flex-col justify-between flex-1 opacity-50">

@@ -93,7 +93,8 @@ export function ProductGrid({ onProductClick, searchQuery, selectedCategory }: P
               category={product.category?.name || product.itemType || 'Chưa phân loại'}
               price={`₫${product.basePrice.toLocaleString('vi-VN')}`}
               image={product.imageUrl || 'https://placehold.co/400x300/F5F0E6/8a7560?text=Chưa+Có+Ảnh'}
-              outOfStock={!product.isActive}
+              isActive={product.isActive}
+              isAvailable={product.isAvailable !== false}
               isBestSeller={product.isFeatured}
               onClick={() => onProductClick(product)}
             />

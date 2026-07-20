@@ -17,6 +17,7 @@ export interface MenuItem {
   imageUrl?: string
   basePrice: number
   isActive: boolean
+  isAvailable?: boolean
   isFeatured: boolean
   itemType: string
   category: {
