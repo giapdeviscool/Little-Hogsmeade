@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import { httpClient } from '../../api/httpClient'
 import { CalendarCheck2, Clock3, Loader2, Phone, User, UsersRound } from 'lucide-react'
-import { env } from '../../config/env'
-import { getAuthToken } from '../../store/auth.store'
+
 import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 import { Input } from '../../components/ui/input'
@@ -25,15 +24,8 @@ type ReservedTableModalProps = {
   onSuccess: (nextTableStatus: 'occupied' | 'available') => void
 }
 
-type ApiError = { message?: string; errors?: Array<{ message?: string }> }
-
-function apiHeaders() {
-  const token = getAuthToken()
-  return token ? { Authorization: `Bearer ${token}` } : undefined
-}
-
 function getErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError<ApiError>(error)) return error.response?.data?.message || error.response?.data?.errors?.[0]?.message || fallback
+  if (error instanceof Error && error.message) return error.message
   return fallback
 }
 
@@ -79,9 +71,9 @@ export function ReservedTableModal({ isOpen, onClose, tableId, onSuccess }: Rese
       setToast('')
       setShowNoShowConfirm(false)
       try {
-        const response = await axios.get(`${env.apiBaseUrl}/tables/${tableId}/reservation`, { headers: apiHeaders() })
+        const response = await httpClient<any>(`/tables/${tableId}/reservation`)
         if (!isCurrent) return
-        const detail = toReservationDetail(unwrapData(response.data) as Record<string, unknown>, tableId)
+        const detail = toReservationDetail(unwrapData(response) as Record<string, unknown>, tableId)
         setReservation(detail)
         setActualGuestCount(String(detail.guestCount))
       } catch (requestError) {
@@ -109,7 +101,7 @@ export function ReservedTableModal({ isOpen, onClose, tableId, onSuccess }: Rese
     setError('')
     setIsCheckingIn(true)
     try {
-      await axios.post(`${env.apiBaseUrl}/reservations/${reservation.id}/check-in`, { actual_guest_count: guestCount }, { headers: apiHeaders() })
+      await httpClient(`/reservations/${reservation.id}/check-in`, { method: 'POST', body: JSON.stringify({ actual_guest_count: guestCount }) })
       finishSuccess('Nhận bàn thành công', 'occupied')
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'Không thể nhận bàn. Vui lòng thử lại.'))
@@ -123,7 +115,7 @@ export function ReservedTableModal({ isOpen, onClose, tableId, onSuccess }: Rese
     setError('')
     setIsCancelling(true)
     try {
-      await axios.patch(`${env.apiBaseUrl}/reservations/${reservation.id}/status`, { status: 'no_show' }, { headers: apiHeaders() })
+      await httpClient(`/reservations/${reservation.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'no_show' }) })
       finishSuccess('Đã ghi nhận khách không đến', 'available')
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'Không thể cập nhật trạng thái đặt bàn.'))
