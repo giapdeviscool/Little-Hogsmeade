@@ -200,6 +200,13 @@ export function checkCustomerPhone(phone: string) {
   return httpClient<{ status: 'not_found' | 'no_pin' | 'has_pin' | 'locked', customer?: { id: string, fullName: string } }>(`/customers/auth/check-phone?phone=${phone}`)
 }
 
+export function checkCustomerPin(payload: { customerId: string, pin: string }) {
+  return httpClient<ApiResponse<any>>('/customers/auth/check-pin', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
 export function customerLogin(payload: { phone: string, pin: string, fullName?: string }) {
   return httpClient<ApiResponse<CustomerProfileApiRecord>>('/customers/auth/login', {
     method: 'POST',

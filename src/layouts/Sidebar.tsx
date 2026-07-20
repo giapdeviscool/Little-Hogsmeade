@@ -12,12 +12,11 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const location = useLocation()
   const session = getAuthSession()
   const user = session?.user
-  const roleName = session?.user?.roleName || session?.user?.role || ''
   const displayName = user?.fullName || user?.name || 'Admin'
   const initial = displayName.charAt(0).toUpperCase()
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
 
-  const roleName = (user?.role?.name || (user as any)?.roleName || '').toLowerCase()
+  const roleName = ((user as any)?.roleName || '').toLowerCase()
   const isStaffOrCashier = roleName.includes('staff') || roleName.includes('cashier') || roleName.includes('nhân viên') || roleName.includes('thu ngân')
   const isCashier = roleName.includes('cashier') || roleName.includes('thu ngân')
 

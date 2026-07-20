@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import { getShiftId } from '@/store/shift.store';
+import { getShiftId, clearShiftId } from '@/store/shift.store';
 import { getAuthSession } from '@/store/auth.store';
 import { getActiveCashierShift } from '@/api/shift.api';
 import { listInvoices } from '@/api/invoice.api';
@@ -40,8 +40,13 @@ export function ShiftOverviewPage() {
       try {
         // 1. Fetch active shift details
         const activeRes = await getActiveCashierShift();
-        if (activeRes?.data) {
-          if (activeRes.data.starting_float !== undefined) {
+        if (!activeRes?.data || activeRes.data.active === false) {
+          clearShiftId();
+          navigate(ROUTES.shiftOpening);
+          return;
+        }
+
+        if (activeRes.data.starting_float !== undefined) {
             setStartingFloat(activeRes.data.starting_float);
           }
           if (activeRes.data.opened_at || activeRes.data.openedAt) {
@@ -52,14 +57,13 @@ export function ShiftOverviewPage() {
             setCashierName(employee.fullName || employee.name || '');
             setCashierRole(employee.role || employee.roleName || '');
           }
-        }
 
         // Fallback info
         const authSession = getAuthSession();
         if (authSession?.user) {
           setCashierName(prev => prev || authSession.user.fullName || authSession.user.name || 'Nguyễn Văn A');
           setCashierRole(prev => prev || authSession.user.role || authSession.user.roleName || 'Nhân viên phục vụ');
-          setBranchName(authSession.user.branchId || '123 Quận 1, TP HCM');
+          setBranchName(authSession.user.branchName || authSession.user.branch || 'Chi nhánh mặc định');
         } else {
           setCashierName(prev => prev || 'Nguyễn Văn A');
           setCashierRole(prev => prev || 'Nhân viên phục vụ');
@@ -96,6 +100,8 @@ export function ShiftOverviewPage() {
         }
       } catch (err) {
         console.error("Failed to load shift overview data:", err);
+        clearShiftId();
+        navigate(ROUTES.shiftOpening);
       }
     };
     loadData();
