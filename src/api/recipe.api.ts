@@ -7,6 +7,7 @@ export function getRecipes(params?: RecipeFilterParams) {
   if (params?.limit) queryParams.append('limit', params.limit.toString())
   if (params?.search) queryParams.append('search', params.search)
   if (params?.ingredientId) queryParams.append('ingredientId', params.ingredientId)
+  if (params?.branchId) queryParams.append('branchId', params.branchId)
 
   const queryString = queryParams.toString()
   const url = queryString ? `/recipes?${queryString}` : '/recipes'

@@ -168,12 +168,27 @@ export const getBreakEven = async (branchId: string, startDate: string, endDate:
 export interface DailyProfitData {
   date: string;
   revenue: number;
-  variableCost: number;
-  fixedCost: number;
+  cogs: number;
+  fixedCostPerDay: number;
   netProfit: number;
+  unitsSold: number;
 }
 
-export const getDailyProfit = async (branchId: string, startDate: string, endDate: string): Promise<DailyProfitData[]> => {
+export interface DailyProfitMeta {
+  daysInMonth: number;
+  totalFixedMonth: number;
+  dailyFixedCost: number;
+  defaultUtilityUsed: boolean;
+  defaultUtilityAmount: number;
+  fixedBreakdown: { name: string; amount: number }[];
+}
+
+export interface DailyProfitResponse {
+  days: DailyProfitData[];
+  meta: DailyProfitMeta;
+}
+
+export const getDailyProfit = async (branchId: string, startDate: string, endDate: string): Promise<DailyProfitResponse> => {
   const params = new URLSearchParams();
   if (branchId) params.append('branchId', branchId);
   params.append('startDate', startDate);

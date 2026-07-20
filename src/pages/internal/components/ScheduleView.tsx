@@ -102,7 +102,10 @@ function employeeInitials(name: string): string {
 
 export function ScheduleView() {
   const authSession = getAuthSession()
-  const isChainOwner = authSession?.user?.roleName?.toLowerCase().includes('owner') || authSession?.user?.role?.toLowerCase().includes('owner')
+  const roleStr = (authSession?.user?.roleName || (authSession?.user?.role as any)?.name || authSession?.user?.role || '').toLowerCase()
+  const isChainOwner = roleStr.includes('owner')
+  const isChainAdmin = roleStr.includes('admin') || roleStr.includes('manager')
+  const canManageSchedule = isChainOwner || isChainAdmin
   const userBranchId = authSession?.user?.branchId || ''
   const [rosters, setRosters] = useState<RosterEntry[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
@@ -248,6 +251,7 @@ export function ScheduleView() {
   }
 
   function openAssign(employeeId?: string, date?: Date) {
+    if (!canManageSchedule) return
     setAssignEmployee(employeeId || '')
     setAssignDate(date ? formatDate(date) : '')
     setAssignShift(shifts[0]?.id || '')
@@ -322,12 +326,14 @@ export function ScheduleView() {
               ))}
             </select>
           )}
-          <button
-            onClick={() => openAssign()}
-            className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
-          >
-            + Xếp lịch
-          </button>
+          {canManageSchedule && (
+            <button
+              onClick={() => openAssign()}
+              className="rounded-[14px] bg-coffee px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+            >
+              + Xếp lịch
+            </button>
+          )}
         </div>
       </div>
       <Card className="p-6 space-y-6">
@@ -576,8 +582,12 @@ export function ScheduleView() {
                 <div className="mt-2 text-sm font-semibold text-muted">{formatTime(selectedRoster.shift?.startTime)} - {formatTime(selectedRoster.shift?.endTime)}</div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => openAssign(selectedRoster.employeeId, parseDate(selectedRoster.date.slice(0, 10)))} className="grid h-9 w-9 place-items-center rounded-full border border-line text-lg hover:bg-cream" title="Chỉnh sửa">✎</button>
-                <button onClick={() => handleRemove(selectedRoster.id)} disabled={saving} className="grid h-9 w-9 place-items-center rounded-full border border-line text-lg hover:bg-red-50 disabled:opacity-50" title="Xóa">⌫</button>
+                {canManageSchedule && (
+                  <>
+                    <button onClick={() => openAssign(selectedRoster.employeeId, parseDate(selectedRoster.date.slice(0, 10)))} className="grid h-9 w-9 place-items-center rounded-full border border-line text-lg hover:bg-cream" title="Chỉnh sửa">✎</button>
+                    <button onClick={() => handleRemove(selectedRoster.id)} disabled={saving} className="grid h-9 w-9 place-items-center rounded-full border border-line text-lg hover:bg-red-50 disabled:opacity-50" title="Xóa">⌫</button>
+                  </>
+                )}
                 <button onClick={() => setSelectedRoster(null)} className="grid h-9 w-9 place-items-center rounded-full border border-line text-xl hover:bg-cream" title="Đóng">×</button>
               </div>
             </div>

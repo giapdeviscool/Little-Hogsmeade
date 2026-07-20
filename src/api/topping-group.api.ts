@@ -1,7 +1,8 @@
 import { httpClient } from './httpClient'
 
-export async function getToppingGroups() {
-  return httpClient<any>('/topping-groups')
+export async function getToppingGroups(branchId?: string) {
+  const query = branchId ? `?branchId=${branchId}` : ''
+  return httpClient<any>(`/topping-groups${query}`)
 }
 
 export async function createToppingGroup(data: any) {
