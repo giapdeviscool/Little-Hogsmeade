@@ -5,6 +5,7 @@ import { getAuthSession } from '@/store/auth.store';
 
 interface LedgerRowProps {
   invoice: any;
+  branches?: any[];
   isExpanded: boolean;
   onToggleExpand: () => void;
   formatCurrency: (amount: number) => string;
@@ -13,6 +14,7 @@ interface LedgerRowProps {
 
 export function LedgerRow({
   invoice,
+  branches = [],
   isExpanded,
   onToggleExpand,
   formatCurrency,
@@ -22,7 +24,9 @@ export function LedgerRow({
   const invoiceId = invoice.id || (invoice as any)._id || '';
   const displayId = invoiceId ? `#...${invoiceId.substring(invoiceId.length - 6)}` : '';
   const method = invoice.paymentMethod || invoice.payments?.[0]?.method;
-  const branchName = session?.user.branchName || 'Hogsmeade';
+  
+  // Find branch name from branches list if provided, otherwise fallback to session branch name
+  const branchName = branches.find(b => (b.id || b._id) === invoice.orderId.branchId)?.name || session?.user.branchName || 'Hogsmeade';
 
   // Color codes border-l of expanded row based on status
   let borderLeftColor = "border-l-transparent hover:bg-cream";
