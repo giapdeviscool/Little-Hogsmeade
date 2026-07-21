@@ -21,6 +21,7 @@ export type BranchTable = {
   reservation_id?: number | string | null
   guest_count?: number | null
   guest_name?: string | null
+  guest_phone?: string | null
   reserved_time?: string | null
   note?: string | null
   updated_at: string

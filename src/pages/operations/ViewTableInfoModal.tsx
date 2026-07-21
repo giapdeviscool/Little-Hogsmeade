@@ -51,22 +51,40 @@ export function ViewTableInfoModal({ isOpen, table, onClose }: ViewTableInfoModa
                   {table.guest_name && (
                     <div className="flex justify-between">
                       <span className="text-muted">Khách hàng:</span>
-                      <strong className="font-semibold">{table.guest_name}</strong>
+                      <strong className="font-semibold text-right">{table.guest_name}</strong>
+                    </div>
+                  )}
+                  {table.guest_phone && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">Số điện thoại:</span>
+                      <strong className="font-semibold text-right">{table.guest_phone}</strong>
+                    </div>
+                  )}
+                  {table.guest_count && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">Số lượng khách:</span>
+                      <strong className="font-semibold text-right">{table.guest_count} người</strong>
                     </div>
                   )}
                   {table.reserved_time && (
                     <div className="flex justify-between">
                       <span className="text-muted">Thời gian hẹn:</span>
-                      <strong className="font-semibold">
+                      <strong className="font-semibold text-right">
                         {formatVnTime(table.reserved_time)} - {formatVnDate(table.reserved_time)}
                       </strong>
+                    </div>
+                  )}
+                  {table.note && (
+                    <div className="flex flex-col mt-2 pt-2 border-t border-gold/20 gap-1.5">
+                      <span className="text-muted">Ghi chú:</span>
+                      <p className="font-medium italic text-coffee/90">"{table.note}"</p>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {table.status === 'occupied' && table.guest_name && (
+            {table.status === 'occupied' && (
               <div className="rounded-2xl border border-line bg-white p-5">
                 <h4 className="flex items-center gap-2 font-bold">
                   <ReceiptText className="size-4 text-muted" /> Đang phục vụ
@@ -74,8 +92,34 @@ export function ViewTableInfoModal({ isOpen, table, onClose }: ViewTableInfoModa
                 <div className="mt-3 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted">Khách hàng:</span>
-                    <strong className="font-semibold">{table.guest_name}</strong>
+                    <strong className="font-semibold text-right">{table.guest_name || 'Khách vãng lai'}</strong>
                   </div>
+                  {table.guest_phone && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">Số điện thoại:</span>
+                      <strong className="font-semibold text-right">{table.guest_phone}</strong>
+                    </div>
+                  )}
+                  {table.guest_count && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">Số lượng khách:</span>
+                      <strong className="font-semibold text-right">{table.guest_count} người</strong>
+                    </div>
+                  )}
+                  {table.reserved_time && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">Thời gian đến:</span>
+                      <strong className="font-semibold text-right">
+                        {formatVnTime(table.reserved_time)} - {formatVnDate(table.reserved_time)}
+                      </strong>
+                    </div>
+                  )}
+                  {table.note && (
+                    <div className="flex flex-col mt-2 pt-2 border-t border-line gap-1.5">
+                      <span className="text-muted">Ghi chú:</span>
+                      <p className="font-medium italic text-coffee/90">"{table.note}"</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -62,6 +62,8 @@ export function AssignReservationModal({ isOpen, reservation, branchId, onClose,
     onClose()
   }
 
+  const isCapacityEnough = selectedTable ? selectedTable.capacity >= reservation.guestCount : false
+
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity" onClick={handleClose} />
@@ -144,33 +146,39 @@ export function AssignReservationModal({ isOpen, reservation, branchId, onClose,
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {availableTables.map(table => (
-                  <button
-                    key={table.id}
-                    onClick={() => setSelectedTable(table)}
-                    className={cn(
-                      "p-4 rounded-2xl border text-left transition-all relative overflow-hidden group",
-                      selectedTable?.id === table.id 
-                        ? "border-gold bg-beige/40 ring-1 ring-gold shadow-sm" 
-                        : "border-line bg-white hover:border-latte hover:bg-cream"
-                    )}
-                  >
-                    {selectedTable?.id === table.id && (
-                      <div className="absolute top-0 right-0 w-8 h-8 bg-gold rounded-bl-2xl flex items-center justify-center">
-                        <MapPin className="size-3 text-white" />
+                {availableTables.map(table => {
+                  const isSmall = table.capacity < reservation.guestCount;
+                  return (
+                    <button
+                      key={table.id}
+                      onClick={() => setSelectedTable(table)}
+                      className={cn(
+                        "p-4 rounded-2xl border text-left transition-all relative overflow-hidden group",
+                        selectedTable?.id === table.id 
+                          ? (isSmall ? "border-red-400 bg-red-50/50 ring-1 ring-red-400 shadow-sm" : "border-gold bg-beige/40 ring-1 ring-gold shadow-sm") 
+                          : "border-line bg-white hover:border-latte hover:bg-cream"
+                      )}
+                    >
+                      {selectedTable?.id === table.id && (
+                        <div className={cn("absolute top-0 right-0 w-8 h-8 rounded-bl-2xl flex items-center justify-center", isSmall ? "bg-red-500" : "bg-gold")}>
+                          <MapPin className="size-3 text-white" />
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mb-3">
+                        <strong className="text-coffee font-bold text-lg">{table.name}</strong>
                       </div>
-                    )}
-                    <div className="flex items-center justify-between mb-3">
-                      <strong className="text-coffee font-bold text-lg">{table.name}</strong>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-xs text-muted font-medium bg-cream group-hover:bg-white px-2 py-1 rounded-md transition-colors">
-                        <Users className="size-3" /> {table.capacity} khách
-                      </span>
-                      <p className="text-[10px] font-bold text-green-700 bg-green-50 px-2 py-1 rounded-full uppercase tracking-wider">Trống</p>
-                    </div>
-                  </button>
-                ))}
+                      <div className="flex items-center justify-between">
+                        <span className={cn(
+                          "flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md transition-colors",
+                          isSmall ? "text-red-600 bg-red-50" : "text-muted bg-cream group-hover:bg-white"
+                        )}>
+                          <Users className="size-3" /> {table.capacity} khách
+                        </span>
+                        <p className="text-[10px] font-bold text-green-700 bg-green-50 px-2 py-1 rounded-full uppercase tracking-wider">Trống</p>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -180,16 +188,24 @@ export function AssignReservationModal({ isOpen, reservation, branchId, onClose,
             
             <div className="flex items-center gap-4">
               {selectedTable && (
-                <span className="text-sm text-coffee">
-                  Đã chọn: <strong className="font-bold text-lg">{selectedTable.name}</strong>
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="text-sm text-coffee">
+                    Đã chọn: <strong className="font-bold text-lg">{selectedTable.name}</strong>
+                  </span>
+                  {!isCapacityEnough && (
+                    <span className="text-xs font-semibold text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="size-3" />
+                      Bàn không đủ chỗ cho {reservation.guestCount} người
+                    </span>
+                  )}
+                </div>
               )}
               <Button 
-                onClick={() => selectedTable && onAssign(selectedTable.id, selectedTable.name)}
-                disabled={!selectedTable}
+                onClick={() => selectedTable && isCapacityEnough && onAssign(selectedTable.id, selectedTable.name)}
+                disabled={!selectedTable || !isCapacityEnough}
                 className={cn(
                   "px-8 rounded-xl font-bold h-11 transition-all",
-                  selectedTable 
+                  selectedTable && isCapacityEnough
                     ? "bg-coffee hover:bg-[#3a291d] text-white shadow-soft" 
                     : "bg-line/50 text-muted cursor-not-allowed"
                 )}
