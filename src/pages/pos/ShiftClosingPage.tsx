@@ -72,15 +72,20 @@ export function ShiftClosingPage() {
       try {
         // 1. Get starting float & active shift metadata
         const activeRes = await getActiveCashierShift();
-        if (activeRes?.data) {
-          if (activeRes.data.starting_float !== undefined) {
-            setStartingFloat(activeRes.data.starting_float);
-          }
-          if (activeRes.data.opened_at) {
-            setOpenedAt(activeRes.data.opened_at);
-          } else if (activeRes.data.openedAt) {
-            setOpenedAt(activeRes.data.openedAt);
-          }
+        if (!activeRes || !activeRes.data || activeRes.data.active === false) {
+          clearShiftId();
+          navigate(ROUTES.shiftOpening);
+          return;
+        }
+
+        if (activeRes.data.starting_float !== undefined) {
+          setStartingFloat(activeRes.data.starting_float);
+        }
+        if (activeRes.data.opened_at) {
+          setOpenedAt(activeRes.data.opened_at);
+        } else if (activeRes.data.openedAt) {
+          setOpenedAt(activeRes.data.openedAt);
+        }
 
           const employee = activeRes.data.employee;
           if (employee) {
@@ -90,7 +95,6 @@ export function ShiftClosingPage() {
           if (activeRes.data.terminal) {
             setTerminalNo(activeRes.data.terminal);
           }
-        }
 
         // Fallback cashier details from authSession if not returned by API
         const authSession = getAuthSession();
@@ -113,6 +117,13 @@ export function ShiftClosingPage() {
           setRefundedInvoices(totalsRes.data.refunded_invoices ?? totalsRes.data.refundedInvoices ?? 0);
         }
       } catch (err: any) {
+        // If the error is from getActiveCashierShift (no shift found)
+        if (err.message?.includes('No active') || err.error?.includes('No active') || err.message?.includes('không có ca') || err.error?.includes('không có ca') || err.error?.toLowerCase() === 'not found' || err.status === 404) {
+           clearShiftId();
+           navigate(ROUTES.shiftOpening);
+           return;
+        }
+
         // If there are pending orders or unpaid invoices
         const errorMsg = err.error || err.message || 'Lỗi tải dữ liệu ca làm việc.';
         setErrorMessage(errorMsg);
@@ -574,7 +585,7 @@ export function ShiftClosingPage() {
                     ))}
                   </div>
 
-                  {timeLeft > 0 ? (
+                  {/* {timeLeft > 0 ? (
                     <p className="text-center text-xs text-muted">
                       Thời gian mã lực: <span className="font-bold text-coffee tabular-nums">{timeLeft}s</span>
                     </p>
@@ -588,7 +599,7 @@ export function ShiftClosingPage() {
                     >
                       Làm mới OTP
                     </button>
-                  )}
+                  )} */}
                 </div>
 
                 {errorMessage && (

@@ -78,9 +78,12 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
       const role = data.user.role || data.user.roleName || ''
       const isCustomer = role.toLowerCase() === 'customer'
+      const isStaffOrCashier = role.toLowerCase().includes('staff') || role.toLowerCase().includes('cashier') || role.toLowerCase().includes('thu ngân') || role.toLowerCase().includes('nhân viên')
       
       if (isCustomer) {
         navigate(ROUTES.customerHome)
+      } else if (isStaffOrCashier) {
+        navigate('/admin/internal?tab=attendance')
       } else {
         navigate(ROUTES.adminDashboard)
       }

@@ -2,6 +2,7 @@ import { LedgerRow } from './LedgerRow';
 
 interface LedgerTableProps {
   invoices: any[];
+  branches?: any[];
   loading: boolean;
   expandedRow: string | null;
   onToggleExpand: (invoiceId: string) => void;
@@ -11,6 +12,7 @@ interface LedgerTableProps {
 
 export function LedgerTable({
   invoices,
+  branches = [],
   loading,
   expandedRow,
   onToggleExpand,
@@ -59,6 +61,7 @@ export function LedgerTable({
                 <LedgerRow
                   key={invoiceId}
                   invoice={invoice}
+                  branches={branches}
                   isExpanded={expandedRow === invoiceId}
                   onToggleExpand={() => onToggleExpand(invoiceId)}
                   formatCurrency={formatCurrency}

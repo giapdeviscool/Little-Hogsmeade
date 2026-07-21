@@ -8,7 +8,7 @@ import { updateOrderStatus } from '@/api/order.api';
 interface InvoiceDetailPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onRefund: () => void;
+  onRefund: (invoiceData: any) => void;
   invoice: Invoice | null;
   onUpdate?: () => void;
   refreshTrigger?: number;
@@ -218,7 +218,7 @@ export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice, onUpdat
               {order.pointTransactions.map((tx: any, idx: number) => (
                 <div key={idx} className="flex justify-between items-center text-sm bg-gold/10 p-3 rounded-xl border border-gold/20">
                   <div>
-                    <span className="font-bold text-coffee block">{tx.type === 'earn' ? 'Tích điểm' : tx.type === 'redeem' ? 'Tiêu điểm' : tx.type}</span>
+                    <span className="font-bold text-coffee block">{tx.type === 'earn' ? 'Tích điểm' : tx.type === 'redeem' ? 'Tiêu điểm' : tx.type === 'adjust' ? 'Thu hồi điểm' : tx.type}</span>
                     <span className="text-xs text-muted block mt-0.5">{tx.note}</span>
                   </div>
                   <span className={`font-bold ${tx.type === 'earn' ? 'text-green-600' : 'text-red-500'}`}>
@@ -303,7 +303,7 @@ export function InvoiceDetailPanel({ isOpen, onClose, onRefund, invoice, onUpdat
             >
               <Printer className="w-5 h-5" /> In lại hóa đơn
             </button>
-            <button onClick={onRefund} className="w-full h-14 flex items-center justify-center gap-3 bg-coffee text-white rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-md disabled:opacity-50" disabled={isLoading}>
+            <button onClick={() => onRefund(invoiceData)} className="w-full h-14 flex items-center justify-center gap-3 bg-coffee text-white rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-md disabled:opacity-50" disabled={isLoading}>
               <RotateCcw className="w-5 h-5" /> Hoàn tiền (Refund)
             </button>
           </>

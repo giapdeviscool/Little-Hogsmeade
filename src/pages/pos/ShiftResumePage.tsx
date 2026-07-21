@@ -233,7 +233,7 @@ export function ShiftResumePage() {
                   <div className="space-y-1">
                     <h2 className="text-base sm:text-lg font-bold text-coffee">Xác thực mã PIN</h2>
                     <p className="text-xs text-muted">
-                      Để tiếp tục ca làm việc, vui lòng nhập mã PIN xác thực của Quản lý / Thu ngân.
+                      Để tiếp tục ca làm việc, vui lòng nhập mã PIN xác thực của Quản lý.
                     </p>
                   </div>
 
