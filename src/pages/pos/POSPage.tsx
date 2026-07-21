@@ -18,6 +18,7 @@ export function POSPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalDocs, setTotalDocs] = useState<number>(0);
+  const [summary, setSummary] = useState({ totalRevenue: 0, totalRefund: 0 });
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
@@ -32,10 +33,6 @@ export function POSPage() {
   const session = getAuthSession();
   const isOwner = (session?.user?.roleName || '').toLowerCase().includes('owner');
 
-  // Calculate some simple statistics from current page
-  const totalRevenueCurrentPage = invoices.reduce((sum, inv) => sum + (inv.status === 'paid' ? inv.totalAmount : 0), 0);
-  const totalRefundedCurrentPage = invoices.reduce((sum, inv) => sum + (inv.status === 'refunded' ? inv.totalAmount : 0), 0);
-  
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -191,6 +188,7 @@ export function POSPage() {
           setInvoices(response.data || []);
           setTotalPages(response.pagination?.totalPages || 1);
           setTotalDocs(response.pagination?.totalDocs || 0);
+          setSummary(response.summary || { totalRevenue: 0, totalRefund: 0 });
         }
       } catch (error) {
         console.error('Failed to fetch invoices:', error);
@@ -223,23 +221,23 @@ export function POSPage() {
         }
       />
 
-      {/* Overview/KPI Section (Calculated dynamically from current page) */}
+      {/* Overview/KPI Section */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
         <StatisticCard
-          name="Doanh thu (Trang này)"
-          value={formatCurrency(totalRevenueCurrentPage)}
+          name="Tổng Doanh thu"
+          value={formatCurrency(summary.totalRevenue)}
           icon="payments"
         />
         <StatisticCard
-          name="Tổng Hoàn tiền (Trang này)"
-          value={formatCurrency(totalRefundedCurrentPage)}
+          name="Tổng Hoàn tiền"
+          value={formatCurrency(summary.totalRefund)}
           icon="replay"
           iconColorClass="text-[#c25a5a]"
           bgIconClass="bg-[#c25a5a]/10"
         />
         <StatisticCard
-          name="Số Giao dịch (Trang này)"
-          value={`${invoices.length} / ${totalDocs} Giao dịch`}
+          name="Số Giao dịch"
+          value={`${totalDocs} Giao dịch`}
           icon="show_chart"
           iconColorClass="text-gold"
           bgIconClass="bg-gold/10"
