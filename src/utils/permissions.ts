@@ -64,7 +64,7 @@ export function isOwner(): boolean {
   return resolveRole(roleName) === 'owner'
 }
 
-export function filterBranchesByRole(branches: { id: string }[]): { id: string }[] {
+export function filterBranchesByRole<T extends { id: string }>(branches: T[]): T[] {
   const branchId = getUserBranchId()
   if (!branchId) return branches
   return branches.filter(b => b.id === branchId)

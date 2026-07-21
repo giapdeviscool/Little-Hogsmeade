@@ -20,6 +20,8 @@ export type BranchTable = {
   current_order_id?: number | string | null
   reservation_id?: number | string | null
   guest_count?: number | null
+  guest_name?: string | null
+  reserved_time?: string | null
   note?: string | null
   updated_at: string
 }

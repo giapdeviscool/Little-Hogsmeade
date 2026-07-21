@@ -1,4 +1,4 @@
-export type ReservationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'
+export type ReservationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'checked_in' | 'no_show'
 
 export type Reservation = {
   id: string
@@ -13,6 +13,10 @@ export type Reservation = {
   note?: string
   status: ReservationStatus
   createdAt?: string
+  table?: {
+    id: string
+    name: string
+  }
 }
 
 export type ReservationPayload = Omit<Reservation, 'id' | 'createdAt'>

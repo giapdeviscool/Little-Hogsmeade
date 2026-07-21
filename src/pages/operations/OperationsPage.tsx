@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { cn } from '../../utils/cn'
 import { Bell } from 'lucide-react'
 import { Button } from '../../components/ui/button'
+import { TableLayoutPage } from './TableLayoutPage'
+import { ReservationManager } from './ReservationManager'
 
 interface NotificationItem {
   id: string
@@ -14,6 +16,9 @@ interface NotificationItem {
 
 export function OperationsPage() {
   const [isOpen, setIsOpen] = useState(false)
+  const [searchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') || 'tables'
+  
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: '1',
@@ -134,15 +139,18 @@ export function OperationsPage() {
           Vận hành & Phục vụ
         </p>
         <h1 className="mt-2 text-[34px] font-bold tracking-[-0.04em]">
-          Sơ đồ bàn ăn
+          {activeTab === 'tables' ? 'Danh sách bàn' : 'Quản lý đặt bàn'}
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted">
-          Theo dõi sơ đồ bàn ăn của các khu vực trong quán, hỗ trợ nhận khách nhanh và đặt bàn trước.
+          {activeTab === 'tables' 
+            ? 'Theo dõi danh sách các bàn của quán, hỗ trợ nhận khách nhanh và đặt bàn trước.'
+            : 'Quản lý danh sách khách hàng đã đặt bàn trước, tiện lợi cho việc sắp xếp và gán bàn.'}
         </p>
       </div>
 
       <div className="mt-10">
-        <Outlet />
+        {activeTab === 'tables' && <TableLayoutPage />}
+        {activeTab === 'reservations' && <ReservationManager />}
       </div>
     </div>
   )

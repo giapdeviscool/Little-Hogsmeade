@@ -5,7 +5,14 @@ export type { TabKey } from '../types'
 export const navItems: NavItem[] = [
   { key: 'dashboard', icon: 'grid' },
   { key: 'pos', icon: 'cart' },
-  { key: 'operations', icon: 'service' },
+  { 
+    key: 'operations', 
+    icon: 'service',
+    subItems: [
+      { key: 'tables', label: 'Danh sách bàn' },
+      { key: 'reservations', label: 'Quản lý đặt bàn' },
+    ]
+  },
   { 
     key: 'internal', 
     icon: 'users',
