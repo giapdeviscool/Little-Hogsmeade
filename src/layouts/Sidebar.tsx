@@ -39,12 +39,20 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
         <div className="mt-3 text-xs font-semibold uppercase tracking-[0.34em] text-muted">{t.brand.tagline}</div>
       </div>
 
-      <div className="mb-5 flex items-center gap-3 rounded-[14px] bg-white px-3 py-3.5 shadow-soft">
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-coffee font-bold text-white">{initial}</div>
-        <div>
-          <span className="block text-xs text-muted">Xin chào,</span>
-          <strong className="block text-[15px] truncate max-w-[120px]">{displayName}</strong>
+      <div className="mb-5 flex flex-col rounded-[14px] bg-white px-3 py-3.5 shadow-soft">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-coffee font-bold text-white">{initial}</div>
+          <div className="min-w-0 flex-1">
+            <span className="block text-xs text-muted">Xin chào,</span>
+            <strong className="block text-[15px] truncate max-w-[120px]" title={displayName}>{displayName}</strong>
+          </div>
         </div>
+        {(user?.branchName || user?.branch) && (
+          <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-beige/50 px-2 py-1.5 text-xs font-semibold text-coffee/90 border border-coffee/5">
+            <div className="scale-75 origin-left shrink-0"><Icon name="building" /></div>
+            <span className="truncate" title={user.branchName || user.branch}>{user.branchName || user.branch}</span>
+          </div>
+        )}
       </div>
 
       <nav className="flex flex-col gap-2">
