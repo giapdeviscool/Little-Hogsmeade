@@ -96,12 +96,14 @@ interface BranchSelectInfo {
   name: string
 }
 
-function TableLayoutContent({ 
+export function TableLayoutContent({ 
   branchId, 
-  onBranchChange 
+  onBranchChange,
+  className
 }: { 
   branchId: string | null
   onBranchChange: (id: string | null) => void 
+  className?: string
 }) {
   const [branches, setBranches] = useState<BranchSelectInfo[]>([])
 
@@ -149,7 +151,7 @@ function TableLayoutContent({
   }
 
   return (
-    <section className="-mx-10 -my-8 min-h-screen bg-white text-coffee">
+    <section className={cn("min-h-screen bg-white text-coffee", className)}>
       <header className="flex min-h-[68px] flex-wrap items-center gap-5 border-b border-[rgba(74,53,37,0.08)] bg-white px-7 py-3">
         <div className="relative w-full max-w-[400px]"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm bàn..." className="h-10 rounded-xl border-line bg-cream pl-11 text-sm text-coffee placeholder:text-muted focus-visible:ring-1 focus-visible:ring-latte" /></div>
         <div className="relative">

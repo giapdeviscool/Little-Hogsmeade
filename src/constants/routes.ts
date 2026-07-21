@@ -26,6 +26,7 @@ export const ROUTES = {
   shiftClosing: '/shift-closing',
   shiftResume: '/shift-resume',
   pos: '/pos',
+  posTables: '/pos/tables',
   invoices: '/invoices',
   shiftOverview: '/shift-overview',
 } as const

@@ -29,6 +29,7 @@ import { CMSPage } from '../pages/cms/CMSPage'
 import { SettingsPage } from '../pages/settings/SettingsPage'
 import { CustomerListPage } from '../pages/loyalty/CustomerListPage'
 import { PosPage } from '@/pages/pos/index'
+import { PosTablePage } from '@/pages/pos/PosTablePage'
 import { InvoicePage } from '@/pages/invoices/index'
 import { ShiftOpeningPage } from '../pages/pos/ShiftOpeningPage'
 import { ShiftClosingPage } from '../pages/pos/ShiftClosingPage'
@@ -76,6 +77,7 @@ export function AppRouter() {
       <Route path={ROUTES.shiftClosing} element={<ShiftClosingPage />} />
       <Route path={ROUTES.shiftResume} element={<ShiftResumePage />} />
       <Route path={ROUTES.pos} element={<PosPage />} />
+      <Route path={ROUTES.posTables} element={<PosTablePage />} />
       <Route path={ROUTES.invoices} element={<InvoicePage />} />
       <Route path={ROUTES.shiftOverview} element={<ShiftOverviewPage />} />
       
