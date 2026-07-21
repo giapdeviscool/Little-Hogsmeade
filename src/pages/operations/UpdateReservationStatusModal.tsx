@@ -87,12 +87,23 @@ export function UpdateReservationStatusModal({ isOpen, reservation, onClose, onU
                 onChange={(e) => setStatus(e.target.value as ReservationStatus)}
                 className="w-full h-12 rounded-xl border border-line bg-[#fcfbf9] pl-4 pr-10 text-sm font-semibold text-coffee focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-latte appearance-none"
               >
-                <option value="pending">Chờ duyệt (Pending)</option>
-                <option value="confirmed">Đã xác nhận (Confirmed)</option>
-                <option value="checked_in">Khách đã đến (Checked-In)</option>
-                <option value="completed">Khách đã rời đi (Completed)</option>
-                <option value="cancelled">Khách huỷ (Cancelled)</option>
-                <option value="no_show">Khách không đến (No-Show)</option>
+                <option value={reservation.status} disabled>-- Chọn trạng thái cập nhật --</option>
+                {reservation.status === 'pending' && (
+                  <>
+                    <option value="confirmed">Đã xác nhận (Confirmed)</option>
+                    <option value="cancelled">Khách huỷ (Cancelled)</option>
+                    <option value="no_show">Khách không đến (No-Show)</option>
+                  </>
+                )}
+                {reservation.status === 'confirmed' && (
+                  <>
+                    <option value="cancelled">Khách huỷ (Cancelled)</option>
+                    <option value="no_show">Khách không đến (No-Show)</option>
+                  </>
+                )}
+                {reservation.status === 'checked_in' && (
+                  <option value="completed">Khách đã rời đi (Completed)</option>
+                )}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-coffee/60">
                 <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>

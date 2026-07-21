@@ -213,13 +213,15 @@ export function ReservationManager() {
                           <MapPin className="h-4 w-4" />
                         </button>
                       )}
-                      <button 
-                        onClick={() => setSelectedReservationToUpdate(res)} 
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-200" 
-                        title="Cập nhật trạng thái"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </button>
+                      {['pending', 'confirmed', 'checked_in'].includes(res.status) && (
+                        <button 
+                          onClick={() => setSelectedReservationToUpdate(res)} 
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-200" 
+                          title="Cập nhật trạng thái"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
