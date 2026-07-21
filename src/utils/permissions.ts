@@ -11,8 +11,8 @@ function resolveRole(roleName?: string | null): string {
 }
 
 const SIDEBAR_PERMISSIONS: Record<string, SidebarNavKey[]> = {
-  owner: ['dashboard', 'pos', 'operations', 'internal', 'owner', 'cms', 'loyalty', 'customers', 'settings'],
-  'chain admin': ['dashboard', 'pos', 'operations', 'internal', 'owner', 'loyalty', 'customers', 'settings'],
+  owner: ['owner', 'cms', 'loyalty', 'customers', 'settings'],
+  'chain admin': ['dashboard', 'pos', 'operations', 'internal'],
   cashier: ['operations', 'internal'],
   staff: ['operations', 'internal'],
 }
@@ -25,8 +25,8 @@ const INTERNAL_TAB_PERMISSIONS: Record<string, string[]> = {
 }
 
 const ROUTE_PERMISSIONS: Record<string, string[]> = {
-  owner: ['/admin/dashboard', '/admin/pos', '/admin/operations', '/admin/internal', '/admin/owner', '/admin/cms', '/admin/customers', '/admin/loyalty', '/admin/settings'],
-  'chain admin': ['/admin/dashboard', '/admin/pos', '/admin/operations', '/admin/internal', '/admin/owner', '/admin/customers', '/admin/loyalty', '/admin/settings'],
+  owner: ['/admin/owner', '/admin/cms', '/admin/customers', '/admin/loyalty', '/admin/settings'],
+  'chain admin': ['/admin/dashboard', '/admin/pos', '/admin/operations', '/admin/internal'],
   cashier: ['/pos', '/shift-opening', '/shift-closing', '/shift-resume', '/shift-overview', '/invoices', '/admin/operations', '/admin/internal'],
   staff: ['/admin/operations', '/admin/internal'],
 }
