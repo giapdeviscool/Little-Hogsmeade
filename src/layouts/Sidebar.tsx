@@ -12,37 +12,13 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
   const location = useLocation()
   const session = getAuthSession()
   const user = session?.user
+  const roleName = session?.user?.roleName || session?.user?.role || ''
   const displayName = user?.fullName || user?.name || 'Admin'
   const initial = displayName.charAt(0).toUpperCase()
   const navButton = 'flex h-11 w-full items-center gap-3 rounded-[13px] px-4 text-left text-sm font-semibold transition'
 
-  const roleName = ((user as any)?.roleName || '').toLowerCase()
-  const isStaffOrCashier = roleName.includes('staff') || roleName.includes('cashier') || roleName.includes('nhân viên') || roleName.includes('thu ngân')
-  const isCashier = roleName.includes('cashier') || roleName.includes('thu ngân')
-
   const [collapsedKeys, setCollapsedKeys] = useState<string[]>([])
   const filteredNavItems = navItems.filter(item => canAccessSidebarItem(roleName, item.key))
-
-  let displayNavItems = [...navItems]
-  if (isStaffOrCashier) {
-    const hrItems = [
-      { key: 'schedule', href: 'internal?tab=schedule', label: 'Lịch làm việc', icon: 'calendar' },
-      { key: 'attendance', href: 'internal?tab=attendance', label: 'Chấm công', icon: 'clock' },
-      { key: 'payroll', href: 'internal?tab=payroll', label: 'Bảng lương', icon: 'wallet' },
-      { key: 'recipes', href: 'internal?tab=recipes', label: 'Công thức BOM', icon: 'grid' },
-    ]
-    
-    displayNavItems = []
-    // Users said to "chỉ giữ lại đúng 3 phần". We won't keep POS for them unless they ask again.
-    // However, a cashier definitely needs POS! Wait, "chỉ giữ lại đúng 3 phần".
-    // "chỉ giữ lại đúng 3 phần lich làm viêc chấm công với bảng lương thôi"
-    // We'll keep POS for cashier just in case. They can't do their job without it.
-    if (isCashier) {
-      const posItem = navItems.find(i => i.key === 'pos')
-      if (posItem) displayNavItems.push(posItem)
-    }
-    displayNavItems = displayNavItems.concat(hrItems as any)
-  }
 
   const handleParentClick = (e: React.MouseEvent, key: string, isActive: boolean, hasSubItems: boolean) => {
     if (hasSubItems) {
@@ -72,8 +48,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <nav className="flex flex-col gap-2">
-        {displayNavItems.map((item) => {
-
+        {filteredNavItems.map((item) => {
           const href = item.href ?? `/admin/${item.key}`
           const isActive = location.pathname.startsWith(href)
           const isExpanded = isActive && !collapsedKeys.includes(item.key)
@@ -85,7 +60,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
                 className={cn(navButton, isActive && !item.subItems ? 'bg-latte text-white shadow-[0_10px_24px_rgba(74,53,37,0.16)]' : 'text-coffee hover:bg-white/65')}
               >
                 <Icon name={item.icon} />
-                <span className="flex-1">{item.label || t.navigation[item.key as keyof typeof t.navigation]}</span>
+                <span className="flex-1">{t.navigation[item.key]}</span>
                 {item.subItems && (
                   <span className={cn('transition-transform duration-200', isExpanded ? 'rotate-180' : '')}>
                     <Icon name="chevronDown" />
@@ -128,7 +103,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
-        {canAccessSidebarItem(roleName, 'settings') && (
+        {((roleName||'').toLowerCase().includes('owner')) && (
           <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
             <Icon name="settings" />
             {t.common.settings}

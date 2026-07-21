@@ -8,12 +8,10 @@ import { env } from '../../config/env'
 import { useBranchTableLayout } from '../../hooks/useTableLayout'
 import { useTableStatusSocket } from '../../hooks/useTableStatusSocket'
 import { getAuthSession } from '../../store/auth.store'
+import { filterBranchesByRole } from '../../utils/permissions'
 import type { BranchTable, BranchTableLayout, BranchTableStatus } from '../../types'
 import { cn } from '../../utils/cn'
-import { UpdateTableStatusModal } from './UpdateTableStatusModal'
-import { OccupiedTableModal } from './OccupiedTableModal'
-import { ReservedTableModal } from './ReservedTableModal'
-import { StartTableOrderModal } from './StartTableOrderModal'
+import { ViewTableInfoModal } from './ViewTableInfoModal'
 
 const UPDATED_AT = '2026-06-22T10:00:00Z'
 
@@ -98,12 +96,14 @@ interface BranchSelectInfo {
   name: string
 }
 
-function TableLayoutContent({ 
+export function TableLayoutContent({ 
   branchId, 
-  onBranchChange 
+  onBranchChange,
+  className
 }: { 
   branchId: string | null
   onBranchChange: (id: string | null) => void 
+  className?: string
 }) {
   const [branches, setBranches] = useState<BranchSelectInfo[]>([])
 
@@ -114,7 +114,7 @@ function TableLayoutContent({
         const activeList = items
           .filter((b: any) => b.status === 'active')
           .map((b: any) => ({ id: b.id, name: b.name }))
-        setBranches(activeList)
+        setBranches(filterBranchesByRole(activeList))
       })
       .catch((err) => console.error('Failed to fetch branches:', err))
   }, [])
@@ -122,9 +122,7 @@ function TableLayoutContent({
   const [selectedStatus, setSelectedStatus] = useState<BranchTableStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [selectedTable, setSelectedTable] = useState<BranchTable | null>(null)
-  const [availableTableAction, setAvailableTableAction] = useState<'choose' | 'reserve'>('choose')
   const [statusOverrides, setStatusOverrides] = useState<Record<string, BranchTableStatus>>({})
-  const [successMessage, setSuccessMessage] = useState('')
   const allLayoutQuery = useBranchTableLayout(branchId)
   const fullLayout = allLayoutQuery.data ?? temporaryLayout
   const withCurrentStatus = (table: BranchTable): BranchTable => ({ ...table, status: statusOverrides[String(table.id)] ?? table.status })
@@ -153,7 +151,7 @@ function TableLayoutContent({
   }
 
   return (
-    <section className="-mx-10 -my-8 min-h-screen bg-white text-coffee">
+    <section className={cn("min-h-screen bg-white text-coffee", className)}>
       <header className="flex min-h-[68px] flex-wrap items-center gap-5 border-b border-[rgba(74,53,37,0.08)] bg-white px-7 py-3">
         <div className="relative w-full max-w-[400px]"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm bàn..." className="h-10 rounded-xl border-line bg-cream pl-11 text-sm text-coffee placeholder:text-muted focus-visible:ring-1 focus-visible:ring-latte" /></div>
         <div className="relative">
@@ -161,7 +159,8 @@ function TableLayoutContent({
           <select
             value={branchId || ''}
             onChange={(e) => onBranchChange(e.target.value || null)}
-            className="h-10 rounded-xl border border-line bg-white pl-9 pr-8 text-sm font-semibold text-coffee focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-latte appearance-none cursor-pointer hover:bg-cream transition"
+            disabled={branches.length <= 1}
+            className="h-10 rounded-xl border border-line bg-white pl-9 pr-8 text-sm font-semibold text-coffee focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-latte appearance-none cursor-pointer hover:bg-cream transition disabled:cursor-not-allowed disabled:hover:bg-white disabled:opacity-80"
           >
             {branches.length > 0 ? (
               branches.map(b => (
@@ -176,7 +175,6 @@ function TableLayoutContent({
       </header>
 
       <main className="px-7 py-7">
-        {successMessage && <div className="fixed right-6 top-6 z-[80] rounded-xl bg-[#3d8053] px-4 py-3 text-sm font-bold text-white shadow-lg">{successMessage}</div>}
         {!branchId && <div className="mb-5 rounded-xl border border-gold/30 bg-[#fffaf0] px-4 py-3 text-sm text-[#8a6820]">Chưa có branchId trong phiên đăng nhập. Đang hiển thị dữ liệu mẫu; Owner có thể cấu hình VITE_DEFAULT_BRANCH_ID.</div>}
         <div className="flex flex-wrap items-center justify-between gap-4"><span className="text-xs text-muted">Cập nhật theo thời gian thực</span></div>
 
@@ -196,56 +194,14 @@ function TableLayoutContent({
 
           <section className="mt-6 rounded-2xl border border-line bg-[#fcfbf9] p-6">
             {allLayoutQuery.isError && <p className="mb-4 rounded-xl bg-beige px-4 py-3 text-xs text-muted">Backend chưa phản hồi, đang hiển thị dữ liệu mẫu.</p>}
-            {tables.length === 0 ? <div className="py-20 text-center"><p className="font-bold">Không tìm thấy bàn phù hợp</p><p className="mt-1 text-sm text-muted">Thử đổi khu vực, trạng thái hoặc từ khoá.</p></div> : <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">{tables.map((table, index) => <TableShape key={table.id} table={table} index={index} onSelect={(selected) => { setSelectedTable(selected); setAvailableTableAction('choose') }} />)}</div>}
+            {tables.length === 0 ? <div className="py-20 text-center"><p className="font-bold">Không tìm thấy bàn phù hợp</p><p className="mt-1 text-sm text-muted">Thử đổi khu vực, trạng thái hoặc từ khoá.</p></div> : <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">{tables.map((table, index) => <TableShape key={table.id} table={table} index={index} onSelect={(selected) => { setSelectedTable(selected) }} />)}</div>}
           </section>
       </main>
-      <UpdateTableStatusModal
-        isOpen={selectedTable?.status === 'cleaning' || (selectedTable?.status === 'available' && availableTableAction === 'reserve')}
-        tableData={selectedTable}
-        branchId={branchId}
-        initialStatus={selectedTable?.status === 'available' && availableTableAction === 'reserve' ? 'reserved' : undefined}
+      
+      <ViewTableInfoModal 
+        isOpen={selectedTable !== null}
+        table={selectedTable}
         onClose={() => setSelectedTable(null)}
-        onUpdateSuccess={(updatedTable) => {
-          setStatusOverrides((current) => ({ ...current, [String(updatedTable.id)]: updatedTable.status }))
-          setSuccessMessage('Cập nhật trạng thái bàn thành công')
-          window.setTimeout(() => setSuccessMessage(''), 2500)
-        }}
-      />
-      <OccupiedTableModal
-        isOpen={selectedTable?.status === 'occupied'}
-        tableId={selectedTable?.status === 'occupied' ? selectedTable.id : null}
-        tableName={selectedTable?.status === 'occupied' ? selectedTable.name : undefined}
-        orderId={selectedTable?.status === 'occupied' ? selectedTable.current_order_id : null}
-        branchId={branchId}
-        onClose={() => setSelectedTable(null)}
-        onSuccess={() => {
-          setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: 'available' } : {}) }))
-          setSuccessMessage('Cập nhật sơ đồ bàn thành công')
-          window.setTimeout(() => setSuccessMessage(''), 2500)
-        }}
-      />
-      <StartTableOrderModal
-        key={selectedTable?.id}
-        isOpen={selectedTable?.status === 'available' && availableTableAction === 'choose'}
-        tableId={selectedTable?.status === 'available' ? selectedTable.id : null}
-        tableName={selectedTable?.status === 'available' ? selectedTable.name : undefined}
-        onClose={() => setSelectedTable(null)}
-        onReserve={() => setAvailableTableAction('reserve')}
-        onSuccess={() => {
-          setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: 'occupied' } : {}) }))
-          setSuccessMessage('Tạo hóa đơn và gọi món thành công')
-          window.setTimeout(() => setSuccessMessage(''), 2500)
-        }}
-      />
-      <ReservedTableModal
-        isOpen={selectedTable?.status === 'reserved'}
-        tableId={selectedTable?.status === 'reserved' ? selectedTable.id : null}
-        onClose={() => setSelectedTable(null)}
-        onSuccess={(nextTableStatus) => {
-          setStatusOverrides((current) => ({ ...current, ...(selectedTable ? { [String(selectedTable.id)]: nextTableStatus } : {}) }))
-          setSuccessMessage('Cập nhật sơ đồ bàn thành công')
-          window.setTimeout(() => setSuccessMessage(''), 2500)
-        }}
       />
     </section>
   )
@@ -259,6 +215,17 @@ function TableShape({ table, index, onSelect }: { table: BranchTable; index: num
   return <button type="button" onClick={() => onSelect(table)} className={cn('relative flex min-h-[245px] items-center justify-center border p-5 text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', detail.surface, shape === 'circle' ? 'aspect-square rounded-full' : 'rounded-2xl', shape === 'wide' && 'md:col-span-2')}>
     <span className="absolute left-4 top-4 flex items-center gap-1 text-xs opacity-85"><Users className="size-3.5" /> {table.capacity}</span>
     <span className="absolute right-4 top-4 rounded-full bg-white/60 px-2 py-1 text-[9px] font-bold text-coffee/70">{detail.label}</span>
-    <div className="text-center"><strong className="block text-2xl tracking-[-0.04em]">{table.name}</strong><span className="mt-1 block text-[10px] font-bold tracking-[0.16em]">BÀN</span>{reference && <span className="mt-3 inline-flex rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold text-coffee">{reference}</span>}</div>
+    <div className="text-center">
+      <strong className="block text-2xl tracking-[-0.04em]">{table.name}</strong>
+      <span className="mt-1 block text-[10px] font-bold tracking-[0.16em]">BÀN</span>
+      
+      {reference && (
+        <div className="mt-3 flex flex-col items-center gap-1">
+          <span className="inline-flex rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold text-coffee">{reference}</span>
+          {table.guest_name && <span className="text-[11px] font-medium opacity-90 truncate max-w-[120px]">{table.guest_name}</span>}
+          {table.reserved_time && <span className="text-[10px] opacity-70">{new Date(table.reserved_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</span>}
+        </div>
+      )}
+    </div>
   </button>
 }

@@ -6,9 +6,10 @@ import { clearAuthSession } from '@/store/auth.store';
 
 const NAV_LINKS = [
   { name: 'Thu Ngân', link: ROUTES.pos, exact: true },
+  { name: 'Bàn', link: ROUTES.posTables, exact: false },
   { name: 'Hóa Đơn', link: ROUTES.invoices, exact: false },
-  // { name: 'Inventory', link: '#', exact: false },
   { name: 'Tổng Quan', link: ROUTES.shiftOverview, exact: false },
+  { name: 'Quản lý', link: ROUTES.adminOperations, exact: false },
 ];
 
 export function PosHeader() {
@@ -29,9 +30,7 @@ export function PosHeader() {
         </h1>
         <div className="hidden md:flex items-center gap-5 ml-6">
           {NAV_LINKS.map((item) => {
-            const isActive = item.link !== '#' && (
-              item.exact ? location.pathname === item.link : location.pathname.includes(item.link)
-            );
+            const isActive = item.exact ? location.pathname === item.link : location.pathname.includes(item.link);
             
             return (
               <Link 

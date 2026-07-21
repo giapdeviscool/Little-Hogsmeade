@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
-import { listReservations, updateReservation } from '../../api/reservation.api'
+import { assignReservationTable, listReservations, updateReservation } from '../../api/reservation.api'
 import type { Reservation, ReservationStatus } from '../../types'
+import { MapPin, Edit3 } from 'lucide-react'
+import { AssignReservationModal } from './AssignReservationModal'
+import { UpdateReservationStatusModal } from './UpdateReservationStatusModal'
+import { getUserBranchId } from '../../utils/permissions'
+import { useQueryClient } from '@tanstack/react-query'
+import { tableLayoutQueryKeys } from '../../hooks/useTableLayout'
 import { formatVnDate, formatVnTime } from '../../utils/date'
-import { Check, Clock, X, CheckCircle2 } from 'lucide-react'
 
 export function ReservationManager() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedReservationToAssign, setSelectedReservationToAssign] = useState<Reservation | null>(null)
+  const [selectedReservationToUpdate, setSelectedReservationToUpdate] = useState<Reservation | null>(null)
+  const queryClient = useQueryClient()
+
+  const branchId = getUserBranchId()
 
   useEffect(() => {
     load()
@@ -15,7 +25,7 @@ export function ReservationManager() {
   async function load() {
     setLoading(true)
     try {
-      const res = await listReservations()
+      const res = await listReservations(branchId || undefined)
       // Sort by newest first
       if (res.data) {
         setReservations(res.data.sort((a, b) => new Date(b.reservedDate).getTime() - new Date(a.reservedDate).getTime()))
@@ -31,8 +41,31 @@ export function ReservationManager() {
     try {
       await updateReservation(id, { status })
       setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+      
+      // Nếu trạng thái làm thay đổi bàn (ví dụ huỷ, hoàn thành), ta cũng nên làm mới sơ đồ bàn
+      queryClient.invalidateQueries({ queryKey: tableLayoutQueryKeys.branch(branchId, {}) })
     } catch (err) {
       alert('Lỗi cập nhật trạng thái đặt bàn')
+    }
+  }
+
+  async function handleAssignTable(tableId: string | number, _tableName: string) {
+    if (!selectedReservationToAssign) return
+    try {
+      await assignReservationTable(selectedReservationToAssign.id, tableId)
+      
+      setReservations(prev => prev.map(r => 
+        r.id === selectedReservationToAssign.id 
+          ? { ...r, status: 'confirmed', tableId: String(tableId), table: { id: String(tableId), name: _tableName } } 
+          : r
+      ))
+      
+      // Quan trọng: Invalidate cache để Tab Sơ đồ tải lại trạng thái bàn mới nhất!
+      queryClient.invalidateQueries({ queryKey: tableLayoutQueryKeys.branch(branchId, {}) })
+      
+      setSelectedReservationToAssign(null)
+    } catch (err) {
+      alert('Lỗi gán bàn')
     }
   }
 
@@ -52,6 +85,8 @@ export function ReservationManager() {
       case 'confirmed': return 'Đã xác nhận'
       case 'completed': return 'Hoàn thành'
       case 'cancelled': return 'Đã huỷ'
+      case 'checked_in': return 'Khách đã đến'
+      case 'no_show': return 'Không đến'
       default: return status
     }
   }
@@ -99,31 +134,22 @@ export function ReservationManager() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {res.status === 'pending' && (
-                        <>
-                          <button onClick={() => handleStatusChange(res.id, 'confirmed')} className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition hover:bg-blue-100" title="Xác nhận">
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button onClick={() => handleStatusChange(res.id, 'cancelled')} className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600 transition hover:bg-red-100" title="Từ chối/Huỷ">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                      {res.status === 'confirmed' && (
-                        <>
-                          <button onClick={() => handleStatusChange(res.id, 'completed')} className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100" title="Hoàn thành (Khách đã đến)">
-                            <CheckCircle2 className="h-4 w-4" />
-                          </button>
-                          <button onClick={() => handleStatusChange(res.id, 'cancelled')} className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600 transition hover:bg-red-100" title="Khách không đến/Huỷ">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                      {(res.status === 'completed' || res.status === 'cancelled') && (
-                        <button onClick={() => handleStatusChange(res.id, 'pending')} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-600 transition hover:bg-gray-200" title="Hoàn tác về chờ duyệt">
-                          <Clock className="h-4 w-4" />
+                      {res.status === 'pending' && !res.tableId && (
+                        <button 
+                          onClick={() => setSelectedReservationToAssign(res)} 
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition hover:bg-blue-100" 
+                          title="Gán bàn"
+                        >
+                          <MapPin className="h-4 w-4" />
                         </button>
                       )}
+                      <button 
+                        onClick={() => setSelectedReservationToUpdate(res)} 
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-200" 
+                        title="Cập nhật trạng thái"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -132,6 +158,21 @@ export function ReservationManager() {
           </tbody>
         </table>
       </div>
+
+      <AssignReservationModal 
+        isOpen={!!selectedReservationToAssign}
+        reservation={selectedReservationToAssign}
+        branchId={selectedReservationToAssign?.branchId || branchId}
+        onClose={() => setSelectedReservationToAssign(null)}
+        onAssign={handleAssignTable}
+      />
+
+      <UpdateReservationStatusModal
+        isOpen={!!selectedReservationToUpdate}
+        reservation={selectedReservationToUpdate}
+        onClose={() => setSelectedReservationToUpdate(null)}
+        onUpdate={handleStatusChange}
+      />
     </div>
   )
 }
