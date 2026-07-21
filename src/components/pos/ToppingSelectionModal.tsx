@@ -98,6 +98,11 @@ export function ToppingSelectionModal({
               delete next[t.id];
             }
           });
+        } else if (activeGroup && activeGroup.maxSelect > 0) {
+          const currentGroupSelectedCount = activeGroup.toppings.reduce((total, t) => total + (prev[t.id]?.quantity || 0), 0);
+          if (currentGroupSelectedCount >= activeGroup.maxSelect) {
+            return prev;
+          }
         }
         
         next[topping.id] = {
@@ -115,6 +120,14 @@ export function ToppingSelectionModal({
     setSelectedToppings((prev) => {
       const existing = prev[toppingId];
       if (!existing) return prev;
+      
+      if (delta > 0 && activeGroup && activeGroup.maxSelect > 0) {
+        const currentGroupSelectedCount = activeGroup.toppings.reduce((total, t) => total + (prev[t.id]?.quantity || 0), 0);
+        if (currentGroupSelectedCount >= activeGroup.maxSelect) {
+          return prev;
+        }
+      }
+
       const newQty = Math.max(1, existing.quantity + delta);
       return {
         ...prev,
@@ -186,66 +199,80 @@ export function ToppingSelectionModal({
 
               {/* Toppings list for active group */}
               <div className="flex-1 flex flex-col gap-2">
-                {activeGroup?.toppings.map((topping) => {
-                  const isSelected = !!selectedToppings[topping.id];
-                  const currentQty = selectedToppings[topping.id]?.quantity || 0;
+                {(() => {
+                  const currentGroupSelectedCount = activeGroup?.toppings.reduce((total, t) => total + (selectedToppings[t.id]?.quantity || 0), 0) || 0;
+                  const isMaxReached = activeGroup && activeGroup.maxSelect > 0 ? currentGroupSelectedCount >= activeGroup.maxSelect : false;
 
-                  return (
-                    <div
-                      key={topping.id}
-                      onClick={() => handleToggleTopping(topping)}
-                      className={cn(
-                        'flex justify-between items-center p-3 rounded-xl border transition-all cursor-pointer select-none',
-                        isSelected
-                          ? 'bg-cream border-latte shadow-sm'
-                          : 'bg-white border-[rgba(74,53,37,0.08)] hover:bg-beige/30'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            'w-5 h-5 rounded flex items-center justify-center border transition-all',
-                            isSelected
-                              ? 'bg-coffee border-coffee text-white'
-                              : 'border-[rgba(74,53,37,0.2)] bg-white'
-                          )}
-                        >
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  return activeGroup?.toppings.map((topping) => {
+                    const isSelected = !!selectedToppings[topping.id];
+                    const currentQty = selectedToppings[topping.id]?.quantity || 0;
+                    const disabled = !isSelected && activeGroup?.maxSelect !== 1 && isMaxReached;
+
+                    return (
+                      <div
+                        key={topping.id}
+                        onClick={() => !disabled && handleToggleTopping(topping)}
+                        className={cn(
+                          'flex justify-between items-center p-3 rounded-xl border transition-all select-none',
+                          isSelected
+                            ? 'bg-cream border-latte shadow-sm cursor-pointer'
+                            : disabled
+                              ? 'bg-gray-50 border-[rgba(74,53,37,0.04)] opacity-60 cursor-not-allowed'
+                              : 'bg-white border-[rgba(74,53,37,0.08)] hover:bg-beige/30 cursor-pointer'
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              'w-5 h-5 rounded flex items-center justify-center border transition-all',
+                              isSelected
+                                ? 'bg-coffee border-coffee text-white'
+                                : 'border-[rgba(74,53,37,0.2)] bg-white'
+                            )}
+                          >
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-coffee">{topping.name}</span>
+                            <span className="text-xs text-muted ml-2">
+                              +{topping.extraPrice.toLocaleString('vi-VN')}đ
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-bold text-sm text-coffee">{topping.name}</span>
-                          <span className="text-xs text-muted ml-2">
-                            +{topping.extraPrice.toLocaleString('vi-VN')}đ
-                          </span>
-                        </div>
+
+                        {/* Quantity Controls (Only shown if selected and maxSelect > 1) */}
+                        {isSelected && activeGroup?.maxSelect !== 1 && (
+                          <div
+                            className="flex items-center gap-2"
+                            onClick={(e) => e.stopPropagation()} // Prevent toggling selection
+                          >
+                            <button
+                              onClick={() => handleUpdateQuantity(topping.id, -1)}
+                              className="w-6 h-6 rounded-md border border-line flex items-center justify-center text-coffee hover:bg-white active:scale-95 transition-all"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="font-bold text-xs w-4 text-center text-coffee">
+                              {currentQty}
+                            </span>
+                            <button
+                              onClick={() => !isMaxReached && handleUpdateQuantity(topping.id, 1)}
+                              disabled={isMaxReached}
+                              className={cn(
+                                "w-6 h-6 rounded-md border flex items-center justify-center transition-all",
+                                isMaxReached 
+                                  ? "border-transparent text-muted/50 cursor-not-allowed bg-transparent"
+                                  : "border-line text-coffee hover:bg-white active:scale-95"
+                              )}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-
-                      {/* Quantity Controls (Only shown if selected and maxSelect > 1) */}
-                      {isSelected && activeGroup?.maxSelect !== 1 && (
-                        <div
-                          className="flex items-center gap-2"
-                          onClick={(e) => e.stopPropagation()} // Prevent toggling selection
-                        >
-                          <button
-                            onClick={() => handleUpdateQuantity(topping.id, -1)}
-                            className="w-6 h-6 rounded-md border border-line flex items-center justify-center text-coffee hover:bg-white active:scale-95 transition-all"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="font-bold text-xs w-4 text-center text-coffee">
-                            {currentQty}
-                          </span>
-                          <button
-                            onClick={() => handleUpdateQuantity(topping.id, 1)}
-                            className="w-6 h-6 rounded-md border border-line flex items-center justify-center text-coffee hover:bg-white active:scale-95 transition-all"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             </>
           )}
