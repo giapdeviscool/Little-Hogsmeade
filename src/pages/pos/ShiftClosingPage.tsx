@@ -12,6 +12,7 @@ import {
 import { OtpSuccessModal } from '../../components/ui/OtpSuccessModal';
 import { OtpFailureModal } from '../../components/ui/OtpFailureModal';
 import { verify2FA } from '../../api/otp.api';
+import { PosHeader } from '../../layouts/PosHeader';
 
 export function ShiftClosingPage() {
   const navigate = useNavigate();
@@ -324,28 +325,7 @@ export function ShiftClosingPage() {
       `}</style>
 
       {/* Top Header */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white shadow-sm border-b border-line">
-        <div className="flex items-center gap-6">
-          <h1 className="text-xl font-bold text-primary font-display cursor-pointer" onClick={() => navigate(ROUTES.pos)}>Little Hogsmeade</h1>
-          <nav className="hidden md:flex gap-6 ml-6">
-            <span className="text-on-surface-variant font-semibold text-xs cursor-pointer hover:text-coffee" onClick={() => navigate(ROUTES.pos)}>Bán Hàng</span>
-            <span className="text-on-surface-variant font-semibold text-xs cursor-pointer hover:text-coffee" onClick={() => navigate(ROUTES.invoices)}>Lịch sử Hóa Đơn</span>
-            <span className="text-primary border-b-2 border-primary font-bold pb-1 text-xs">Đóng Ca</span>
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5 items-center px-3 py-1 bg-surface-container rounded-full text-on-surface-variant text-xs">
-            <span className="material-symbols-outlined text-base">schedule</span>
-            <span>Ca Thu Ngân</span>
-          </div>
-          <button
-            onClick={() => navigate(ROUTES.pos)}
-            className="border border-line bg-white text-coffee px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-cream transition-colors cursor-pointer"
-          >
-            Quay lại POS
-          </button>
-        </div>
-      </header>
+      <PosHeader />
 
       <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
         {step !== 3 ? (
