@@ -111,7 +111,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </nav>
 
       <nav className="mt-auto flex flex-col gap-2 border-t border-line pt-5">
-        {((roleName||'').toLowerCase().includes('owner')) || (roleName||'').toLowerCase().includes('chain admin') && (
+        {(((roleName||'').toLowerCase().includes('owner')) || (roleName||'').toLowerCase().includes('chain admin')) && (
           <Link to="/admin/settings" className={cn(navButton, location.pathname.includes('/admin/settings') ? 'bg-latte text-white' : 'text-coffee hover:bg-white/65')}>
             <Icon name="settings" />
             {t.common.settings}
