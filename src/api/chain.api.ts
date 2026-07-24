@@ -69,6 +69,18 @@ export function toggleBranchStatus(id: string) {
   })
 }
 
+export interface CheckInactiveResult {
+  canToggle: boolean
+  reasons: string[]
+  warnings: string[]
+}
+
+export function checkInactiveConstraints(id: string) {
+  return httpClient<ApiResponse<CheckInactiveResult>>(`/branches/${id}/check-inactive`, {
+    headers: authHeaders(),
+  })
+}
+
 export function getChainConfig() {
   return httpClient<ApiResponse<ChainConfig>>('/chain/config', {
     headers: authHeaders(),

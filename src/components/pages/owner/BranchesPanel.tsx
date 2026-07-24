@@ -5,6 +5,7 @@ import { Plus, Store } from "lucide-react";
 import { BranchCard } from "./BranchCard";
 import { BranchDialog } from "./BranchDialog";
 import { BranchDetailDialog } from "./BranchDetailDialog";
+import { DisableBranchDialog } from "./DisableBranchDialog";
 import { isOwner } from "../../../utils/permissions";
 
 export function BranchesPanel({
@@ -33,6 +34,7 @@ export function BranchesPanel({
   onToggleStatus: (id: string) => void;
 }) {
   const [detailBranch, setDetailBranch] = useState<Branch | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<Branch | null>(null);
 
   return (
     <TooltipProvider>
@@ -66,7 +68,7 @@ export function BranchesPanel({
                 branch={branch}
                 onView={() => setDetailBranch(branch)}
                 onEdit={() => onEdit(branch)}
-                onToggle={() => onToggleStatus(branch.id)}
+                onToggle={() => setToggleTarget(branch)}
                 canEdit={isOwner()}
               />
             ))}
@@ -87,6 +89,18 @@ export function BranchesPanel({
           isOpen={detailBranch !== null}
           onClose={() => setDetailBranch(null)}
           branch={detailBranch}
+        />
+
+        <DisableBranchDialog
+          branchId={toggleTarget?.id ?? ''}
+          branchName={toggleTarget?.name ?? ''}
+          branchStatus={toggleTarget?.status ?? ''}
+          isOpen={toggleTarget !== null}
+          onClose={() => setToggleTarget(null)}
+          onConfirm={() => {
+            if (toggleTarget) onToggleStatus(toggleTarget.id)
+            setToggleTarget(null)
+          }}
         />
       </section>
     </TooltipProvider>
