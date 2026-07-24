@@ -36,7 +36,7 @@ export function EventsPanel() {
   }, [search])
 
   useEffect(() => {
-    void getBranches().then((res) => setBranches(normalizeList<Branch>(res.data))).catch(() => {})
+    void getBranches().then((res) => setBranches(normalizeList<Branch>(res.data).filter((b: Branch) => b.status === 'active'))).catch(() => {})
   }, [])
 
   const fetchEvents = useCallback(async (currentPage: number, currentSearch: string, currentStatus: string) => {
