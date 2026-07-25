@@ -25,9 +25,9 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="grid min-h-screen grid-cols-[290px_minmax(990px,1fr)] bg-white text-coffee">
+    <div className="flex min-h-screen bg-white text-coffee">
       <Sidebar onLogout={logout} />
-      <main className="min-w-0">
+      <main className="flex-1 min-w-0">
         <div className="px-10 py-8">
           <ProtectedRoute><Outlet /></ProtectedRoute>
         </div>

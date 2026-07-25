@@ -19,6 +19,7 @@ const emptyForm: LoyaltyRewardPayload = {
   discountType: 'percent',
   minOrderValue: 0,
   expiryDays: 30,
+  productId: null,
   description: '',
   isActive: true,
 }
@@ -38,10 +39,16 @@ function validateForm(form: LoyaltyRewardPayload): RewardFormErrors {
     errors.discountValue = 'Mức giảm giá phải lớn hơn 0'
   }
 
+  if (form.discountType === 'gift' && !form.productId) {
+    errors.productId = 'Vui lòng chọn phần thưởng'
+  }
+
   return errors
 }
 
 import { getAuthSession } from '../../../store/auth.store'
+import { getMenuItems } from '../../../api/menu-item.api'
+import { getBranchMenu } from '../../../api/branch-menu.api'
 
 export function RewardDialog({
   isOpen,
@@ -69,7 +76,26 @@ export function RewardDialog({
 
   const [form, setForm] = useState<LoyaltyRewardPayload>(emptyForm)
   const [errors, setErrors] = useState<RewardFormErrors>({})
+  const [menuItems, setMenuItems] = useState<any[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      if (form.branchId) {
+        getBranchMenu(form.branchId).then(res => {
+          if (res.data?.menuItems) {
+            setMenuItems(res.data.menuItems)
+          }
+        }).catch(console.error)
+      } else {
+        getMenuItems({ limit: 100, branchId: 'global' }).then(res => {
+          if (res.data?.items) {
+            setMenuItems(res.data.items)
+          }
+        }).catch(console.error)
+      }
+    }
+  }, [isOpen, form.branchId])
 
   const handleUploadImage = async (file: File) => {
     try {
@@ -92,6 +118,7 @@ export function RewardDialog({
         discountType: reward.discountType ?? 'percent',
         minOrderValue: reward.minOrderValue ?? 0,
         expiryDays: reward.expiryDays ?? 30,
+        productId: reward.productId ?? null,
         description: reward.description ?? '',
         imageUrl: reward.imageUrl,
         isActive: reward.isActive,
@@ -131,7 +158,7 @@ export function RewardDialog({
               <select
                 className="h-10 w-full rounded-lg border border-line bg-white px-3 text-sm focus:border-coffee focus:outline-none"
                 value={form.branchId || ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value || null }))}
+                onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value || null, productId: null }))}
               >
                 <option value="">Tất cả chi nhánh (Chung)</option>
                 {branches.map(b => (
@@ -172,7 +199,7 @@ export function RewardDialog({
                   setForm((prev) => ({
                     ...prev,
                     discountType: event.target.value as 'percent' | 'fixed' | 'gift',
-                    ...(event.target.value === 'gift' ? { discountValue: 0, minOrderValue: 0 } : {})
+                    ...(event.target.value === 'gift' ? { discountValue: 0, minOrderValue: 0 } : { productId: null })
                   }))
                 }
               >
@@ -182,6 +209,24 @@ export function RewardDialog({
               </select>
             </Field>
           </div>
+
+          {form.discountType === 'gift' && (
+            <div>
+              <Field label="Sản phẩm quà tặng">
+                <select
+                  className="h-9 w-full rounded-lg border border-line bg-white px-3 text-sm"
+                  value={form.productId || ''}
+                  onChange={(event) => setForm(prev => ({ ...prev, productId: event.target.value || null }))}
+                >
+                  <option value="">-- Chọn sản phẩm tặng --</option>
+                  {menuItems.map(item => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </select>
+              </Field>
+              {errors.productId ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.productId}</p> : null}
+            </div>
+          )}
           
           <div className="grid gap-3 sm:grid-cols-2">
             <NumberField

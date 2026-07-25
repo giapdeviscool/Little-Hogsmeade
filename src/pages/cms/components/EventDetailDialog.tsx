@@ -1,5 +1,6 @@
 import { CmsEditorModal } from '../CmsEditorModal'
 import { formatVnDate, formatVnTime, formatVnDateTime } from '../../../utils/date'
+import { formatHtml } from '../../../utils/html'
 import { StatusPill, InfoRow } from './CmsSharedUI'
 import type { Event } from '../../../types'
 
@@ -49,16 +50,16 @@ export function EventDetailDialog({
             label="Khung giờ"
             value={`${formatVnTime(event.startTime)} – ${formatVnTime(event.endTime)}`}
           />
-          <InfoRow label="Địa điểm" value={event.locationNote} />
-          <InfoRow label="Cập nhật" value={formatVnDateTime(event.updatedAt ?? event.createdAt)} />
+          <InfoRow label="Chi nhánh" value={event.branch?.name || 'Chưa cập nhật'} />
+          <InfoRow label="Khu vực" value={event.locationNote || 'Không có'} />
         </div>
 
         {/* Description */}
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-gold">Mô tả</p>
           <div
-            className="cms-rendered-content rounded-[14px] border border-line bg-cream/50 p-5 text-sm leading-7 text-coffee"
-            dangerouslySetInnerHTML={{ __html: event.description }}
+            className="cms-rendered-content rounded-[14px] border border-line bg-cream/50 p-5 text-sm leading-7 text-coffee [&_p]:mb-4 [&_p]:leading-7 [&_em]:italic [&_strong]:font-bold [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-latte [&_a]:underline break-words whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: formatHtml(event.description) }}
           />
         </div>
 

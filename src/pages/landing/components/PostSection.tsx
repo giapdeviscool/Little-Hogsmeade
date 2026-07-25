@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ArrowRight, Eye } from 'lucide-react'
+import { formatHtml } from '../../../utils/html'
 import { Card } from '../../../components/ui/Card'
 import { formatVnDate } from '../../../utils/date'
 import { PostDetailModal } from '../../../components/customer/DetailModals'
@@ -32,7 +33,7 @@ export function PostSection({ posts, showSeeMore = false }: { posts: Post[], sho
               <div className="p-5 flex flex-col h-[calc(100%-210px)]">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold">{post.category}</p>
                 <h3 className="mt-2 text-[18px] font-bold leading-6 transition group-hover:text-coffee">{post.title}</h3>
-                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted flex-1">{post.content}</p>
+                <div className="mt-3 line-clamp-3 text-sm leading-6 text-muted flex-1 [&_p]:inline break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatHtml(post.content) }} />
                 <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-xs text-muted">
                   <span>{formatVnDate(post.publishedAt ?? post.createdAt)}</span>
                   <span className="flex items-center gap-1 font-bold text-coffee"><Eye className="h-3.5 w-3.5" /> Đọc tiếp</span>

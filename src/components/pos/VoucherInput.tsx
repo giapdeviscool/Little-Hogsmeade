@@ -7,7 +7,7 @@ interface VoucherInputProps {
   customerId?: string | null;
   customerName?: string;
   voucherCode?: string;
-  onApplyVoucher: (voucherCode?: string, discountAmount?: number) => void;
+  onApplyVoucher: (voucherCode?: string, discountAmount?: number, giftProductId?: string, giftProduct?: any) => void;
 }
 
 export function VoucherInput({
@@ -32,11 +32,10 @@ export function VoucherInput({
           }}
           disabled={!hasCustomer}
           title={!hasCustomer ? "Vui lòng chọn khách hàng trước để áp dụng voucher" : "Khuyến mãi / Voucher"}
-          className={`w-full flex items-center justify-between p-3 transition-colors text-left ${
-            hasCustomer
+          className={`w-full flex items-center justify-between p-3 transition-colors text-left ${hasCustomer
               ? "cursor-pointer hover:bg-beige"
               : "cursor-not-allowed opacity-60 bg-gray-50/70"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-latte" />

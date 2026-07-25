@@ -263,7 +263,7 @@ export function CustomerPromotionsPage() {
 
       if (res.data) {
         const { voucher, updatedMembership } = res.data
-        setMembership(updatedMembership)
+        setMembership(prev => prev ? { ...prev, ...updatedMembership } : updatedMembership)
         setMyVouchers(prev => [voucher, ...prev])
         setNotice({ type: 'success', msg: `Đổi thành công! Voucher "${reward.name}" đã được thêm vào Kho Voucher của bạn.` })
       }
@@ -944,7 +944,7 @@ export function CustomerMembershipPage() {
 
       if (res.data) {
         const { voucher, updatedMembership } = res.data
-        setMembership(updatedMembership)
+        setMembership(prev => prev ? { ...prev, ...updatedMembership } : updatedMembership)
         setSuccessVoucher(voucher)
 
         getPointTransactions(updatedMembership.id).then(txRes => {
@@ -1232,7 +1232,7 @@ export function CustomerMembershipPage() {
                   {transactions.map(tx => (
                     <div key={tx.id} className="flex items-center justify-between border-b border-line pb-4 last:border-0 last:pb-0">
                       <div>
-                        <p className="font-semibold text-[15px]">{tx.type === 'earn' ? 'Tích điểm từ hóa đơn' : tx.type === 'redeem' ? 'Đổi điểm nhận ưu đãi' : 'Điều chỉnh điểm'}</p>
+                        <p className="font-semibold text-[15px]">{tx.type.toLowerCase() === 'earn' ? 'Tích điểm từ hóa đơn' : tx.type.toLowerCase() === 'redeem' ? 'Đổi điểm nhận ưu đãi' : 'Điều chỉnh điểm'}</p>
                         <p className="text-xs text-muted mt-1">{formatVnDateTime(tx.createdAt)}</p>
                       </div>
                       <div className={`font-bold text-lg ${tx.points > 0 ? 'text-emerald-600' : 'text-red-500'}`}>

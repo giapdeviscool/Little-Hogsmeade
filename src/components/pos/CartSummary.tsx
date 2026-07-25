@@ -11,7 +11,7 @@ interface CartSummaryProps {
   customerName?: string;
   voucherCode?: string;
   discountAmount?: number;
-  onSetVoucher?: (code?: string, amount?: number) => void;
+  onSetVoucher?: (code?: string, amount?: number, giftProductId?: string, giftProduct?: any) => void;
   onClear?: () => void;
 }
 
@@ -49,7 +49,7 @@ export function CartSummary({
 
     setLoading(true);
     const items = cartItems.map((ci) => ({
-      menuItemId: ci.id,
+      menuItemId: (ci as any).productId || ci.id,
       unitPrice: parsePrice(ci.price),
       quantity: ci.quantity,
       toppings: (ci.toppings || []).map((t) => ({
@@ -103,8 +103,8 @@ export function CartSummary({
         customerId={customerId}
         customerName={customerName}
         voucherCode={voucherCode}
-        onApplyVoucher={(code, amount) => {
-          if (onSetVoucher) onSetVoucher(code, amount || 0);
+        onApplyVoucher={(code, amount, giftProductId, giftProduct) => {
+          if (onSetVoucher) onSetVoucher(code, amount || 0, giftProductId, giftProduct);
         }}
       />
       <div className="flex flex-col gap-1 mb-2">
