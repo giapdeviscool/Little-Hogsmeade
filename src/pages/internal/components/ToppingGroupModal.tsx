@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createToppingGroup, updateToppingGroup } from '../../../api/topping-group.api'
+import { getIngredients, type Ingredient } from '../../../api/ingredient.api'
 import { AlertModal } from '../../../components/ui/AlertModal'
 import { CurrencyInput } from '../../../components/ui/CurrencyInput'
 
@@ -14,7 +15,8 @@ export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: Topp
   const [name, setName] = useState('')
   const [minSelect, setMinSelect] = useState(0)
   const [maxSelect, setMaxSelect] = useState(1)
-  const [toppings, setToppings] = useState<{ name: string; extraPrice: number }[]>([])
+  const [toppings, setToppings] = useState<{ name: string; extraPrice: number; ingredientId?: string; quantityRequired?: number }[]>([])
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -22,11 +24,12 @@ export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: Topp
 
   useEffect(() => {
     if (isOpen) {
+      getIngredients({ branchId: 'global' }).then(res => setIngredients(res.data)).catch(console.error)
       if (editData) {
         setName(editData.name)
         setMinSelect(editData.minSelect)
         setMaxSelect(editData.maxSelect)
-        setToppings(editData.toppings.map((t: any) => ({ name: t.name, extraPrice: t.extraPrice })))
+        setToppings(editData.toppings.map((t: any) => ({ name: t.name, extraPrice: t.extraPrice, ingredientId: t.ingredientId, quantityRequired: t.quantityRequired })))
       } else {
         setName('')
         setMinSelect(0)
@@ -43,12 +46,16 @@ export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: Topp
     setToppings([...toppings, { name: '', extraPrice: 0 }])
   }
 
-  const handleToppingChange = (index: number, field: 'name' | 'extraPrice', value: string) => {
+  const handleToppingChange = (index: number, field: 'name' | 'extraPrice' | 'ingredientId' | 'quantityRequired', value: any) => {
     const newToppings = [...toppings]
     if (field === 'name') {
       newToppings[index].name = value
-    } else {
+    } else if (field === 'extraPrice') {
       newToppings[index].extraPrice = parseInt(value) || 0
+    } else if (field === 'ingredientId') {
+      newToppings[index].ingredientId = value
+    } else if (field === 'quantityRequired') {
+      newToppings[index].quantityRequired = parseFloat(value) || 0
     }
     setToppings(newToppings)
   }
@@ -86,9 +93,15 @@ export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: Topp
     }
   }
 
+  const getUnit = (ingredientId?: string) => {
+    if (!ingredientId) return ''
+    const ing = ingredients.find(i => i.id === ingredientId)
+    return ing ? ing.unit : ''
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-[24px] bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-4xl rounded-[24px] bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="mb-6 text-2xl font-bold text-coffee">{editData ? 'Sửa nhóm Topping' : 'Thêm nhóm Topping mới'}</h2>
         
         {error && (
@@ -152,32 +165,64 @@ export function ToppingGroupModal({ isOpen, editData, onClose, onSuccess }: Topp
 
             <div className="space-y-3">
               {toppings.map((top, idx) => (
-                <div key={idx} className="flex gap-3 items-start">
+                <div key={idx} className="flex gap-3 items-start bg-gray-50 p-3 rounded-xl border border-line">
                   <div className="flex-1">
+                    <label className="block text-xs text-muted mb-1 font-medium">Tên tuỳ chọn <span className="text-red-500">*</span></label>
                     <input
                       required
-                      placeholder="Tên tuỳ chọn (VD: 50% Đường)"
-                      className="w-full rounded-[14px] border border-line p-3 text-sm"
+                      placeholder="VD: 50% Đường"
+                      className="w-full rounded-[14px] border border-line p-2.5 text-sm"
                       value={top.name}
                       onChange={(e) => handleToppingChange(idx, 'name', e.target.value)}
                     />
                   </div>
-                  <div className="w-1/3">
+                  <div className="w-32">
+                    <label className="block text-xs text-muted mb-1 font-medium">Phụ thu</label>
                     <CurrencyInput
                       required
-                      placeholder="Phụ thu (VND)"
-                      className="w-full rounded-[14px] border border-line p-3 text-sm"
+                      placeholder="VND"
+                      className="w-full rounded-[14px] border border-line p-2.5 text-sm"
                       value={top.extraPrice}
                       onValueChange={(val) => handleToppingChange(idx, 'extraPrice', val)}
                     />
                   </div>
-                  <button 
-                    type="button"
-                    onClick={() => handleRemoveTopping(idx)}
-                    className="p-3 text-red-500 hover:bg-red-50 rounded-[14px]"
-                  >
-                    Xoá
-                  </button>
+                  <div className="w-48">
+                    <label className="block text-xs text-muted mb-1 font-medium">Nguyên liệu tiêu hao (Optional)</label>
+                    <select
+                      className="w-full rounded-[14px] border border-line p-2.5 text-sm"
+                      value={top.ingredientId || ''}
+                      onChange={(e) => handleToppingChange(idx, 'ingredientId', e.target.value)}
+                    >
+                      <option value="">-- Không chọn --</option>
+                      {ingredients.map(ing => (
+                        <option key={ing.id} value={ing.id}>{ing.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-24 relative">
+                    <label className="block text-xs text-muted mb-1 font-medium">Số lượng</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      className="w-full rounded-[14px] border border-line p-2.5 text-sm pr-10"
+                      value={top.quantityRequired || ''}
+                      onChange={(e) => handleToppingChange(idx, 'quantityRequired', e.target.value)}
+                      disabled={!top.ingredientId}
+                    />
+                    <span className="absolute right-3 top-[30px] text-xs text-muted pointer-events-none">
+                      {getUnit(top.ingredientId)}
+                    </span>
+                  </div>
+                  <div className="pt-5">
+                    <button 
+                      type="button"
+                      onClick={() => handleRemoveTopping(idx)}
+                      className="p-2.5 text-red-500 hover:bg-red-50 rounded-[14px] text-sm font-medium"
+                    >
+                      Xoá
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
