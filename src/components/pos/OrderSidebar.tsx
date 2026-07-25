@@ -93,6 +93,7 @@ export function OrderSidebar({
         cartItems={activeOrder.cartItems}
         orderType={activeOrder.orderType}
         customerId={activeOrder.customer?.id || null}
+        customerName={activeOrder.customer?.fullName}
         voucherCode={activeOrder.voucherCode}
         discountAmount={activeOrder.discountAmount}
         onSetVoucher={onSetVoucher}
