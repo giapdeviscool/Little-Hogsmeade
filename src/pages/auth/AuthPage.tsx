@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthInput } from '../../components/ui/AuthInput'
-import { LanguageSwitch } from '../../components/ui/LanguageSwitch'
 import { useLocale } from '../../hooks/useLocale'
 import type { AuthMode } from '../../types'
 import { login, register } from '../../api/auth.api'
@@ -85,7 +84,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
       } else if (isStaffOrCashier) {
         navigate('/admin/internal?tab=attendance')
       } else {
-        navigate(ROUTES.adminDashboard)
+        navigate(ROUTES.adminPos)
       }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to connect to server')
@@ -98,27 +97,17 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     <main className="grid min-h-screen grid-cols-[1.05fr_.95fr] bg-white p-6 text-coffee">
       <section className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(90deg,rgba(74,53,37,.72),rgba(74,53,37,.18)),url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1400&q=85')] bg-cover bg-center p-10 shadow-soft">
         <div className="relative z-10 flex items-start justify-between text-white">
-          <strong className="text-[30px] font-bold tracking-[-0.03em]">{t.brand.name}</strong>
+          <button type="button" onClick={() => navigate(ROUTES.customerHome)} className="text-[30px] font-bold tracking-[-0.03em] hover:opacity-80 transition-opacity text-left">
+            {t.brand.name}
+          </button>
           <div className="flex items-center gap-4">
             <span className="mt-2 text-xs font-bold uppercase tracking-[0.34em] text-white/75">{t.brand.tagline}</span>
-            <LanguageSwitch tone="glass" />
           </div>
         </div>
         <div className="relative z-10 mt-[210px] max-w-[620px] text-white">
           <p className="mb-4 inline-flex rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] backdrop-blur">ERP & POS Management</p>
           <h1 className="text-[52px] font-bold leading-[1.03] tracking-[-0.05em]">{t.auth.heroTitle}</h1>
           <span className="mt-5 block max-w-[520px] text-[17px] leading-7 text-white/80">{t.auth.heroSubtitle}</span>
-        </div>
-        <div className="absolute bottom-10 left-10 right-10 z-10 grid grid-cols-3 gap-4">
-          {['12 Chi nhánh', '6.4K Đơn/tháng', '98% Đồng bộ'].map((metric) => {
-            const [value, ...label] = metric.split(' ')
-            return (
-              <article key={metric} className="rounded-[18px] border border-white/20 bg-white/15 p-5 text-white backdrop-blur">
-                <b className="block text-[32px] leading-none">{value}</b>
-                <span className="mt-2 block text-xs font-semibold text-white/75">{label.join(' ')}</span>
-              </article>
-            )
-          })}
         </div>
       </section>
 
@@ -153,6 +142,13 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
             </div>
           )}
           <button type="submit" disabled={isSubmitting} className="mt-2 h-12 rounded-[14px] bg-coffee px-5 text-[15px] font-bold text-white shadow-[0_16px_32px_rgba(74,53,37,0.18)] hover:bg-[#3f2d20] disabled:cursor-wait disabled:opacity-65">{isSubmitting ? t.auth.processing : isForgot ? t.auth.submitRecovery : isRegister ? t.auth.submitRegister : t.auth.login}</button>
+          
+          <div className="flex justify-center mt-1">
+            <button type="button" onClick={() => navigate(ROUTES.customerHome)} className="text-sm font-bold text-muted hover:text-coffee hover:underline transition-colors">
+              Quay về trang chủ
+            </button>
+          </div>
+
           {message && <p className="rounded-[12px] bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</p>}
           {error && <p className="rounded-[12px] bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
         </form>
