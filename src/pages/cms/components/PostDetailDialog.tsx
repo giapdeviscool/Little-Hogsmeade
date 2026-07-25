@@ -1,5 +1,6 @@
 import { CmsEditorModal } from '../CmsEditorModal'
 import { formatVnDate, formatVnDateTime } from '../../../utils/date'
+import { formatHtml } from '../../../utils/html'
 import { StatusPill, InfoRow } from './CmsSharedUI'
 import type { Post } from '../../../types'
 
@@ -48,15 +49,14 @@ export function PostDetailDialog({
           <InfoRow label="Danh mục" value={post.category} />
           <InfoRow label="Tags" value={post.tags || 'Không có'} />
           <InfoRow label="Ngày đăng" value={formatVnDate(post.publishedAt ?? post.createdAt)} />
-          <InfoRow label="Cập nhật" value={formatVnDateTime(post.updatedAt ?? post.createdAt)} />
         </div>
 
         {/* Content */}
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-gold">Nội dung</p>
           <div
-            className="cms-rendered-content rounded-[14px] border border-line bg-cream/50 p-5 text-sm leading-7 text-coffee"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            className="cms-rendered-content rounded-[14px] border border-line bg-cream/50 p-5 text-sm leading-7 text-coffee [&_p]:mb-4 [&_p]:leading-7 [&_em]:italic [&_strong]:font-bold [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-latte [&_a]:underline break-words whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: formatHtml(post.content) }}
           />
         </div>
 

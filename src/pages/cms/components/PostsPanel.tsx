@@ -12,6 +12,7 @@ import { normalizeList } from './cms.utils'
 import { StateShell, InlineNotice, StatusPill } from './CmsSharedUI'
 import { PostEditorDialog } from './PostEditorDialog'
 import { PostDetailDialog } from './PostDetailDialog'
+import { formatHtml } from '../../../utils/html'
 
 export function PostsPanel() {
   const { t } = useLocale()
@@ -148,7 +149,7 @@ export function PostsPanel() {
                     <StatusPill active={post.isPublished} />
                   </div>
                   <p className="mt-2 text-sm text-muted">{post.slug} · {post.category}</p>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-coffee/80">{post.content}</p>
+                  <div className="cms-rendered-content mt-2 line-clamp-2 text-sm leading-6 text-coffee/80 [&_p]:inline break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatHtml(post.content) }} />
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button type="button" onClick={() => setViewingPost(post)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">

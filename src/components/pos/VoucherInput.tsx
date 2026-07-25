@@ -6,7 +6,7 @@ interface VoucherInputProps {
   orderSubtotal: number;
   customerId?: string | null;
   voucherCode?: string;
-  onApplyVoucher: (voucherCode?: string, discountAmount?: number) => void;
+  onApplyVoucher: (voucherCode?: string, discountAmount?: number, giftProductId?: string, giftProduct?: any) => void;
 }
 
 export function VoucherInput({ orderSubtotal, customerId, voucherCode, onApplyVoucher }: VoucherInputProps) {
@@ -57,7 +57,7 @@ export function VoucherInput({ orderSubtotal, customerId, voucherCode, onApplyVo
       
       if (res.data && res.data.isValid) {
         setSuccess(`Đã áp dụng giảm ₫${res.data.discountAmount.toLocaleString('vi-VN')}`);
-        onApplyVoucher(voucherToApply.trim(), res.data.discountAmount);
+        onApplyVoucher(voucherToApply.trim(), res.data.discountAmount, res.data.giftProductId, res.data.giftProduct);
         setIsOpen(false);
       } else {
         setError('Mã không hợp lệ');

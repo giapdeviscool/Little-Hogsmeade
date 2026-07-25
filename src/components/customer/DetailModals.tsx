@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from '../ui/dialog'
 import type { Event, Post } from '../../types/cms.types'
 import { formatVnDate, formatVnTime } from '../../utils/date'
+import { formatHtml } from '../../utils/html'
 import { Clock3, MapPin } from 'lucide-react'
 
 export function EventDetailModal({ event, onClose }: { event: Event | null; onClose: () => void }) {
@@ -26,15 +27,12 @@ export function EventDetailModal({ event, onClose }: { event: Event | null; onCl
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           <p className="mb-6 flex items-center text-sm font-semibold text-coffee">
             <MapPin className="mr-2 h-5 w-5" />
-            Địa điểm: {event.locationNote || 'Chưa cập nhật'}
+            Địa điểm: {event.branch?.name || 'Chi nhánh'} {event.locationNote && `(Khu vực: ${event.locationNote})`}
           </p>
-          <div className="prose prose-sm md:prose-base max-w-none text-muted">
-            {event.description.split('\n').map((paragraph, index) => (
-              <p key={index} className="mb-4 leading-7">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+          <div 
+            className="prose prose-sm md:prose-base max-w-none text-muted [&_p]:mb-4 [&_p]:leading-7 [&_em]:italic [&_strong]:font-bold [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-latte [&_a]:underline whitespace-pre-wrap break-words"
+            dangerouslySetInnerHTML={{ __html: formatHtml(event.description) }}
+          />
         </div>
       </DialogContent>
     </Dialog>
@@ -65,13 +63,10 @@ export function PostDetailModal({ post, onClose }: { post: Post | null; onClose:
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
-          <div className="prose prose-sm md:prose-base max-w-none text-coffee">
-            {post.content.split('\n').map((paragraph, index) => (
-              <p key={index} className="mb-5 leading-8">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+          <div 
+            className="prose prose-sm md:prose-base max-w-none text-coffee [&_p]:mb-5 [&_p]:leading-8 [&_em]:italic [&_strong]:font-bold [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-latte [&_a]:underline [&_img]:rounded-xl [&_img]:mt-4 whitespace-pre-wrap break-words"
+            dangerouslySetInnerHTML={{ __html: formatHtml(post.content) }}
+          />
         </div>
       </DialogContent>
     </Dialog>
