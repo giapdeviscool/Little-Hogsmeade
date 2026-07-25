@@ -159,8 +159,9 @@ export function CustomerPromotionsPage() {
       getCustomerLoyaltyRewards().catch(() => [])
     ]).then(([voucherRes, rewardsRes]) => {
       if (alive) {
-        setvouchers(voucherRes.data || [])
-        setRewards(rewardsRes || [])
+        const now = new Date()
+        setvouchers((voucherRes.data || []).filter((v: any) => !v.expireDate || new Date(v.expireDate) > now))
+        setRewards((rewardsRes || []).filter((r: any) => r.isActive !== false))
         setLoading(false)
       }
     })
@@ -216,7 +217,8 @@ export function CustomerPromotionsPage() {
         }
 
         const myVouchersRes = await getCustomerVouchers(fullProfile.id)
-        setMyVouchers(myVouchersRes.data || [])
+        const now = new Date()
+        setMyVouchers((myVouchersRes.data || []).filter((v: any) => !v.expireDate || new Date(v.expireDate) > now))
         setNotice({ type: 'success', msg: 'Đăng nhập thành công!' })
       }
     } catch (error: any) {

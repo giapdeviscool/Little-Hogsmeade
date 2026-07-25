@@ -1,5 +1,7 @@
-﻿import type { Branch, Voucher, VoucherPayload } from '../../../types'
+import { useState, useMemo } from 'react'
+import type { Branch, Voucher, VoucherPayload } from '../../../types'
 import { dateToInput, formatCurrency } from '../../../utils/owner.utils'
+import { Pagination } from '../../ui/Pagination'
 import { StatusBadge, ScopeBadge } from './OwnerFields'
 import { DataTable } from './DataTable'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -48,13 +50,43 @@ export function VouchersPanel({
   const VoucherToToggle = Vouchers.find(p => p.id === confirmToggleVoucherId)
   const selectedVoucher = selectedVoucherId ? Vouchers.find(p => p.id === selectedVoucherId) || null : null
 
+  const [page, setPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+
+  const filteredVouchers = useMemo(() => {
+    return Vouchers.filter(v => {
+      if (statusFilter === 'active' && v.isActive === false) return false
+      if (statusFilter === 'inactive' && v.isActive !== false) return false
+      return true
+    })
+  }, [Vouchers, statusFilter])
+
+  const PAGE_SIZE = 10
+  const totalItems = filteredVouchers.length
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1
+  const paginatedVouchers = filteredVouchers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
     <TooltipProvider>
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-coffee">
-            Danh sách Voucher
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-coffee">
+              Danh sách Voucher
+            </h2>
+            <select
+              className="h-9 rounded-lg border border-line bg-white px-3 text-sm focus:border-coffee focus:outline-none"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as any)
+                setPage(1)
+              }}
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="active">Đang hoạt động</option>
+              <option value="inactive">Ngừng hoạt động</option>
+            </select>
+          </div>
           <button
             onClick={onOpenModal}
             className="flex h-9 items-center gap-2 rounded-lg bg-coffee px-4 text-sm font-semibold text-white transition-colors hover:bg-coffee/90"
@@ -65,7 +97,7 @@ export function VouchersPanel({
         </div>
 
         <DataTable
-          data={Vouchers}
+          data={paginatedVouchers}
           colSpan={6}
           emptyMessage="Chưa có Voucher."
           renderHeader={() => (
@@ -180,6 +212,16 @@ export function VouchersPanel({
             );
           }}
         />
+
+        {totalPages > 1 || totalItems > 0 ? (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={totalItems}
+            onPageChange={setPage}
+            label="voucher"
+          />
+        ) : null}
 
         <VoucherDialog
           isOpen={isModalOpen}

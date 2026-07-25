@@ -16,7 +16,7 @@ const emptyForm: LoyaltyRewardPayload = {
   branchId: null,
   pointsRequired: 1,
   discountValue: 10,
-  discountType: 'percent',
+  discountType: 'fixed',
   minOrderValue: 0,
   expiryDays: 30,
   productId: null,
@@ -37,6 +37,10 @@ function validateForm(form: LoyaltyRewardPayload): RewardFormErrors {
 
   if (form.discountType !== 'gift' && form.discountValue <= 0) {
     errors.discountValue = 'Mức giảm giá phải lớn hơn 0'
+  }
+
+  if (form.discountType === 'percent' && form.discountValue > 100) {
+    errors.discountValue = 'Mức giảm giá không được vượt quá 100%'
   }
 
   if (form.discountType === 'gift' && !form.productId) {
@@ -183,17 +187,9 @@ export function RewardDialog({
           {errors.pointsRequired ? <p className="-mt-2 text-xs text-[#c25a5a]">{errors.pointsRequired}</p> : null}
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <NumberField
-                label="Mức giảm"
-                value={form.discountType === 'gift' ? 0 : form.discountValue ?? 0}
-                onChange={(value) => setForm((prev) => ({ ...prev, discountValue: value }))}
-              />
-              {errors.discountValue ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.discountValue}</p> : null}
-            </div>
-            <Field label="Loại phần thưởng / Giảm giá">
+            <Field label="Loại phần thưởng">
               <select
-                className="h-9 w-full rounded-lg border border-line bg-white px-3 text-sm"
+                className="h-10 w-full rounded-lg border border-line bg-white px-3 text-sm focus:border-coffee focus:outline-none"
                 value={form.discountType}
                 onChange={(event) =>
                   setForm((prev) => ({
@@ -203,11 +199,20 @@ export function RewardDialog({
                   }))
                 }
               >
-                <option value="percent">Giảm Phần trăm (%)</option>
                 <option value="fixed">Giảm Số tiền (VNĐ)</option>
+                <option value="percent">Giảm Phần trăm (%)</option>
                 <option value="gift">Quà tặng (Miễn phí)</option>
               </select>
             </Field>
+            <div>
+              <NumberField
+                label="Giá trị (VND / %)"
+                value={form.discountType === 'gift' ? 0 : form.discountValue ?? 0}
+                onChange={(value) => setForm((prev) => ({ ...prev, discountValue: value }))}
+                disabled={form.discountType === 'gift'}
+              />
+              {errors.discountValue ? <p className="mt-1 text-xs text-[#c25a5a]">{errors.discountValue}</p> : null}
+            </div>
           </div>
 
           {form.discountType === 'gift' && (

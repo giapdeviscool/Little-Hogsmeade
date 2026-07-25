@@ -22,10 +22,11 @@ function resolveBranchId(branchId?: string | null) {
 }
 
 function buildBranchQuery(branchId?: string | null, existingQuery = '') {
+  if (branchId === 'ALL_BRANCHES') return existingQuery
   const resolvedBranchId = resolveBranchId(branchId)
   if (resolvedBranchId === undefined) return existingQuery
   const val = resolvedBranchId === null ? 'null' : encodeURIComponent(resolvedBranchId)
-  const separator = existingQuery ? '&' : '?'
+  const separator = existingQuery.includes('?') ? '&' : '?'
   return `${existingQuery}${separator}branchId=${val}`
 }
 
@@ -134,8 +135,10 @@ function buildRewardsQuery(params: LoyaltyRewardListParams = {}) {
 export async function getLoyaltyRewards(
   params: LoyaltyRewardListParams = {},
 ): Promise<LoyaltyRewardListResult> {
+  const queryUrl = `/admin/loyalty/rewards${buildRewardsQuery(params)}`
+  const separator = queryUrl.includes('?') ? '&' : '?'
   const response = await httpClient<ApiResponse<PaginatedData<LoyaltyRewardApiRecord>>>(
-    `/admin/loyalty/rewards${buildRewardsQuery(params)}`,
+    `${queryUrl}${separator}exactBranch=true`,
   )
 
   const data = response.data

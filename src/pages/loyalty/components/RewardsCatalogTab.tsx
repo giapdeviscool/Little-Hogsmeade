@@ -56,7 +56,7 @@ export function RewardsCatalogTab() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [branchFilter, setBranchFilter] = useState<string>(isOwner ? 'all' : (user?.branchId || ''))
+  const [branchFilter, setBranchFilter] = useState<string>(isOwner ? 'global' : (user?.branchId || ''))
   const [branches, setBranches] = useState<Branch[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<RewardDialogMode>('create')
@@ -91,7 +91,7 @@ export function RewardsCatalogTab() {
         search: debouncedSearch || undefined,
         discount_type: typeFilter === 'all' ? undefined : typeFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
-        branchId: branchFilter === 'all' ? null : branchFilter,
+        branchId: branchFilter === 'global' ? null : branchFilter,
       })
 
       setRewards(result.items)
@@ -161,14 +161,13 @@ export function RewardsCatalogTab() {
   }
 
   const handleDeleteReward = async () => {
-    if (!rewardToDelete) return
+    if (!deleteTarget) return
     setSaving(true)
 
     try {
-      await deleteLoyaltyReward(rewardToDelete)
+      await deleteLoyaltyReward(deleteTarget.id)
       toast.success('Đã xóa phần thưởng.')
-      setDeleteConfirmOpen(false)
-      setRewardToDelete(null)
+      setDeleteTarget(null)
       await fetchRewards()
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Không xóa được phần thưởng.')
@@ -243,7 +242,7 @@ export function RewardsCatalogTab() {
                 setPage(1)
               }}
             >
-              <option value="all">Tất cả chi nhánh</option>
+              <option value="global">Chung (Toàn hệ thống)</option>
               {branches.map(b => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
@@ -272,7 +271,6 @@ export function RewardsCatalogTab() {
             renderHeader={() => (
               <tr>
                 <th className="px-4 py-3">Tên phần thưởng</th>
-                {isOwner && <th className="px-4 py-3">Chi nhánh</th>}
                 <th className="px-4 py-3">Loại phần thưởng</th>
                 <th className="px-4 py-3 text-right">Điểm yêu cầu</th>
                 <th className="px-4 py-3">Giá trị quy đổi</th>
@@ -297,11 +295,6 @@ export function RewardsCatalogTab() {
                     </div>
                   </div>
                 </td>
-                {isOwner && (
-                  <td className="px-4 py-3 text-sm">
-                    {reward.branchId ? branches.find(b => b.id === reward.branchId)?.name || '...' : 'Tất cả (Chung)'}
-                  </td>
-                )}
                 <td className="px-4 py-3">
                   <RewardTypeBadge type={reward.discountType} />
                 </td>
@@ -366,9 +359,9 @@ export function RewardsCatalogTab() {
 
       <ConfirmDialog
         isOpen={!!deleteTarget}
-        title="Ngưng áp dụng phần thưởng này?"
-        description="Phần thưởng sẽ được chuyển sang trạng thái không hoạt động và ẩn khỏi danh sách đổi thưởng."
-        confirmLabel="Ngưng áp dụng"
+        title="Xóa phần thưởng"
+        description={`Bạn có chắc chắn muốn xóa vĩnh viễn phần thưởng "${deleteTarget?.name}" không? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa vĩnh viễn"
         loading={saving}
         onConfirm={handleDeleteReward}
         onClose={() => setDeleteTarget(null)}

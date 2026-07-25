@@ -19,17 +19,18 @@ export function TextField({ label, value, onChange }: { label: string; value: st
   )
 }
 
-export function NumberField({ label, value, onChange, emphasized = false, }: { label: string; value: number; onChange: (value: number) => void; emphasized?: boolean }) {
+export function NumberField({ label, value, onChange, emphasized = false, disabled = false }: { label: string; value: number; onChange: (value: number) => void; emphasized?: boolean; disabled?: boolean }) {
   const input = (
     <input
       className={
         emphasized
-          ? 'h-9 w-full rounded-lg border-2 border-coffee bg-white px-3 text-base font-semibold text-coffee'
-          : 'h-9 w-full rounded-lg border border-line bg-white px-3 text-sm'
+          ? 'h-9 w-full rounded-lg border-2 border-coffee bg-white px-3 text-base font-semibold text-coffee disabled:opacity-50 disabled:bg-beige disabled:cursor-not-allowed'
+          : 'h-9 w-full rounded-lg border border-line bg-white px-3 text-sm disabled:opacity-50 disabled:bg-beige disabled:cursor-not-allowed'
       }
       type="number"
       value={value}
       onChange={(event) => onChange(Number(event.target.value))}
+      disabled={disabled}
     />
   )
 
