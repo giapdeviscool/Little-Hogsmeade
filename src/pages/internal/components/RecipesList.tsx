@@ -91,7 +91,7 @@ export function RecipesList() {
   const fetchRecipes = async () => {
     try {
       setLoading(true)
-      const res = await getRecipes({ search, branchId: selectedBranch })
+      const res = await getRecipes({ search, branchId: selectedBranch, limit: 1000 })
       setRecipes(res.data.items)
     } catch (err) {
       console.error(err)

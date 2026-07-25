@@ -31,11 +31,11 @@ const SHIFT_TONES = [
 ]
 
 const ROW_HEIGHT = 78
-const LEFT_WIDTH = 284
+const LEFT_WIDTH = 240
 const GRID_DAYS = 7
-const DAY_COLUMN = 'minmax(132px, 1fr)'
+const DAY_COLUMN = 'minmax(120px, 1fr)'
 const SCHEDULE_GRID_TEMPLATE = `${LEFT_WIDTH}px repeat(${GRID_DAYS}, ${DAY_COLUMN})`
-const SCHEDULE_MIN_WIDTH = LEFT_WIDTH + GRID_DAYS * 132
+const SCHEDULE_MIN_WIDTH = LEFT_WIDTH + GRID_DAYS * 120
 
 function getMonday(d: Date): Date {
   const date = new Date(d)
@@ -123,7 +123,7 @@ export function ScheduleView() {
   const [selectedRoster, setSelectedRoster] = useState<RosterEntry | null>(null)
   const [assignDate, setAssignDate] = useState('')
   const [assignEmployee, setAssignEmployee] = useState('')
-  const [assignShift, setAssignShift] = useState('')
+  const [assignShifts, setAssignShifts] = useState<string[]>([])
 
   useEffect(() => {
     loadBranches()
@@ -174,31 +174,40 @@ export function ScheduleView() {
     }
   }
 
-  async function handleAssign() {
-    if (!assignEmployee || !assignShift || !assignDate) {
-      setError('Vui lòng chọn nhân viên, ca làm và ngày trước khi lưu.')
+  async function handleAssignMultiple() {
+    if (!assignEmployee || assignShifts.length === 0 || !assignDate) {
+      setError('Vui lòng chọn nhân viên, ngày và ít nhất một ca làm trước khi lưu.')
       return
     }
     try {
       setSaving(true)
       setError('')
-      const payload: CreateRosterPayload = {
-        employeeId: assignEmployee,
-        shiftId: assignShift,
-        date: assignDate,
-        branchId: selectedBranch,
-      }
-      await rosterApi.createRoster(payload)
+      await Promise.all(
+        assignShifts.map((shiftId) =>
+          rosterApi.createRoster({
+            employeeId: assignEmployee,
+            shiftId: shiftId,
+            date: assignDate,
+            branchId: selectedBranch,
+          })
+        )
+      )
       setNotice('Đã xếp lịch thành công.')
       setShowAssign(false)
       setAssignEmployee('')
-      setAssignShift('')
+      setAssignShifts([])
       await loadData()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Không thể xếp lịch')
     } finally {
       setSaving(false)
     }
+  }
+
+  function toggleAssignShift(shiftId: string) {
+    setAssignShifts((prev) =>
+      prev.includes(shiftId) ? prev.filter((id) => id !== shiftId) : [...prev, shiftId]
+    )
   }
 
   async function handleRemove(id: string) {
@@ -254,7 +263,7 @@ export function ScheduleView() {
     if (!canManageSchedule) return
     setAssignEmployee(employeeId || '')
     setAssignDate(date ? formatDate(date) : '')
-    setAssignShift(shifts[0]?.id || '')
+    setAssignShifts([])
     setShowAssign(true)
   }
 
@@ -431,35 +440,62 @@ export function ScheduleView() {
       {notice && <div className="rounded-[14px] border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">{notice}</div>}
 
       {showAssign && (
-        <div className="rounded-[14px] border border-line bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-black">Xếp lịch làm việc</h3>
-            <button onClick={() => setShowAssign(false)} className="grid h-9 w-9 place-items-center rounded-full border border-line text-xl hover:bg-cream">×</button>
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <label>
-              <span className="mb-1 block text-xs font-bold text-muted">Nhân viên</span>
-              <select value={assignEmployee} onChange={(event) => setAssignEmployee(event.target.value)} className="h-11 w-full rounded-[14px] border border-line bg-white px-3 text-sm outline-none focus:border-coffee">
-                <option value="">Chọn nhân viên</option>
-                {visibleEmployees.map((employee) => <option key={employee.id} value={employee.id}>{employee.fullName}</option>)}
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs font-bold text-muted">Ca làm</span>
-              <select value={assignShift} onChange={(event) => setAssignShift(event.target.value)} className="h-11 w-full rounded-[14px] border border-line bg-white px-3 text-sm outline-none focus:border-coffee">
-                <option value="">Chọn ca làm</option>
-                {shifts.map((shift) => <option key={shift.id} value={shift.id}>{shift.name} ({formatTime(shift.startTime)} - {formatTime(shift.endTime)})</option>)}
-              </select>
-            </label>
-            <label>
-              <span className="mb-1 block text-xs font-bold text-muted">Ngày</span>
-              <input type="date" value={assignDate} onChange={(event) => setAssignDate(event.target.value)} className="h-11 w-full rounded-[14px] border border-line bg-white px-3 text-sm outline-none focus:border-coffee" />
-            </label>
-            <div className="flex items-end gap-2">
-              <button onClick={handleAssign} disabled={saving} className="h-11 rounded-[14px] bg-coffee px-5 text-sm font-bold text-white hover:bg-coffee/90 disabled:opacity-50">
-                {saving ? 'Đang lưu...' : 'Lưu lịch'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowAssign(false)}>
+          <div className="w-full max-w-lg rounded-[24px] bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Xếp lịch làm việc</h3>
+              <button onClick={() => setShowAssign(false)} className="grid h-8 w-8 place-items-center rounded-full bg-gray-100 hover:bg-gray-200">×</button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-semibold mb-1 text-muted">Nhân viên</label>
+                <select value={assignEmployee} onChange={(e) => setAssignEmployee(e.target.value)} className="w-full rounded-[14px] border border-line p-3 text-sm outline-none focus:border-coffee">
+                  <option value="">Chọn nhân viên</option>
+                  {visibleEmployees.map(e => <option key={e.id} value={e.id}>{e.fullName}</option>)}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold mb-1 text-muted">Ngày làm việc</label>
+                <input type="date" value={assignDate} onChange={(e) => setAssignDate(e.target.value)} className="w-full rounded-[14px] border border-line p-3 text-sm outline-none focus:border-coffee" />
+              </div>
+            </div>
+
+            <div className="mb-3 text-sm font-semibold text-muted">Chọn các ca làm:</div>
+            <div className="grid grid-cols-2 gap-3">
+              {shifts.map(shift => {
+                const tone = getTone(shift.id)
+                const isSelected = assignShifts.includes(shift.id)
+                return (
+                  <button
+                    key={shift.id}
+                    onClick={() => toggleAssignShift(shift.id)}
+                    disabled={saving}
+                    className={`relative flex flex-col p-4 rounded-[14px] border text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? `ring-2 ring-coffee shadow-md bg-white border-coffee text-coffee` : `opacity-70 hover:opacity-100 ${tone.border} ${tone.bg} ${tone.text}`}`}
+                  >
+                    {isSelected && (
+                      <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-coffee text-white flex items-center justify-center text-xs">✓</div>
+                    )}
+                    <span className="font-bold text-base mb-1">{shift.name}</span>
+                    <span className="text-sm font-semibold opacity-80">{formatTime(shift.startTime)} - {formatTime(shift.endTime)}</span>
+                  </button>
+                )
+              })}
+            </div>
+            
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={handleAssignMultiple} 
+                disabled={saving || assignShifts.length === 0 || !assignEmployee || !assignDate} 
+                className="flex-1 h-12 rounded-[14px] bg-coffee font-bold text-white shadow-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Đang lưu...' : 'Lưu lịch làm việc'}
               </button>
-              <button onClick={() => setShowAssign(false)} className="h-11 rounded-[14px] border border-line px-5 text-sm font-bold text-muted hover:bg-cream">
+              <button 
+                onClick={() => setShowAssign(false)} 
+                className="h-12 px-6 rounded-[14px] border border-line font-bold text-muted hover:bg-cream"
+              >
                 Hủy
               </button>
             </div>
@@ -474,7 +510,7 @@ export function ScheduleView() {
           <div className="overflow-x-auto">
             <div style={{ minWidth: SCHEDULE_MIN_WIDTH }}>
               <div className="sticky top-0 z-10 grid bg-white" style={{ gridTemplateColumns: SCHEDULE_GRID_TEMPLATE }}>
-                <div className="sticky left-0 z-20 flex h-16 items-center border-b border-r border-line bg-white px-6 text-sm font-black">
+                <div className="sticky left-0 z-20 flex h-16 items-center border-b border-r border-line bg-white px-4 text-sm font-black">
                   Nhân viên
                   <span className="ml-2 rounded-full bg-[#f2f2f2] px-2 py-1 text-xs text-muted">{visibleEmployees.length}</span>
                 </div>
@@ -497,9 +533,9 @@ export function ScheduleView() {
                 employeeGroups.map(([groupName, groupEmployees]) => (
                   <div key={groupName}>
                     <div className="grid" style={{ gridTemplateColumns: SCHEDULE_GRID_TEMPLATE }}>
-                      <div className="sticky left-0 z-10 flex h-10 items-center gap-3 border-b border-r border-line bg-green-50 px-6 text-xs font-black uppercase text-green-700">
-                        <span className="h-5 w-5 rounded border border-line bg-white" />
-                        {groupName}
+                      <div className="sticky left-0 z-10 flex h-10 items-center gap-3 border-b border-r border-line bg-green-50 px-4 text-xs font-black uppercase text-green-700">
+                        <span className="h-5 w-5 shrink-0 rounded border border-line bg-white" />
+                        <span className="truncate">{groupName}</span>
                       </div>
                       <div className="border-b border-line bg-green-50/70" style={{ gridColumn: `2 / span ${GRID_DAYS}` }} />
                     </div>
@@ -512,16 +548,16 @@ export function ScheduleView() {
                       const rowHeight = Math.max(ROW_HEIGHT, 24 + maxRosterCount * 60)
                       return (
                         <div key={employee.id} className="grid" style={{ gridTemplateColumns: SCHEDULE_GRID_TEMPLATE }}>
-                          <div className="sticky left-0 z-10 flex items-center gap-4 border-b border-r border-line bg-white px-6" style={{ height: rowHeight }}>
-                            <span className="h-5 w-5 rounded border border-line bg-white" />
+                          <div className="sticky left-0 z-10 flex items-center gap-3 border-b border-r border-line bg-white px-4" style={{ height: rowHeight }}>
+                            <span className="h-5 w-5 shrink-0 rounded border border-line bg-white" />
                             {employee.avatarUrl ? (
-                              <img src={employee.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                              <img src={employee.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
                             ) : (
-                              <span className="grid h-10 w-10 place-items-center rounded-full bg-coffee text-xs font-black text-white">
+                              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-coffee text-xs font-black text-white">
                                 {employeeInitials(employee.fullName)}
                               </span>
                             )}
-                            <div className="min-w-0 flex flex-col justify-center">
+                            <div className="min-w-0 flex-1 flex flex-col justify-center">
                               <div className="truncate text-sm font-black leading-tight">{employee.fullName}</div>
                               <div className="truncate text-[10px] font-black text-green-700 uppercase mt-0.5">{employee.role?.name || 'Nhân viên'}</div>
                               <div className="truncate text-xs font-semibold text-muted mt-0.5">@{employee.email?.split('@')[0] || employee.phone}</div>
