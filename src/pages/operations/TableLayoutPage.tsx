@@ -60,8 +60,6 @@ const statusDetails: Record<BranchTableStatus, { label: string; dot: string; sur
   cleaning: { label: 'Đang dọn', dot: 'bg-[#a6a09a]', surface: 'border-[#d5d1cd] bg-[#ebe8e4] text-[#716a64]' },
 }
 
-const tableShapes = ['square', 'circle', 'square', 'circle', 'square', 'wide', 'circle', 'square', 'square', 'circle', 'wide', 'square'] as const
-
 function normalizeAreaName(areaName: string) {
   return areaName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 }
@@ -209,10 +207,9 @@ export function TableLayoutContent({
 
 function TableShape({ table, index, onSelect }: { table: BranchTable; index: number; onSelect: (table: BranchTable) => void }) {
   const detail = statusDetails[table.status] ?? statusDetails.cleaning
-  const shape = tableShapes[index % tableShapes.length]
   const reference = table.current_order_id ? 'Đang phục vụ' : table.reservation_id ? 'Đã đặt' : null
 
-  return <button type="button" onClick={() => onSelect(table)} className={cn('relative flex min-h-[245px] items-center justify-center border p-5 text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', detail.surface, shape === 'circle' ? 'aspect-square rounded-full' : 'rounded-2xl', shape === 'wide' && 'md:col-span-2')}>
+  return <button type="button" onClick={() => onSelect(table)} className={cn('relative flex min-h-[245px] aspect-square items-center justify-center rounded-2xl border p-5 text-left transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold', detail.surface)}>
     <span className="absolute left-4 top-4 flex items-center gap-1 text-xs opacity-85"><Users className="size-3.5" /> {table.capacity}</span>
     <span className="absolute right-4 top-4 rounded-full bg-white/60 px-2 py-1 text-[9px] font-bold text-coffee/70">{detail.label}</span>
     <div className="text-center">
