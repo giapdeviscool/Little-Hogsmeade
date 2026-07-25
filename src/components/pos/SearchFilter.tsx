@@ -51,7 +51,7 @@ export function SearchFilter({
         >
           Tất cả
         </button>
-        {categories.map((cat) => (
+        {categories.map((cat) => cat.isActive && (
           <button 
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
