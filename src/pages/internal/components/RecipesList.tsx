@@ -172,14 +172,15 @@ export function RecipesList() {
               </tr>
             ) : (
               groupedRecipes.map((g, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                <tr 
+                  key={idx} 
+                  onClick={() => setSelectedGroup(g)}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                >
                   <td className="py-4 pr-4 pl-4 font-medium">
-                    <button 
-                      onClick={() => setSelectedGroup(g)}
-                      className="text-coffee hover:underline font-semibold text-left"
-                    >
+                    <span className="text-coffee font-semibold text-left">
                       {g.fullName}
-                    </button>
+                    </span>
                   </td>
                   <td className="py-4 pr-4 text-center">{g.ingredients.length}</td>
                   <td className="py-4 pr-4 text-center">
