@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import * as payrollApi from '../../../api/payroll.api'
 import * as employeeApi from '../../../api/employee.api'
-import { getExpenseCategories, createExpenseCategory, createExpense } from '../../../api/expense.api'
+import { getExpenseCategories, createExpenseCategory, createExpense, getExpenses } from '../../../api/expense.api'
 import { getAuthSession } from '../../../store/auth.store'
 import type { PayrollSummary, Branch } from '../../../types'
 import { TimesheetModal } from './TimesheetModal'
@@ -31,6 +31,7 @@ export function PayrollView() {
 
   // Trạng thái thanh toán
   const [isPaying, setIsPaying] = useState(false)
+  const [isPaid, setIsPaid] = useState(false)
 
   useEffect(() => {
     loadBranches()
@@ -39,6 +40,30 @@ export function PayrollView() {
   useEffect(() => {
     loadPayroll()
   }, [selectedBranch, selectedMonth])
+
+  useEffect(() => {
+    checkPaymentStatus()
+  }, [selectedBranch, selectedMonth, payroll])
+
+  async function checkPaymentStatus() {
+    if (payroll.length === 0) {
+      setIsPaid(false)
+      return
+    }
+    try {
+      // Dùng 1 chi nhánh bất kỳ có trong bảng lương để kiểm tra
+      const sampleBranchId = selectedBranch || payroll[0]?.branchId
+      if (!sampleBranchId) return
+      
+      const startDate = `${selectedMonth}-01T00:00:00.000Z`
+      const expenses = await getExpenses(sampleBranchId, startDate)
+      
+      const found = expenses.some(e => e.description === `Thanh toán lương tháng ${selectedMonth}`)
+      setIsPaid(found)
+    } catch (err) {
+      console.error('Failed to check payment status', err)
+    }
+  }
 
   async function loadBranches() {
     try {
@@ -76,20 +101,20 @@ export function PayrollView() {
   const partTimePayroll = payroll.filter(p => p.employeeType === 'part_time' || p.roleName?.toLowerCase().includes('part-time') || p.roleName?.toLowerCase().includes('bán thời gian'))
   const partTimeTotalSalary = partTimePayroll.reduce((sum, p) => sum + p.estimatedSalary, 0)
 
-  const handlePayPartTime = async () => {
-    if (partTimeTotalSalary <= 0) {
-      alert('Không có lương nhân viên part-time để thanh toán trong tháng này.')
+  const handlePaySalary = async () => {
+    if (totalSalary <= 0) {
+      alert('Không có lương để thanh toán trong tháng này.')
       return
     }
 
-    if (!confirm(`Bạn có chắc chắn muốn thanh toán tổng cộng ${formatCurrency(partTimeTotalSalary)} cho nhân viên part-time?`)) {
+    if (!confirm(`Bạn có chắc chắn muốn thanh toán tổng cộng ${formatCurrency(totalSalary)} tiền lương?`)) {
       return
     }
 
     setIsPaying(true)
     try {
       // Nhóm theo chi nhánh
-      const branchTotals = partTimePayroll.reduce((acc, p) => {
+      const branchTotals = payroll.reduce((acc, p) => {
         acc[p.branchId] = (acc[p.branchId] || 0) + p.estimatedSalary
         return acc
       }, {} as Record<string, number>)
@@ -98,11 +123,11 @@ export function PayrollView() {
       const categories = await getExpenseCategories()
 
       for (const branchId of Object.keys(branchTotals)) {
-        let cat = categories.find(c => c.name.toLowerCase().includes('lương nhân viên part-time') && (c.branchId === branchId || !c.branchId))
+        let cat = categories.find(c => c.name.toLowerCase().includes('lương nhân viên') && (c.branchId === branchId || !c.branchId))
         if (!cat) {
           cat = await createExpenseCategory({
-            name: 'Lương nhân viên part-time',
-            costType: 'VARIABLE',
+            name: 'Lương nhân viên',
+            costType: 'FIXED',
             isSystem: false,
             branchId
           })
@@ -113,13 +138,14 @@ export function PayrollView() {
           branchId,
           expenseCategoryId: cat.id,
           amount: branchTotals[branchId],
-          description: `Thanh toán lương Part-time tháng ${selectedMonth}`,
+          description: `Thanh toán lương tháng ${selectedMonth}`,
           date: new Date().toISOString(),
           employeeId: authSession?.user?.id || ''
         })
       }
 
-      alert('Thanh toán lương Part-time thành công!')
+      setIsPaid(true)
+      alert('Thanh toán lương thành công!')
     } catch (err: any) {
       alert('Lỗi khi thanh toán: ' + (err.message || 'Unknown error'))
     } finally {
@@ -265,21 +291,28 @@ export function PayrollView() {
       )}
 
       {/* Payment Action */}
-      {(isChainOwner || isChainAdmin) && partTimePayroll.length > 0 && (
+      {(isChainOwner || isChainAdmin) && payroll.length > 0 && (
         <div className="mt-8 p-6 bg-coffee/5 border border-coffee/20 rounded-xl flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-coffee text-lg">Thanh toán lương Part-time</h3>
+            <h3 className="font-bold text-coffee text-lg">Thanh toán lương nhân viên</h3>
             <p className="text-sm text-muted mt-1">
-              Có <strong className="text-foreground">{partTimePayroll.length}</strong> nhân viên part-time. Tổng lương cần thanh toán: <strong className="text-green-600">{formatCurrency(partTimeTotalSalary)}</strong>
+              Có <strong className="text-foreground">{payroll.length}</strong> nhân viên. Tổng lương cần thanh toán: <strong className="text-green-600">{formatCurrency(totalSalary)}</strong>
             </p>
           </div>
-          <button
-            onClick={handlePayPartTime}
-            disabled={isPaying}
-            className="px-6 py-2.5 bg-coffee text-white font-bold rounded-xl shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {isPaying ? 'Đang xử lý...' : 'Tạo phiếu chi tự động'}
-          </button>
+          {isPaid ? (
+            <div className="px-6 py-2.5 bg-green-100 text-green-700 border border-green-200 font-bold rounded-xl shadow-sm flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Đã thanh toán
+            </div>
+          ) : (
+            <button
+              onClick={handlePaySalary}
+              disabled={isPaying}
+              className="px-6 py-2.5 bg-coffee text-white font-bold rounded-xl shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {isPaying ? 'Đang xử lý...' : 'Tạo phiếu chi tự động'}
+            </button>
+          )}
         </div>
       )}
 
