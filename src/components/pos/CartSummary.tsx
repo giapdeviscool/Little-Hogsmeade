@@ -8,6 +8,7 @@ interface CartSummaryProps {
   cartItems?: CartItemType[];
   orderType?: 'dine-in' | 'takeaway';
   customerId?: string | null;
+  customerName?: string;
   voucherCode?: string;
   discountAmount?: number;
   onSetVoucher?: (code?: string, amount?: number, giftProductId?: string, giftProduct?: any) => void;
@@ -18,6 +19,7 @@ export function CartSummary({
   cartItems = [],
   orderType = 'dine-in',
   customerId = null,
+  customerName,
   voucherCode,
   discountAmount = 0,
   onSetVoucher,
@@ -99,6 +101,7 @@ export function CartSummary({
       <VoucherInput
         orderSubtotal={subtotal}
         customerId={customerId}
+        customerName={customerName}
         voucherCode={voucherCode}
         onApplyVoucher={(code, amount, giftProductId, giftProduct) => {
           if (onSetVoucher) onSetVoucher(code, amount || 0, giftProductId, giftProduct);
