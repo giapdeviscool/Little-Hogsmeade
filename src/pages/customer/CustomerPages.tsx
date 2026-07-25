@@ -651,6 +651,12 @@ export function CustomerBookingPage() {
         return
       }
 
+      const bookingDate = new Date(draft.datetime)
+      if (bookingDate <= new Date()) {
+        setNotice('Thời gian đặt bàn phải diễn ra trong tương lai.')
+        return
+      }
+
       await createReservation({
         branchId: draft.branchId,
         guestName: draft.name,

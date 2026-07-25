@@ -22,7 +22,7 @@ interface CustomerVoucherModalProps {
   customerName?: string;
   orderSubtotal: number;
   currentVoucherCode?: string;
-  onApplyVoucher: (voucherCode?: string, discountAmount?: number) => void;
+  onApplyVoucher: (voucherCode?: string, discountAmount?: number, giftProductId?: string, giftProduct?: any) => void;
 }
 
 export function CustomerVoucherModal({
@@ -99,7 +99,7 @@ export function CustomerVoucherModal({
       if (res.data && res.data.isValid) {
         const discount = res.data.discountAmount || 0;
         setSuccessMsg(`Đã áp dụng mã ${trimmed} (Giảm ₫${discount.toLocaleString('vi-VN')})`);
-        onApplyVoucher(trimmed, discount);
+        onApplyVoucher(trimmed, discount, res.data.giftProductId, res.data.giftProduct);
         setTimeout(() => {
           onClose();
         }, 500);
@@ -152,7 +152,7 @@ export function CustomerVoucherModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg rounded-2xl bg-white border border-[rgba(74,53,37,0.12)] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] font-sans">
-        
+
         {/* Header */}
         <div className="px-6 py-4 border-b border-[rgba(74,53,37,0.08)] bg-cream flex justify-between items-center">
           <div className="flex items-center gap-2.5">
@@ -280,13 +280,12 @@ export function CustomerVoucherModal({
               return (
                 <div
                   key={v.id || v.code}
-                  className={`relative flex items-stretch rounded-2xl border transition-all overflow-hidden bg-white shadow-sm ${
-                    isApplied
-                      ? 'border-green-500 ring-2 ring-green-500/20'
-                      : isEligible
+                  className={`relative flex items-stretch rounded-2xl border transition-all overflow-hidden bg-white shadow-sm ${isApplied
+                    ? 'border-green-500 ring-2 ring-green-500/20'
+                    : isEligible
                       ? 'border-line hover:border-gold/60 hover:shadow-md'
                       : 'border-line/60 opacity-80 bg-gray-50/50'
-                  }`}
+                    }`}
                 >
                   {/* Left Ticket Stub */}
                   <div className="w-24 bg-gradient-to-br from-coffee to-[#362619] p-3 flex flex-col items-center justify-center text-white relative shrink-0">
@@ -310,7 +309,7 @@ export function CustomerVoucherModal({
                           </span>
                         )}
                       </div>
-                      
+
                       {v.description && (
                         <p className="text-[11px] text-muted mt-1 leading-relaxed line-clamp-2">
                           {v.description}
@@ -343,11 +342,10 @@ export function CustomerVoucherModal({
                             type="button"
                             onClick={() => handleApplyCode(v.code)}
                             disabled={!isEligible || validating}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all shadow-sm ${
-                              isEligible
-                                ? 'bg-gold text-coffee hover:bg-gold/90 active:scale-95'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                            }`}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all shadow-sm ${isEligible
+                              ? 'bg-gold text-coffee hover:bg-gold/90 active:scale-95'
+                              : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                              }`}
                           >
                             {isEligible ? 'Dùng ngay' : 'Chưa đủ đ/k'}
                           </button>

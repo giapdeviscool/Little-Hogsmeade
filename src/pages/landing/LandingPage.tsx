@@ -175,6 +175,12 @@ export function LandingPage({
         return
       }
 
+      const bookingDate = new Date(bookingDraft.datetime)
+      if (bookingDate <= new Date()) {
+        setBookingNotice('Thời gian đặt bàn phải diễn ra trong tương lai.')
+        return
+      }
+
       await createReservation({
         branchId: bookingDraft.branchId,
         guestName: bookingDraft.name,
