@@ -14,6 +14,7 @@ import { listEvents, listPages, listPosts } from '../../api/cms.api'
 import { checkCustomerPhone, customerLogin, getPointTransactions, getActiveVouchers, getCustomerVouchers, redeemLoyaltyRewardApi } from '../../api/customer.api'
 import { getBranchesPublic as getBranches, getTopSellingMenu } from '../../api/public-menu.api'
 import { getCustomerLoyaltyRewards } from '../../api/loyalty.api'
+import { createReservation } from '../../api/reservation.api'
 import type { Branch, CmsPage, Event, Post, LoyaltyReward } from '../../types'
 import type { Customer, CustomerMembership, PointTransaction } from '../../types/customer.types'
 import { formatVnDate, formatVnDateTime } from '../../utils/date'
@@ -634,13 +635,36 @@ export function CustomerBookingPage() {
     )
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!draft.branchId) {
       setNotice('Vui lòng chọn chi nhánh.')
       return
     }
-    setNotice('Đã ghi nhận yêu cầu. Cảm ơn bạn!')
+
+    try {
+      const [datePart, timePart] = draft.datetime.split('T')
+      if (!datePart || !timePart) {
+        setNotice('Vui lòng chọn ngày giờ hợp lệ.')
+        return
+      }
+
+      await createReservation({
+        branchId: draft.branchId,
+        guestName: draft.name,
+        guestPhone: draft.phone,
+        guestCount: parseInt(draft.guests, 10) || 1,
+        reservedDate: new Date(datePart).toISOString(),
+        reservedTime: new Date(draft.datetime).toISOString(),
+        note: draft.note,
+        status: 'pending'
+      })
+
+      setNotice('Đã gửi yêu cầu đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn sớm nhất.')
+      setDraft({ name: '', phone: '', guests: '4', datetime: '', note: '', branchId: '' })
+    } catch {
+      setNotice('Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại sau.')
+    }
   }
 
   return (
