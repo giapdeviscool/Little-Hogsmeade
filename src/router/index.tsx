@@ -18,7 +18,6 @@ import { RegisterPage } from '../pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
 import { CashierLoginPage } from '../pages/auth/CashierLoginPage'
 
-import { DashboardPage } from '../pages/dashboard/DashboardPage'
 import { POSPage } from '../pages/pos/POSPage'
 import { OperationsPage } from '../pages/operations/OperationsPage'
 
@@ -54,8 +53,7 @@ export function AppRouter() {
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to={ROUTES.adminDashboard} replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
+        <Route index element={<Navigate to={ROUTES.adminPos} replace />} />
         <Route path="pos" element={<POSPage />} />
         <Route path="operations" element={<OperationsPage />} />
         <Route path="internal" element={<InternalPage />} />
@@ -66,7 +64,7 @@ export function AppRouter() {
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
-      <Route path="/home" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/home" element={<Navigate to="/admin/pos" replace />} />
 
       <Route path={ROUTES.login} element={<LoginPage />} />
       <Route path={ROUTES.register} element={<RegisterPage />} />

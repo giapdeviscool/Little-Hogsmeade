@@ -282,3 +282,10 @@ export function updateCustomerMembershipApi(customerId: string, payload: { total
     body: JSON.stringify(payload)
   })
 }
+
+export function updateCustomerProfile(customerId: string, payload: { fullName: string }) {
+  return httpClient<ApiResponse<any>>('/customers/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify({ customerId, ...payload })
+  })
+}

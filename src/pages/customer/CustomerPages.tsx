@@ -23,7 +23,7 @@ import { cn } from '../../utils/cn'
 
 function PinOtpInput({ value, onChange, disabled, autoFocus }: { value: string; onChange: (v: string) => void; disabled?: boolean; autoFocus?: boolean }) {
   const inputs = useRef<(HTMLInputElement | null)[]>([])
-  
+
   useEffect(() => {
     if (autoFocus && !disabled) {
       setTimeout(() => {
@@ -45,7 +45,7 @@ function PinOtpInput({ value, onChange, disabled, autoFocus }: { value: string; 
     arr[i] = char
     const newStr = arr.join('').slice(0, 6)
     onChange(newStr)
-    
+
     if (i < 5 && char) {
       inputs.current[i + 1]?.focus()
     }
@@ -58,7 +58,7 @@ function PinOtpInput({ value, onChange, disabled, autoFocus }: { value: string; 
   }
 
   return (
-    <div className="flex justify-between gap-2 w-full mx-auto max-w-[340px]">
+    <div className="flex justify-center gap-2 md:gap-3 w-full">
       {Array.from({ length: 6 }).map((_, i) => (
         <input
           key={i}
@@ -149,7 +149,7 @@ export function CustomerPromotionsPage() {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [membership, setMembership] = useState<CustomerMembership | null>(null)
   const [redeemingId, setRedeemingId] = useState<string | null>(null)
-  const [notice, setNotice] = useState<{type: 'success' | 'error', msg: string} | null>(null)
+  const [notice, setNotice] = useState<{ type: 'success' | 'error', msg: string } | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -209,11 +209,11 @@ export function CustomerPromotionsPage() {
       if (res.data) {
         const fullProfile = res.data as any
         setCustomer(fullProfile)
-        
+
         if (fullProfile.customerMemberships && fullProfile.customerMemberships.length > 0) {
           setMembership(fullProfile.customerMemberships[0])
         }
-        
+
         const myVouchersRes = await getCustomerVouchers(fullProfile.id)
         setMyVouchers(myVouchersRes.data || [])
         setNotice({ type: 'success', msg: 'Đăng nhập thành công!' })
@@ -248,7 +248,7 @@ export function CustomerPromotionsPage() {
       setNotice({ type: 'error', msg: 'Vui lòng xác thực số điện thoại trước khi đổi phần thưởng.' })
       return
     }
-    
+
     const requiredPoints = reward.pointsRequired
     if (membership.totalPoints < requiredPoints) {
       setNotice({ type: 'error', msg: `Bạn không đủ điểm. Cần ${requiredPoints} điểm để đổi.` })
@@ -260,7 +260,7 @@ export function CustomerPromotionsPage() {
     setRedeemingId(reward.id)
     try {
       const res = await redeemLoyaltyRewardApi(customer.id, reward.id)
-      
+
       if (res.data) {
         const { voucher, updatedMembership } = res.data
         setMembership(updatedMembership)
@@ -297,10 +297,10 @@ export function CustomerPromotionsPage() {
               </div>
             ) : authStep === 'phone' ? (
               <form onSubmit={handleCheckPhone} className="flex gap-3 w-full">
-                <input 
-                  type="tel" 
-                  value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   placeholder="Nhập số điện thoại để xem điểm..."
                   className="flex-1 h-[48px] rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coffee"
                   disabled={isAuthenticating}
@@ -315,14 +315,30 @@ export function CustomerPromotionsPage() {
                   {authStatus === 'not_found' ? 'Tạo tài khoản mới' : authStatus === 'no_pin' ? 'Thiết lập mã PIN bảo mật' : 'Nhập mã PIN để đăng nhập'}
                 </p>
                 {authStatus === 'not_found' && (
-                  <input 
-                    type="text" 
-                    value={fullName} 
-                    onChange={(e) => setFullName(e.target.value)} 
-                    placeholder="Họ và tên của bạn"
-                    className="w-full h-[48px] rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coffee mb-2"
-                    disabled={isAuthenticating}
-                  />
+                  <>
+                    <div className="w-full text-left">
+                      <label className="block text-xs font-semibold text-coffee mb-1 pl-2">Số điện thoại</label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        disabled
+                        className="w-full h-[48px] rounded-xl border border-line bg-gray-50 px-4 text-sm outline-none text-muted mb-2 cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="w-full text-left">
+                      <label htmlFor="fullName" className="block text-xs font-semibold text-coffee mb-1 pl-2">Họ và tên</label>
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Họ và tên của bạn"
+                        className="w-full h-[48px] rounded-xl border border-line bg-white px-4 text-sm outline-none focus:border-coffee mb-2"
+                        disabled={isAuthenticating}
+                      />
+                    </div>
+                  </>
                 )}
                 <div className="flex flex-col gap-4 w-full items-center mt-2">
                   <PinOtpInput value={pin} onChange={setPin} disabled={isAuthenticating} />
@@ -344,7 +360,7 @@ export function CustomerPromotionsPage() {
               </form>
             )}
           </div>
-          
+
           {(membership || authStep === 'pin') && (
             <button onClick={() => { setMembership(null); setCustomer(null); setPhone(''); setPin(''); setAuthStep('phone'); setNotice(null); setMyVouchers([]); }} className="text-sm text-muted hover:text-coffee font-semibold underline whitespace-nowrap">
               Đổi số điện thoại
@@ -453,13 +469,13 @@ export function CustomerPromotionsPage() {
                     <Ticket className="h-8 w-8 mb-2 text-gold" />
                     <h3 className="font-bold text-xl relative z-10 leading-tight truncate">{voucher.name}</h3>
                   </div>
-                  
+
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-bold px-2 py-1 bg-cream text-coffee rounded-md">MÃ: {voucher.code}</span>
                       {voucher.expireDate && <span className="text-xs text-muted">HSD: {new Date(voucher.expireDate).toLocaleDateString('vi-VN')}</span>}
                     </div>
-                    
+
                     <div className="flex items-center justify-between pt-4 border-t border-line border-dashed">
                       <div>
                         <p className="text-xs text-muted uppercase font-bold tracking-wider mb-1">Mức giảm</p>
@@ -491,15 +507,15 @@ export function CustomerPromotionsPage() {
                     <Ticket className="h-8 w-8 mb-2 text-gold" />
                     <h3 className="font-bold text-xl relative z-10 leading-tight truncate">{voucher.name}</h3>
                   </div>
-                  
+
                   <div className="p-6 flex-1 flex flex-col">
                     <p className="text-sm text-muted mb-4 flex-1">
-                      {voucher.discountType === 'percent' 
+                      {voucher.discountType === 'percent'
                         ? `Giảm ${voucher.discountValue}% cho đơn hàng từ ${new Intl.NumberFormat('vi-VN').format(voucher.minOrderValue || 0)}đ`
                         : `Giảm ${new Intl.NumberFormat('vi-VN').format(voucher.discountValue || 0)}đ cho đơn hàng từ ${new Intl.NumberFormat('vi-VN').format(voucher.minOrderValue || 0)}đ`
                       }
                     </p>
-                    
+
                     <div className="flex items-center justify-between pt-4 border-t border-line border-dashed">
                       <div>
                         <p className="text-xs text-muted uppercase font-bold tracking-wider mb-1">Mã Code</p>
@@ -536,10 +552,10 @@ export function CustomerPromotionsPage() {
                     <Gift className="h-8 w-8 mb-2 text-white relative z-10" />
                     <h3 className="font-bold text-xl relative z-10 leading-tight truncate">{reward.name}</h3>
                   </div>
-                  
+
                   <div className="p-6 flex-1 flex flex-col">
                     <p className="text-sm text-muted mb-4 flex-1">{reward.description || 'Voucher ưu đãi'}</p>
-                    
+
                     <div className="flex items-center justify-between mb-6 pt-4 border-t border-line border-dashed">
                       <div>
                         <p className="text-xs text-muted uppercase font-bold tracking-wider mb-1">Loại</p>
@@ -553,7 +569,7 @@ export function CustomerPromotionsPage() {
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => handleRedeem(reward)}
                       disabled={redeemingId === reward.id || (membership && membership.totalPoints < reward.pointsRequired) || !membership}
                       className="w-full h-12 rounded-full bg-coffee font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50"
@@ -659,7 +675,7 @@ export function CustomerBlogPage() {
 
   const publishedPosts = posts.filter((p) => p.isPublished)
   const filteredPosts = publishedPosts.filter((p) => activeCategory === 'All' || p.category === activeCategory)
-  
+
   if (filteredPosts.length === 0) {
     return (
       <section className="bg-cream py-20 md:py-24">
@@ -669,7 +685,7 @@ export function CustomerBlogPage() {
               <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Little Hogsmeade Tạp chí</p>
               <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">Tin tức & Sự kiện</h2>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {BLOG_CATEGORIES.map(cat => (
                 <button
@@ -698,7 +714,7 @@ export function CustomerBlogPage() {
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Little Hogsmeade Tạp chí</p>
             <h2 className="mt-3 text-[36px] font-bold leading-[1.02] tracking-[-0.055em] md:text-[48px]">Tin tức & Sự kiện</h2>
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             {BLOG_CATEGORIES.map(cat => (
               <button
@@ -824,7 +840,9 @@ export function CustomerMembershipPage() {
   const [isChangingPin, setIsChangingPin] = useState(false)
   const [oldPin, setOldPin] = useState('')
   const [newPin, setNewPin] = useState('')
-  
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [editFullName, setEditFullName] = useState('')
+
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [membership, setMembership] = useState<CustomerMembership | null>(null)
   const [transactions, setTransactions] = useState<PointTransaction[]>([])
@@ -839,11 +857,11 @@ export function CustomerMembershipPage() {
   useEffect(() => {
     getBranches().then(res => {
       if (res.data?.items) setBranches(res.data.items)
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   useEffect(() => {
-    getCustomerLoyaltyRewards(selectedBranch || null).then(res => setRewards(res || [])).catch(() => {})
+    getCustomerLoyaltyRewards(selectedBranch || null).then(res => setRewards(res || [])).catch(() => { })
   }, [selectedBranch])
 
   useEffect(() => {
@@ -856,7 +874,7 @@ export function CustomerMembershipPage() {
   async function handleCheckPhone(e: FormEvent) {
     e.preventDefault()
     if (!phone) return
-    
+
     setLoading(true)
     setError(null)
     try {
@@ -892,13 +910,14 @@ export function CustomerMembershipPage() {
       if (res.data) {
         const fullProfile = res.data as any
         setCustomer(fullProfile)
-        
+        setEditFullName(fullProfile.fullName)
+
         if (fullProfile.customerMemberships && fullProfile.customerMemberships.length > 0) {
           const m = fullProfile.customerMemberships[0];
           setMembership(m)
           getPointTransactions(m.id).then(txRes => {
             if (txRes.data) setTransactions(txRes.data)
-          }).catch(() => {})
+          }).catch(() => { })
         }
       }
     } catch (err: any) {
@@ -910,7 +929,7 @@ export function CustomerMembershipPage() {
 
   async function handleRedeem(reward: LoyaltyReward) {
     if (!membership || !customer) return
-    
+
     const requiredPoints = reward.pointsRequired
     if (membership.totalPoints < requiredPoints) {
       setError(`Bạn không đủ điểm. Cần ${requiredPoints} điểm để đổi.`)
@@ -922,15 +941,15 @@ export function CustomerMembershipPage() {
     setRedeemingId(reward.id)
     try {
       const res = await redeemLoyaltyRewardApi(customer.id, reward.id)
-      
+
       if (res.data) {
         const { voucher, updatedMembership } = res.data
         setMembership(updatedMembership)
         setSuccessVoucher(voucher)
-        
-        getPointTransactions(customer.id).then(txRes => {
+
+        getPointTransactions(updatedMembership.id).then(txRes => {
           if (txRes.data) setTransactions(txRes.data)
-        }).catch(() => {})
+        }).catch(() => { })
       }
     } catch (err: any) {
       setError(err?.message || 'Có lỗi xảy ra khi đổi điểm. Vui lòng thử lại.')
@@ -958,6 +977,25 @@ export function CustomerMembershipPage() {
     }
   }
 
+  async function handleUpdateProfile(e: FormEvent) {
+    e.preventDefault()
+    if (!editFullName.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { updateCustomerProfile } = await import('../../api/customer.api')
+      const res = await updateCustomerProfile(customer!.id, { fullName: editFullName })
+      if (res.data) {
+        setCustomer(prev => prev ? { ...prev, fullName: editFullName } : prev)
+        setIsEditingProfile(false)
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Lỗi khi cập nhật thông tin.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <section className="bg-cream py-20 md:py-24 min-h-[80vh]">
       <div className="mx-auto max-w-[800px] px-4 md:px-8">
@@ -965,18 +1003,18 @@ export function CustomerMembershipPage() {
           <p className="text-xs font-bold uppercase tracking-[0.32em] text-gold">Little Hogsmeade</p>
           <h2 className="mt-3 text-[36px] font-bold md:text-[48px]">Tra cứu Thẻ thành viên</h2>
         </div>
-        
+
         {authStep === 'phone' && !customer ? (
           <form onSubmit={handleCheckPhone} className="relative flex items-center mx-auto max-w-[500px] mb-12">
-            <input 
+            <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Nhập số điện thoại của bạn..."
               className="h-[60px] w-full rounded-full border border-line bg-white pl-6 pr-32 text-base outline-none focus:border-coffee shadow-soft"
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading || !phone}
               className="absolute right-2 top-2 bottom-2 rounded-full bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50"
             >
@@ -989,20 +1027,37 @@ export function CustomerMembershipPage() {
               {authStatus === 'not_found' ? 'Tạo tài khoản thành viên mới' : authStatus === 'no_pin' ? 'Thiết lập mã PIN bảo mật' : authStatus === 'locked' ? 'Tài khoản bị khóa' : 'Nhập mã PIN để tra cứu'}
             </p>
             {authStatus === 'not_found' && (
-              <input 
-                type="text" 
-                value={fullName} 
-                onChange={(e) => setFullName(e.target.value)} 
-                placeholder="Họ và tên của bạn"
-                className="h-[60px] w-full rounded-full border border-line bg-white px-6 text-base outline-none focus:border-coffee shadow-soft"
-              />
+              <>
+                <div className="w-full text-left">
+                  <label className="block text-sm font-semibold text-coffee mb-1 pl-4">Số điện thoại đăng ký</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    disabled
+                    className="h-[60px] w-full rounded-full border border-line bg-gray-50 px-6 text-base outline-none text-muted mb-4 cursor-not-allowed"
+                  />
+                </div>
+                <div className="w-full text-left">
+                  <label htmlFor="customer_fullName" className="block text-sm font-semibold text-coffee mb-1 pl-4">Họ và tên của bạn</label>
+                  <input
+                    type="text"
+                    id="customer_fullName"
+                    name="customer_fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Họ và tên của bạn"
+                    autoComplete="new-password"
+                    className="h-[60px] w-full rounded-full border border-line bg-white px-6 text-base outline-none focus:border-coffee shadow-soft mb-2"
+                  />
+                </div>
+              </>
             )}
             <div className="flex flex-col items-center gap-6 mt-6">
               {authStatus !== 'locked' && (
                 <>
                   <PinOtpInput value={pin} onChange={setPin} disabled={loading} autoFocus />
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={loading || pin.length < 6}
                     className="h-[60px] w-full max-w-[340px] rounded-full bg-coffee px-6 font-bold text-white transition hover:bg-opacity-90 disabled:opacity-50 shadow-soft"
                   >
@@ -1010,7 +1065,7 @@ export function CustomerMembershipPage() {
                   </button>
                 </>
               )}
-              <button 
+              <button
                 type="button"
                 onClick={() => setAuthStep('phone')}
                 className="h-[60px] w-full max-w-[340px] rounded-full border-2 border-line bg-white px-6 font-bold text-coffee transition hover:bg-surface-alt shadow-soft"
@@ -1026,12 +1081,52 @@ export function CustomerMembershipPage() {
             <button onClick={() => { setCustomer(null); setMembership(null); setPhone(''); setPin(''); setAuthStep('phone'); }} className="text-sm text-muted hover:text-coffee font-semibold underline mr-4">
               Tra cứu số điện thoại khác
             </button>
-            {!isChangingPin && (
-              <button onClick={() => setIsChangingPin(true)} className="text-sm text-coffee hover:text-opacity-80 font-semibold underline">
-                Đổi mã PIN
-              </button>
+            {!isChangingPin && !isEditingProfile && (
+              <>
+                <button onClick={() => setIsEditingProfile(true)} className="text-sm text-coffee hover:text-opacity-80 font-semibold underline mr-4">
+                  Cập nhật thông tin
+                </button>
+                <button onClick={() => setIsChangingPin(true)} className="text-sm text-coffee hover:text-opacity-80 font-semibold underline">
+                  Đổi mã PIN
+                </button>
+              </>
             )}
           </div>
+        )}
+
+        {isEditingProfile && (
+          <form onSubmit={handleUpdateProfile} className="bg-white p-6 md:p-8 rounded-[32px] border border-line mb-10 shadow-soft max-w-[600px] mx-auto">
+            <h3 className="font-bold text-xl mb-6 text-center text-coffee">Cập nhật thông tin</h3>
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-full text-left">
+                <label className="block text-sm font-semibold text-coffee mb-1 pl-4">Họ và tên</label>
+                <input 
+                  type="text" 
+                  value={editFullName} 
+                  onChange={(e) => setEditFullName(e.target.value)} 
+                  placeholder="Họ và tên của bạn"
+                  className="h-[60px] w-full rounded-full border border-line bg-white px-6 text-base outline-none focus:border-coffee shadow-soft mb-2"
+                  disabled={loading}
+                />
+              </div>
+              <div className="flex gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingProfile(false)}
+                  className="px-8 py-3 rounded-full border-2 border-line text-sm font-bold hover:bg-surface"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !editFullName.trim() || editFullName === customer?.fullName}
+                  className="px-8 py-3 rounded-full bg-coffee text-white text-sm font-bold hover:bg-opacity-90 disabled:opacity-50 shadow-soft"
+                >
+                  Lưu thay đổi
+                </button>
+              </div>
+            </div>
+          </form>
         )}
 
         {isChangingPin && (
@@ -1083,7 +1178,7 @@ export function CustomerMembershipPage() {
                     Hạng: {membership.tier?.name || 'Khách hàng mới'}
                   </p>
                 </div>
-                
+
                 <div className="mt-8 flex items-center justify-between border-t border-line pt-6">
                   <div>
                     <p className="text-xs text-muted mb-1 uppercase tracking-wider font-bold">Điểm hiện tại</p>
@@ -1095,7 +1190,7 @@ export function CustomerMembershipPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="rounded-[24px] border border-line bg-coffee text-white p-6 md:p-8 shadow-soft">
                 <div className="flex items-center gap-3 mb-6">
                   <Award className="h-6 w-6 text-gold" />
@@ -1131,7 +1226,7 @@ export function CustomerMembershipPage() {
                 <History className="h-5 w-5 text-muted" />
                 <h3 className="font-bold text-lg">Lịch sử tích/tiêu điểm</h3>
               </div>
-              
+
               {transactions.length > 0 ? (
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                   {transactions.map(tx => (
@@ -1162,10 +1257,10 @@ export function CustomerMembershipPage() {
                 <Gift className="h-5 w-5 text-gold" />
                 Danh sách phần thưởng
               </h3>
-              
+
               <div className="flex items-center gap-3">
                 {!successVoucher && (
-                  <select 
+                  <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
                     className="border border-line rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-coffee"
@@ -1176,14 +1271,14 @@ export function CustomerMembershipPage() {
                     ))}
                   </select>
                 )}
-                
+
                 <button onClick={() => { setShowRewardModal(false); setSuccessVoucher(null); }} className="p-2 hover:bg-cream rounded-full transition text-muted">
                   <span className="sr-only">Đóng</span>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
             </div>
-            
+
             <div className="p-6 overflow-y-auto flex-1 bg-cream/30">
               {successVoucher ? (
                 <div className="text-center py-8">
@@ -1192,7 +1287,7 @@ export function CustomerMembershipPage() {
                   </div>
                   <h4 className="font-bold text-xl mb-2 text-emerald-700">Đổi thưởng thành công!</h4>
                   <p className="text-muted mb-6">Mã voucher của bạn đã được tạo thành công và chỉ được sử dụng 1 lần.</p>
-                  
+
                   <div className="bg-white border border-emerald-200 rounded-xl p-6 max-w-sm mx-auto shadow-sm">
                     <p className="text-sm font-semibold text-muted mb-2 uppercase tracking-wider">Mã Voucher của bạn</p>
                     <p className="text-3xl font-black text-coffee tracking-widest mb-4">{successVoucher.code}</p>
@@ -1200,7 +1295,7 @@ export function CustomerMembershipPage() {
                       <p className="text-sm text-muted">Hết hạn: <span className="font-semibold text-red-500">{formatVnDate(successVoucher.expireDate)}</span></p>
                     )}
                   </div>
-                  
+
                   <button onClick={() => setSuccessVoucher(null)} className="mt-8 px-6 py-2.5 bg-coffee text-white font-bold rounded-lg hover:bg-opacity-90 transition">
                     Đổi thêm quà khác
                   </button>
