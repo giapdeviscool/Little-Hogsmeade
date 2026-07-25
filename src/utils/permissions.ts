@@ -19,7 +19,7 @@ const SIDEBAR_PERMISSIONS: Record<string, SidebarNavKey[]> = {
 
 const INTERNAL_TAB_PERMISSIONS: Record<string, string[]> = {
   owner: ['employees', 'shifts', 'schedule', 'payroll', 'inventory', 'categories', 'menuItems', 'toppingGroups', 'recipes', 'stock-conversion', 'expenses', 'finance', 'what-if'],
-  'chain admin': ['employees', 'shifts', 'schedule', 'payroll', 'inventory', 'categories', 'menuItems', 'toppingGroups', 'recipes', 'stock-conversion', 'expenses', 'finance'],
+  'chain admin': ['employees', 'shifts', 'schedule', 'payroll', 'inventory', 'menuItems', 'toppingGroups', 'recipes', 'stock-conversion', 'expenses', 'finance'],
   cashier: ['schedule', 'payroll', 'recipes', 'attendance', 'stock-conversion'],
   staff: ['schedule', 'payroll', 'recipes', 'attendance', 'stock-conversion'],
 }
