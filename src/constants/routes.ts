@@ -9,7 +9,6 @@ export const ROUTES = {
   customerBlog: '/blog',
   customerStores: '/stores',
   customerMembership: '/membership',
-  adminDashboard: '/admin/dashboard',
   adminPos: '/admin/pos',
   adminOperations: '/admin/operations',
   adminTableLayout: '/admin/table-layout',

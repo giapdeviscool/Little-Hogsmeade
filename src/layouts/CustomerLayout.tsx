@@ -122,7 +122,7 @@ export function CustomerLayout() {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <Link to={isEmployee ? ROUTES.adminDashboard : ROUTES.customerMembership} className="hidden text-sm font-semibold text-coffee hover:underline md:block">
+              <Link to={isEmployee ? ROUTES.adminPos : ROUTES.customerMembership} className="hidden text-sm font-semibold text-coffee hover:underline md:block">
                 {isEmployee ? 'Bảng điều khiển' : 'Tài khoản'}
               </Link>
             ) : (

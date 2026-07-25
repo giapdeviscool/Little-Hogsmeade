@@ -7,6 +7,10 @@ export function listReservations(branchId?: string) {
   return httpClient<ApiResponse<Reservation[]>>(url)
 }
 
+export function lookupReservationByPhone(phone: string) {
+  return httpClient<ApiResponse<Reservation[]>>(`/reservations/lookup?phone=${encodeURIComponent(phone)}`)
+}
+
 export function createReservation(payload: ReservationPayload) {
   return httpClient<ApiResponse<Reservation>>('/reservations', {
     method: 'POST',

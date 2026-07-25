@@ -17,7 +17,7 @@ export function TwoFactorSuccessModal({ isOpen, onClose, email }: TwoFactorSucce
 
   const handleDashboardReturn = () => {
     onClose();
-    navigate(ROUTES.adminDashboard);
+    navigate(ROUTES.adminPos);
   };
 
   return (

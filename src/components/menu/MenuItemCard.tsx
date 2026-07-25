@@ -64,20 +64,22 @@ export function MenuItemCard({
             >
               <X className="h-5 w-5" />
             </button>
-            <div className="aspect-[16/9] w-full shrink-0 bg-beige">
-              {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl">🍽️</div>
-              )}
-            </div>
             
-            <div className="overflow-y-auto p-6 scrollbar-none">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold leading-tight text-coffee">{item.name}</h2>
-                <div className="mt-1 font-bold text-coffee">{formattedPrice}</div>
-                {item.description && <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>}
+            <div className="overflow-y-auto w-full scrollbar-none">
+              <div className="aspect-video w-full shrink-0 bg-beige">
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-5xl">🍽️</div>
+                )}
               </div>
+              
+              <div className="p-6">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold leading-tight text-coffee">{item.name}</h2>
+                  <div className="mt-1 font-bold text-coffee">{formattedPrice}</div>
+                  {item.description && <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>}
+                </div>
 
               {item.menuItemVariants && item.menuItemVariants.length > 0 && (
                 <div className="mb-6">
@@ -120,6 +122,7 @@ export function MenuItemCard({
                   })}
                 </div>
               )}
+            </div>
             </div>
           </div>
         </div>
