@@ -38,7 +38,7 @@ export function AddMenuItemModal({ isOpen, onClose, onSuccess, categories }: Add
       getBranches()
         .then((res) => {
           const data = res.data
-          setBranches(Array.isArray(data) ? data : (data as any)?.items || [])
+          setBranches(Array.isArray(data) ? data.filter((b: any) => b.status === 'active') : (data as any)?.items?.filter((b: any) => b.status === 'active') || [])
         })
         .catch(console.error)
     }

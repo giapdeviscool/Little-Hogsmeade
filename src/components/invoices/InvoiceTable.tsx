@@ -66,7 +66,7 @@ export function InvoiceTable({ onSelectInvoice, refreshTrigger }: InvoiceTablePr
       try {
         const res = await getBranches();
         if (!res.error && res.data && res.data.items) {
-          setBranches(res.data.items);
+          setBranches(res.data.items.filter((b: any) => b.status === 'active'));
         }
       } catch (err) {
         console.error('Failed to fetch branches:', err);

@@ -54,7 +54,7 @@ export function EmployeeList() {
     Promise.all([getRoles(), getBranches()])
       .then(([rolesRes, branchesRes]) => {
         const rolesData = Array.isArray(rolesRes.data) ? rolesRes.data : (rolesRes.data as any).items || []
-        const branchesData = Array.isArray(branchesRes.data) ? branchesRes.data : (branchesRes.data as any).items || []
+        const branchesData = (Array.isArray(branchesRes.data) ? branchesRes.data : (branchesRes.data as any).items || []).filter((b: any) => b.status === 'active')
         setRoles(rolesData)
         setBranches(branchesData)
       })
