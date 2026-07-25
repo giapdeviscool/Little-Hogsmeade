@@ -43,6 +43,7 @@ export type LoyaltyReward = {
   discountType: 'percent' | 'fixed' | 'gift'
   minOrderValue: number
   expiryDays: number
+  productId?: string | null
   description?: string
   imageUrl?: string
   isActive: boolean
@@ -76,6 +77,7 @@ export type LoyaltyRewardUpsertPayload = {
   discountType: 'percent' | 'fixed' | 'gift'
   minOrderValue: number
   expiryDays: number
+  productId?: string | null
   description?: string
   imageUrl?: string | null
   isActive: boolean

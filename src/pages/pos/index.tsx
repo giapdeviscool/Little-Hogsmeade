@@ -14,11 +14,13 @@ import type { SelectedTopping } from '@/components/pos/ToppingSelectionModal';
 
 export interface CartItemType {
   id: string;
+  productId?: string;
   name: string;
   note: string;
   price: string;
   quantity: number;
   toppings?: SelectedTopping[];
+  isGift?: boolean;
 }
 
 export interface OrderType {
@@ -89,8 +91,18 @@ export function PosPage() {
     setOrders(prev =>
       prev.map(order => {
         if (order.id !== activeOrderId) return order;
+        
+        const itemToRemove = order.cartItems.find(item => item.id === itemId);
+        let newVoucherCode = order.voucherCode;
+        let newDiscountAmount = order.discountAmount;
+
+        if (itemToRemove && itemToRemove.isGift) {
+          newVoucherCode = undefined;
+          newDiscountAmount = 0;
+        }
+
         const filtered = order.cartItems.filter(item => item.id !== itemId);
-        return { ...order, cartItems: filtered };
+        return { ...order, cartItems: filtered, voucherCode: newVoucherCode, discountAmount: newDiscountAmount };
       })
     );
   };
@@ -112,6 +124,7 @@ export function PosPage() {
       } else {
         newCartItems = [...order.cartItems, {
           id: product.id,
+          productId: product.id,
           name: product.name,
           price: `₫${product.basePrice.toLocaleString('vi-VN')}`,
           note: '',
@@ -172,10 +185,29 @@ export function PosPage() {
     ));
   };
 
-  const handleSetVoucher = (voucherCode?: string, discountAmount: number = 0) => {
-    setOrders(prev => prev.map(o =>
-      o.id === activeOrderId ? { ...o, voucherCode, discountAmount } : o
-    ));
+  const handleSetVoucher = (voucherCode?: string, discountAmount: number = 0, giftProductId?: string, giftProduct?: any) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id !== activeOrderId) return o;
+      let newCartItems = [...o.cartItems];
+      
+      // Remove any existing gift items from this order
+      newCartItems = newCartItems.filter(item => !item.isGift);
+
+      // Add the new gift item if applicable
+      if (giftProductId && giftProduct) {
+        newCartItems.push({
+          id: `gift-${giftProduct.id}-${Date.now()}`,
+          productId: giftProduct.id,
+          name: giftProduct.name + ' (Quà tặng)',
+          price: '0',
+          quantity: 1,
+          toppings: [],
+          isGift: true
+        });
+      }
+
+      return { ...o, voucherCode, discountAmount, cartItems: newCartItems };
+    }));
   };
 
   return (

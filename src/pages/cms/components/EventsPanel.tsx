@@ -12,6 +12,7 @@ import { normalizeList } from './cms.utils'
 import { StateShell, InlineNotice, StatusPill, InfoRow } from './CmsSharedUI'
 import { EventEditorDialog } from './EventEditorDialog'
 import { EventDetailDialog } from './EventDetailDialog'
+import { formatHtml } from '../../../utils/html'
 
 export function EventsPanel() {
   const { t } = useLocale()
@@ -36,7 +37,7 @@ export function EventsPanel() {
   }, [search])
 
   useEffect(() => {
-    void getBranches().then((res) => setBranches(normalizeList<Branch>(res.data).filter((b: Branch) => b.status === 'active'))).catch(() => {})
+    void getBranches().then((res) => setBranches(normalizeList<Branch>(res.data).filter((b: Branch) => b.status === 'active'))).catch(() => { })
   }, [])
 
   const fetchEvents = useCallback(async (currentPage: number, currentSearch: string, currentStatus: string) => {
@@ -151,26 +152,25 @@ export function EventsPanel() {
             </div>
             <div className="border-b border-line p-5">
               <h3 className="text-[20px] font-bold">{event.title}</h3>
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{event.description}</p>
+              <div className="cms-rendered-content mt-2 line-clamp-2 text-sm leading-6 text-muted [&_p]:inline break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatHtml(event.description) }} />
             </div>
             <div className="space-y-4 p-5">
               <div className="grid gap-3 text-sm text-muted lg:grid-cols-2">
                 <InfoRow label="Khung giờ" value={`${formatVnTime(event.startTime)} - ${formatVnTime(event.endTime)}`} />
-                <InfoRow label="Địa điểm" value={event.locationNote} />
-                <InfoRow label="Cập nhật" value={formatVnDateTime(event.updatedAt ?? event.createdAt)} />
+                <InfoRow label="Chi nhánh" value={event.branch?.name || 'Chưa cập nhật'} />
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setViewingEvent(event)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
-                   <Eye className="h-4 w-4" />
-                   {t.cms.events.view}
+                  <Eye className="h-4 w-4" />
+                  {t.cms.events.view}
                 </button>
                 <button type="button" onClick={() => startEdit(event)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-coffee">
-                   <Edit3 className="h-4 w-4" />
-                   {t.common.edit}
+                  <Edit3 className="h-4 w-4" />
+                  {t.common.edit}
                 </button>
                 <button type="button" onClick={() => handleDelete(event.id)} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-xs font-semibold text-red-700">
-                   <Trash2 className="h-4 w-4" />
-                   {t.common.delete}
+                  <Trash2 className="h-4 w-4" />
+                  {t.common.delete}
                 </button>
               </div>
             </div>
@@ -178,9 +178,9 @@ export function EventsPanel() {
         ))}
       </div>
 
-        {!loading && totalPages > 0 && (
-          <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label={t.common.events} />
-        )}
+      {!loading && totalPages > 0 && (
+        <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} label={t.common.events} />
+      )}
 
       {viewingEvent && (
         <EventDetailDialog

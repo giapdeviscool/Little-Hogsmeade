@@ -90,6 +90,7 @@ export type Event = {
   isPublished: boolean
   updatedAt?: string | null
   createdAt?: string | null
+  branch?: { id: string; name: string }
 }
 
 export type EventPayload = {

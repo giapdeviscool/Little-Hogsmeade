@@ -19,7 +19,7 @@ interface OrderSidebarProps {
   onUpdateItem: (itemId: string, delta: number) => void;
   onRemoveItem: (itemId: string) => void;
   onCustomizeItem: (itemId: string) => void;
-  onSetVoucher: (voucherCode?: string, discountAmount?: number) => void;
+  onSetVoucher: (voucherCode?: string, discountAmount?: number, giftProductId?: string, giftProduct?: any) => void;
 }
 
 export function OrderSidebar({
