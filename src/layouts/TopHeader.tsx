@@ -1,5 +1,4 @@
 import { Icon } from '../components/icons/Icon'
-import { LanguageSwitch } from '../components/ui/LanguageSwitch'
 import { useLocale } from '../hooks/useLocale'
 import { useLocation } from 'react-router-dom'
 
@@ -20,7 +19,6 @@ export function TopHeader() {
         <Icon name="bell" />
         <span className="absolute right-3 top-2 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-white" />
       </button>
-      <LanguageSwitch />
       <button className="ml-auto flex items-center gap-3 text-left">
         <span className="grid h-10 w-10 place-items-center rounded-full bg-coffee font-bold text-white">A</span>
         <span>

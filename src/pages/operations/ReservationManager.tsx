@@ -204,7 +204,7 @@ export function ReservationManager() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {res.status === 'pending' && !res.tableId && (
+                      {res.status === 'confirmed' && !res.tableId && (
                         <button 
                           onClick={() => setSelectedReservationToAssign(res)} 
                           className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition hover:bg-blue-100" 
