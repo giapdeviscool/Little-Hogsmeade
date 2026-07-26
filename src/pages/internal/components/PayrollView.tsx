@@ -167,7 +167,7 @@ export function PayrollView() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">Bảng lương (UC62)</h2>
+        <h1 className="text-4xl font-bold text-foreground">Bảng Lương</h1>
       </div>
 
       {/* Filters */}

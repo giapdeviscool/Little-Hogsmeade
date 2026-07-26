@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { getAuthSession } from '../../store/auth.store';
-import { setup2FA, verify2FA } from '../../api/otp.api';
+import { setup2FA, verify2FA, get2FAStatus, type OTPStatusResponse } from '../../api/otp.api';
 import { TwoFactorSuccessModal } from '../../components/settings/TwoFactorSuccessModal';
 import { 
   Shield, 
@@ -14,7 +14,10 @@ import {
   Settings, 
   Lock, 
   HelpCircle,
-  QrCode
+  QrCode,
+  Server,
+  UserCheck,
+  Building2
 } from 'lucide-react';
 
 export function SettingsPage() {
@@ -34,6 +37,10 @@ export function SettingsPage() {
   const [qrCode, setQrCode] = useState('');
   const [secret, setSecret] = useState('');
   
+  // 2FA Status State
+  const [statusData, setStatusData] = useState<OTPStatusResponse | null>(null);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
   // 6-digit OTP state
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -42,6 +49,32 @@ export function SettingsPage() {
   const [isVerified, setIsVerified] = useState(() => {
     return localStorage.getItem('little-hogsmeade-2fa-enabled') === 'true';
   });
+
+  const fetch2FAStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      const res = await get2FAStatus();
+      setStatusData(res);
+      if (res.has2FA || res.hasPersonalSecret) {
+        setIsVerified(true);
+        localStorage.setItem('little-hogsmeade-2fa-enabled', 'true');
+      } else {
+        setIsVerified(false);
+        localStorage.removeItem('little-hogsmeade-2fa-enabled');
+      }
+    } catch (err) {
+      console.error('Failed to fetch 2FA status:', err);
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      fetch2FAStatus();
+    }
+  }, [activeTab]);
+
 
   const [copySuccess, setCopySuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -129,6 +162,7 @@ export function SettingsPage() {
         setIsVerified(true);
         localStorage.setItem('little-hogsmeade-2fa-enabled', 'true');
         setShowSuccessModal(true);
+        await fetch2FAStatus();
       } else {
         setError('Mã xác nhận không đúng hoặc đã hết hạn.');
       }
@@ -232,27 +266,29 @@ export function SettingsPage() {
         </Card>
       ) : (
         /* 2FA Setup Interface (Exclusive for Chain Admins) */
-        <Card className="bg-white rounded-2xl shadow-lg border border-line overflow-hidden animate-in fade-in duration-300">
-          
-          {/* Header Section */}
-          <div className="p-6 lg:p-8 border-b border-line bg-cream flex justify-between items-center">
-            <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-coffee mb-1 flex items-center gap-2">
-                <Lock className="w-6 h-6 text-gold" />
-                Cấu hình Bảo mật Quản lý (2FA Verification)
-              </h2>
-              <p className="text-muted text-sm">
-                Kích hoạt mã bảo mật OTP ứng dụng Google Authenticator để phê duyệt chốt ca làm việc.
-              </p>
+        <div className="space-y-6">
+
+          <Card className="bg-white rounded-2xl shadow-lg border border-line overflow-hidden animate-in fade-in duration-300">
+            {/* Header Section */}
+            <div className="p-6 lg:p-8 border-b border-line bg-cream flex justify-between items-center">
+              <div>
+                <h2 className="text-xl lg:text-2xl font-bold text-coffee mb-1 flex items-center gap-2">
+                  <Lock className="w-6 h-6 text-gold" />
+                  Cấu hình Bảo mật Quản lý (2FA Verification)
+                </h2>
+                <p className="text-muted text-sm">
+                  Kích hoạt mã bảo mật OTP ứng dụng Google Authenticator để phê duyệt chốt ca làm việc.
+                </p>
+              </div>
+              
+              {isVerified && (
+                <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200 text-xs font-bold uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4" />
+                  Đang kích hoạt
+                </span>
+              )}
             </div>
-            
-            {isVerified && (
-              <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200 text-xs font-bold uppercase tracking-wider">
-                <ShieldCheck className="w-4 h-4" />
-                Đang kích hoạt
-              </span>
-            )}
-          </div>
+
 
           {/* Setup Forms */}
           {!isSetupInitiated && !isVerified ? (
@@ -468,7 +504,9 @@ export function SettingsPage() {
             </div>
           )}
         </Card>
+        </div>
       )}
+
       <TwoFactorSuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}

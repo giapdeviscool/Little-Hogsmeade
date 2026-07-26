@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Employee, CreateEmployeePayload, UpdateEmployeePayload, Role, Branch } from '../../../types'
 import { createEmployee, updateEmployee } from '../../../api/employee.api'
+import { get2FAStatus, type OTPStatusResponse } from '../../../api/otp.api'
 import { getAuthSession } from '../../../store/auth.store'
 import { CurrencyInput } from '../../../components/ui/CurrencyInput'
+import { ShieldCheck, ShieldAlert, Loader2 } from 'lucide-react'
 
 interface Props {
   employee?: Employee | null
@@ -32,7 +34,7 @@ function validateForm(
   }
 
   if (data.email && data.email.trim() && !EMAIL_REGEX.test(data.email.trim())) {
-    return 'Email không hợp lệ. Vui lòng nhập đúng định dạng (VD: abc@email.com).'
+    return 'Email không hợp lệ. Vui lòng nhập đúng định dạng (VD: abc@example.com).'
   }
 
   if (!isEditing) {
@@ -56,6 +58,20 @@ export function EmployeeModal({ employee, roles, branches, onClose, onSuccess }:
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successPin, setSuccessPin] = useState<string | null>(null)
+
+  // 2FA status state
+  const [otpStatus, setOtpStatus] = useState<OTPStatusResponse | null>(null)
+  const [loadingOtpStatus, setLoadingOtpStatus] = useState(false)
+
+  useEffect(() => {
+    if (isEditing && employee?.id) {
+      setLoadingOtpStatus(true)
+      get2FAStatus(employee.id)
+        .then(res => setOtpStatus(res))
+        .catch(err => console.error('Failed to load 2FA status for employee:', err))
+        .finally(() => setLoadingOtpStatus(false))
+    }
+  }, [isEditing, employee?.id])
 
   const authSession = getAuthSession()
   const userRole = (authSession?.user?.roleName || authSession?.user?.role || '').toLowerCase()
@@ -112,15 +128,14 @@ export function EmployeeModal({ employee, roles, branches, onClose, onSuccess }:
           hiredDate: formData.hiredDate ? new Date(formData.hiredDate).toISOString() : undefined,
         }
         const res = await createEmployee(payload)
-        // Backend returns generatedPin at top-level of response
-        setSuccessPin(res.generatedPin)
+        if (res.generatedPin) {
+          setSuccessPin(res.generatedPin)
+        } else {
+          onSuccess('Thêm nhân viên mới thành công!')
+        }
       }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('Đã xảy ra lỗi')
-      }
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.')
     } finally {
       setLoading(false)
     }
@@ -203,14 +218,36 @@ export function EmployeeModal({ employee, roles, branches, onClose, onSuccess }:
           </div>
 
           {isEditing && (
-            <div>
-              <label className="mb-1 block text-sm font-medium">Trạng thái</label>
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full rounded-[14px] border border-line px-4 py-2">
-                <option value="active">Đang làm việc (Active)</option>
-                <option value="on_leave">Nghỉ phép (On Leave)</option>
-                <option value="resigned">Đã nghỉ việc (Resigned)</option>
-                <option value="inactive">Tạm khóa (Inactive)</option>
-              </select>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium">Trạng thái</label>
+                <select name="status" value={formData.status} onChange={handleChange} className="w-full rounded-[14px] border border-line px-4 py-2">
+                  <option value="active">Đang làm việc (Active)</option>
+                  <option value="on_leave">Nghỉ phép (On Leave)</option>
+                  <option value="resigned">Đã nghỉ việc (Resigned)</option>
+                  <option value="inactive">Tạm khóa (Inactive)</option>
+                </select>
+              </div>
+
+              {/* 2FA Verification Status Indicator */}
+              <div className="p-3 bg-[#FAF8F5] rounded-xl border border-line/60 flex items-center justify-between text-xs">
+                <span className="font-semibold text-coffee flex items-center gap-1.5">
+                  Xác thực 2FA nhân viên:
+                </span>
+                {loadingOtpStatus ? (
+                  <span className="text-muted flex items-center gap-1">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang tải...
+                  </span>
+                ) : otpStatus?.has2FA || otpStatus?.hasPersonalSecret ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 font-bold rounded-lg border border-green-200">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Đã thiết lập 2FA
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 font-medium rounded-lg border border-amber-200">
+                    <ShieldAlert className="w-3.5 h-3.5" /> Chưa thiết lập 2FA
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
