@@ -284,7 +284,7 @@ export function PaymentModal({
                         {qrCodeUrl ? (
                            <img 
                             className="w-full h-full object-contain mix-blend-multiply" 
-                            alt="VietQR code for transaction" 
+                            alt="QR code for transaction" 
                             src={qrCodeUrl} 
                           />
                         ) : (
