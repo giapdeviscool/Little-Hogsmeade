@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import { LanguageSwitch } from '../components/ui/LanguageSwitch'
 import { listPages } from '../api/cms.api'
 import type { CmsPage } from '../types'
 import { ROUTES } from '../constants/routes'
@@ -118,7 +117,6 @@ export function CustomerLayout() {
           <button type="button" aria-label="Tìm kiếm" className="hidden rounded-full border border-line bg-white px-3 py-2 text-sm font-semibold text-coffee md:inline-flex">
             <Search className="h-4 w-4" />
           </button>
-          <LanguageSwitch />
 
           <div className="flex items-center gap-3">
             {user ? (

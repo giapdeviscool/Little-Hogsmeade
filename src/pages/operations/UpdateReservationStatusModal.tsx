@@ -97,6 +97,7 @@ export function UpdateReservationStatusModal({ isOpen, reservation, onClose, onU
                 )}
                 {reservation.status === 'confirmed' && (
                   <>
+                    <option value="checked_in">Khách đã đến (Checked-in)</option>
                     <option value="cancelled">Khách huỷ (Cancelled)</option>
                     <option value="no_show">Khách không đến (No-Show)</option>
                   </>
@@ -110,10 +111,14 @@ export function UpdateReservationStatusModal({ isOpen, reservation, onClose, onU
               </div>
             </div>
             
-            {status === 'cancelled' || status === 'no_show' ? (
+            {status === 'cancelled' || status === 'no_show' || status === 'completed' ? (
               <p className="text-xs text-red-600 font-medium">Lưu ý: Thao tác này sẽ trả lại Bàn (nếu đã gán) về trạng thái Trống.</p>
             ) : status === 'checked_in' ? (
-              <p className="text-xs text-emerald-600 font-medium">Bàn sẽ chuyển sang trạng thái Đang phục vụ (Occupied).</p>
+              !reservation.tableId ? (
+                <p className="text-xs text-red-600 font-medium">Lỗi: Vui lòng gán bàn cho khách trước khi có thể Check-in.</p>
+              ) : (
+                <p className="text-xs text-emerald-600 font-medium">Bàn sẽ chuyển sang trạng thái Đang phục vụ (Occupied).</p>
+              )
             ) : status === 'confirmed' && !reservation.tableId ? (
               <p className="text-xs text-amber-600 font-medium">Gợi ý: Đừng quên gán bàn sau khi xác nhận.</p>
             ) : null}
@@ -126,7 +131,7 @@ export function UpdateReservationStatusModal({ isOpen, reservation, onClose, onU
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || status === reservation.status}
+            disabled={isSubmitting || status === reservation.status || (status === 'checked_in' && !reservation.tableId)}
             className="h-11 px-8 rounded-xl font-bold bg-coffee hover:bg-[#3a291d] text-white shadow-soft transition-all disabled:opacity-50"
           >
             {isSubmitting ? 'Đang lưu...' : 'Lưu cập nhật'}
